@@ -74,8 +74,10 @@
   },
   "dependencies": {
     "@types/deep-freeze-strict": "1.1.0",
+    "@types/got": "9.6.1",
     "@types/metalsmith": "2.3.0",
     "deep-freeze-strict": "1.1.1",
+    "got": "9.6.0",
     "multimatch": "4.0.0"
   },
   "devDependencies": {
