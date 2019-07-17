@@ -73,7 +73,8 @@
     ]
   },
   "dependencies": {
-    "@types/metalsmith": "2.3.0"
+    "@types/metalsmith": "2.3.0",
+    "multimatch": "4.0.0"
   },
   "devDependencies": {
     "@sounisi5011/check-peer-deps": "github:sounisi5011/check-peer-deps",
