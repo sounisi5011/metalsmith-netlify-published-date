@@ -19,9 +19,9 @@ import { DeepReadonly } from './utils/types';
  * Interfaces
  */
 
-type OptionsInterface = DeepReadonly<WritableOptionsInterface>;
+export type OptionsInterface = DeepReadonly<WritableOptionsInterface>;
 
-interface WritableOptionsInterface {
+export interface WritableOptionsInterface {
     pattern: string | string[];
     siteID: string;
     accessToken: string | null;
@@ -44,14 +44,14 @@ interface WritableOptionsInterface {
     }): boolean | Promise<boolean>;
 }
 
-interface GeneratingPageMetadataInterface {
+export interface GeneratingPageMetadataInterface {
     files: Metalsmith.Files;
     filename: string;
     fileData: FileInterface;
     metalsmith: Metalsmith;
 }
 
-type DeployedPageMetadataInterface = {
+export type DeployedPageMetadataInterface = {
     deploy: NetlifyDeployData;
 } & (
     | {
@@ -63,7 +63,7 @@ type DeployedPageMetadataInterface = {
           cachedResponse: CachedResponseInterface;
       });
 
-interface CachedResponseInterface {
+export interface CachedResponseInterface {
     body: Buffer;
     published: string;
 }
@@ -72,7 +72,7 @@ interface CachedResponseInterface {
  * Utility functions
  */
 
-function getCachedResponse(value: unknown): CachedResponseInterface | null {
+export function getCachedResponse(value: unknown): CachedResponseInterface | null {
     if (isObject(value)) {
         const { published } = value;
         if (typeof published === 'string') {
@@ -88,7 +88,7 @@ function getCachedResponse(value: unknown): CachedResponseInterface | null {
     return null;
 }
 
-async function getDeployList(
+export async function getDeployList(
     siteID: string,
     accessToken: string | null,
 ): ReturnType<typeof netlifyDeploys> {
@@ -100,7 +100,7 @@ async function getDeployList(
     return deployList;
 }
 
-async function fetchPage(url: string): Promise<got.Response<Buffer> | null> {
+export async function fetchPage(url: string): Promise<got.Response<Buffer> | null> {
     try {
         return await got(url, { encoding: null });
     } catch (error) {
@@ -113,7 +113,7 @@ async function fetchPage(url: string): Promise<got.Response<Buffer> | null> {
     }
 }
 
-async function eachFile({
+export async function eachFile({
     options,
     nowDate,
     cache,
@@ -303,7 +303,7 @@ const netlifyRootURL = process.env.URL;
 const netlifyRootURLMatch = /^https:[/]{2}([^/]+)/.exec(netlifyRootURL || '');
 const defaultSiteID = (netlifyRootURLMatch && netlifyRootURLMatch[1]) || '';
 
-const defaultOptions: OptionsInterface = deepFreeze({
+export const defaultOptions: OptionsInterface = deepFreeze({
     pattern: ['**/*.html'],
     siteID: defaultSiteID,
     accessToken: null,
@@ -317,7 +317,7 @@ const defaultOptions: OptionsInterface = deepFreeze({
  * Main function
  */
 
-export = createPluginGenerator((opts = {}) => {
+export default createPluginGenerator((opts = {}) => {
     const options = { ...defaultOptions, ...opts };
     const nowDate = Date.now();
     const cache = flatCache.create(
