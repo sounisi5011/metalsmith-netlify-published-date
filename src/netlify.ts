@@ -68,13 +68,17 @@ export async function netlifyDeploys(
         ? new Set(options.commitHashList)
         : null;
     const fetchedURL = new Set<string>();
+    let lastURL: string | null = null;
     const deployList: NetlifyDeployInterface[] = [];
+    let initialDeploy: NetlifyDeployInterface | null = null;
 
     /**
      * @see https://www.netlify.com/docs/api/#deploys
      */
     let url = `${API_PREFIX}sites/${siteID}/deploys`;
-    while (true) {
+    while (!fetchedURL.has(url)) {
+        const lastURLSet = new Set<typeof lastURL>(lastURL);
+
         const { body, linkHeader } = await fetch(
             url,
             options.accessToken
@@ -83,9 +87,29 @@ export async function netlifyDeploys(
         );
         fetchedURL.add(url);
 
+        /**
+         * @see https://www.netlify.com/docs/api/#pagination
+         */
+        let nextURL: string | null = null;
+        if (linkHeader) {
+            const linkData = parseLink(linkHeader);
+            if (linkData) {
+                const nextLink = linkData.next;
+                nextURL = (nextLink && nextLink.url) || null;
+
+                const lastLink = linkData.last;
+                if (lastLink && lastLink.url) {
+                    lastURL = lastLink.url;
+                }
+            }
+        }
+        lastURLSet.add(lastURL);
+
         if (Array.isArray(body)) {
+            const netlifyDeployList = body.filter(isNetlifyDeploy);
+
             deployList.push(
-                ...body.filter(isNetlifyDeploy).filter(deploy => {
+                ...netlifyDeployList.filter(deploy => {
                     if (!commitHashSet) {
                         return true;
                     }
@@ -99,32 +123,31 @@ export async function netlifyDeploys(
                     return false;
                 }),
             );
-        }
 
-        /**
-         * @see https://www.netlify.com/docs/api/#pagination
-         */
-        if (linkHeader) {
-            const linkData = parseLink(linkHeader);
-            if (linkData) {
-                const nextLink = linkData.next;
-                const nextURL = nextLink ? nextLink.url : null;
-                if (nextURL && url !== nextURL) {
-                    url = nextURL;
+            const isLastDeployList = !nextURL || lastURLSet.has(url);
+            if (isLastDeployList && netlifyDeployList.length >= 1) {
+                const lastDeploy =
+                    netlifyDeployList[netlifyDeployList.length - 1];
+                if (lastDeploy.commit_ref === null) {
+                    initialDeploy = lastDeploy;
                 }
             }
         }
 
-        if (!fetchedURL.has(url)) {
-            if (!commitHashSet || commitHashSet.size >= 1) {
-                continue;
-            }
+        if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {
+            url = nextURL;
+        } else if (lastURL && !initialDeploy) {
+            url = lastURL;
         }
-
-        break;
     }
 
     return deployList
+        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+        .concat(
+            initialDeploy && !deployList.includes(initialDeploy)
+                ? [initialDeploy]
+                : [],
+        )
         .map(deploy => ({
             ...deploy,
             deployAbsoluteURL: deploy.deploy_ssl_url.replace(
@@ -134,6 +157,5 @@ export async function netlifyDeploys(
                         ? scheme + deploy.id + hyphen + name + domain
                         : match,
             ),
-        }))
-        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+        }));
 }
