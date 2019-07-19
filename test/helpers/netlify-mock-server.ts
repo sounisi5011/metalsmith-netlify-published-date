@@ -148,7 +148,7 @@ export default async function create(
             .get(addSlash(apiPath))
             .query(actualQueryObject =>
                 Object.prototype.hasOwnProperty.call(actualQueryObject, 'page')
-                    ? actualQueryObject.page === page
+                    ? String(actualQueryObject.page) === String(page)
                     : page === 1,
             )
             .reply(200, [deploy], headers);
