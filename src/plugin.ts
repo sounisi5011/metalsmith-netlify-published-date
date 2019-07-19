@@ -72,7 +72,9 @@ export interface CachedResponseInterface {
  * Utility functions
  */
 
-export function getCachedResponse(value: unknown): CachedResponseInterface | null {
+export function getCachedResponse(
+    value: unknown,
+): CachedResponseInterface | null {
     if (isObject(value)) {
         const { published } = value;
         if (typeof published === 'string') {
@@ -100,7 +102,9 @@ export async function getDeployList(
     return deployList;
 }
 
-export async function fetchPage(url: string): Promise<got.Response<Buffer> | null> {
+export async function fetchPage(
+    url: string,
+): Promise<got.Response<Buffer> | null> {
     try {
         return await got(url, { encoding: null });
     } catch (error) {
