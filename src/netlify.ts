@@ -74,7 +74,7 @@ export async function netlifyDeploys(
      * @see https://www.netlify.com/docs/api/#deploys
      */
     let url = `${API_PREFIX}sites/${siteID}/deploys`;
-    do {
+    while (true) {
         const { body, linkHeader } = await fetch(
             url,
             options.accessToken
@@ -120,7 +120,9 @@ export async function netlifyDeploys(
                 continue;
             }
         }
-    } while (false);
+
+        break;
+    }
 
     return deployList
         .map(deploy => ({
