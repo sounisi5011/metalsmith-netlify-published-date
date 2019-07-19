@@ -25,14 +25,17 @@ test('netlifyDeploys(): If the commitHashList option is undefined, all deploys s
     );
 });
 
-test('netlifyDeploys(): If the commitHashList option is an empty array, an empty array must be returned', async t => {
-    await t.context.server;
+test('netlifyDeploys(): If the commitHashList option is an empty array, it is should return initial deploy only', async t => {
+    const server = await t.context.server;
 
     const deployList = await netlifyDeploys('example.com', {
         commitHashList: [],
     });
 
-    t.deepEqual(deployList, []);
+    t.deepEqual(
+        deployList.map(deploy => deleteProps(deploy, ['deployAbsoluteURL'])),
+        [server.deploys.initial],
+    );
 });
 
 test('netlifyDeploys(): If commit hash is specified in commitHashList option, it is necessary to return two of target deploy and initial deploy', async t => {
