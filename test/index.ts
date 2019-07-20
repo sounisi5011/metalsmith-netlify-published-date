@@ -4,10 +4,11 @@ import path from 'path';
 import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
+import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify from './helpers/netlify-mock-server';
 
 test.serial('should add correct dates to metadata', async t => {
-    const metalsmith = Metalsmith(path.join(__dirname, 'fixtures', 'basic'));
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic'));
     const server = await createNetlify('example.net', {
         root: metalsmith.source(),
         initial: 'initial.html',
