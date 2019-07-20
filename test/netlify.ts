@@ -12,31 +12,55 @@ test.before(t => {
     t.context.server = createNetlify('example.com');
 });
 
-test('netlifyDeploys(): If the commitHashList option is undefined, all deploys should be return', async t => {
-    const server = await t.context.server;
+test.serial(
+    'netlifyDeploys(): If the commitHashList option is undefined, all deploys should be return',
+    async t => {
+        const server = await t.context.server;
 
-    const deployList = await netlifyDeploys('example.com', {
-        commitHashList: undefined,
-    });
+        const logLen = server.requestLogs.api.length;
+        const deployList = await netlifyDeploys('example.com', {
+            commitHashList: undefined,
+        });
+        const newLogs = server.requestLogs.api.slice(logLen);
 
-    t.deepEqual(
-        deployList.map(deploy => deleteProps(deploy, ['deployAbsoluteURL'])),
-        [...server.deploys],
-    );
-});
+        t.deepEqual(
+            deployList.map(deploy =>
+                deleteProps(deploy, ['deployAbsoluteURL']),
+            ),
+            [...server.deploys],
+        );
+        t.is(newLogs.length, server.apiTotalPages, 'should request all pages');
+    },
+);
 
-test('netlifyDeploys(): If the commitHashList option is an empty array, it is should return initial deploy only', async t => {
-    const server = await t.context.server;
+test.serial(
+    'netlifyDeploys(): If the commitHashList option is an empty array, it is should return initial deploy only',
+    async t => {
+        const server = await t.context.server;
 
-    const deployList = await netlifyDeploys('example.com', {
-        commitHashList: [],
-    });
+        const logLen = server.requestLogs.api.length;
+        const deployList = await netlifyDeploys('example.com', {
+            commitHashList: [],
+        });
+        const newLogs = server.requestLogs.api.slice(logLen);
 
-    t.deepEqual(
-        deployList.map(deploy => deleteProps(deploy, ['deployAbsoluteURL'])),
-        [server.deploys.initial],
-    );
-});
+        t.deepEqual(
+            deployList.map(deploy =>
+                deleteProps(deploy, ['deployAbsoluteURL']),
+            ),
+            [server.deploys.initial],
+        );
+        if (server.apiTotalPages === 1) {
+            t.is(newLogs.length, 1, 'should only request the first page');
+        } else {
+            t.is(
+                newLogs.length,
+                2,
+                'should only request the first and last pages',
+            );
+        }
+    },
+);
 
 test('netlifyDeploys(): If commit hash is specified in commitHashList option, it is necessary to return two of target deploy and initial deploy', async t => {
     const server = await t.context.server;

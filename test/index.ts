@@ -24,6 +24,7 @@ test.serial('should add correct dates to metadata', async t => {
                 scope.activeMocks(),
             ]),
         ),
+        requestLogs: server.requestLogs,
     });
 
     const initialPublishedDate = new Date(
@@ -47,6 +48,12 @@ test.serial('should add correct dates to metadata', async t => {
     );
 
     const files = await util.promisify(metalsmith.build.bind(metalsmith))();
+    const initialPagePreviewLogs = server.requestLogs.initial;
+    const modifiedPagePreviewLogs = server.requestLogs.modified;
+    const addedPagePreviewLogs = server.requestLogs.added;
+    const newPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/new.html',
+    );
 
     t.log({
         files,
@@ -55,6 +62,12 @@ test.serial('should add correct dates to metadata', async t => {
             modifiedPublishedDate,
             addedPublishedDate,
             lastPublishedDate,
+        },
+        requestLogs: {
+            initialPagePreviewLogs,
+            modifiedPagePreviewLogs,
+            addedPagePreviewLogs,
+            newPagePreviewLogs,
         },
     });
 
@@ -71,4 +84,24 @@ test.serial('should add correct dates to metadata', async t => {
     t.true(files['new.html'].published > lastPublishedDate);
     t.true(files['new.html'].modified instanceof Date);
     t.true(files['new.html'].modified > lastPublishedDate);
+
+    t.is(
+        initialPagePreviewLogs.length,
+        server.deploys.length,
+        'If the page was deployed initial, should have requested all the previews',
+    );
+    t.is(
+        modifiedPagePreviewLogs.length,
+        server.deploys.length,
+        'If the page was deployed initial and modified midway, should have requested all the previews',
+    );
+    t.true(
+        addedPagePreviewLogs.length < server.deploys.length,
+        'If the page was deployed midway, should not have requested all previews',
+    );
+    t.is(
+        newPagePreviewLogs.length,
+        1,
+        'If the page has not been deployed yet, should have requested only the first preview',
+    );
 });

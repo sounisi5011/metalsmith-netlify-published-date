@@ -1,14 +1,17 @@
+import http from 'http';
 import nock from 'nock';
 import path from 'path';
 
 import { CommitInterface, getFirstParentCommits } from '../../src/git';
 import { NetlifyDeployInterface } from '../../src/netlify';
+import { DeepReadonly } from '../../src/utils/types';
 import {
     generatePronounceableRandStr,
     generateRandStr,
     randomChoice,
     randomChoiceList,
 } from './random';
+import { ArrayItemType } from './types';
 import { addSlash } from './utils';
 
 export const API_ROOT_URL = 'https://api.netlify.com/api/v1/';
@@ -20,20 +23,45 @@ export interface FixtureFilename {
     added?: string;
 }
 
+export interface RequestLog {
+    host?: readonly string[];
+    path: string;
+}
+
 export interface MockServer {
     deploys: {
         initial: NetlifyDeployInterface & Record<string, unknown>;
         modified: NetlifyDeployInterface & Record<string, unknown>;
         added: NetlifyDeployInterface & Record<string, unknown>;
-    } & (NetlifyDeployInterface & Record<string, unknown>)[];
+    } & readonly (NetlifyDeployInterface & Record<string, unknown>)[];
     nockScope: {
         api: nock.Scope;
         previews: Map<string, nock.Scope>;
     };
+    requestLogs: {
+        api: DeepReadonly<RequestLog[]>;
+        initial: DeepReadonly<RequestLog[]>;
+        modified: DeepReadonly<RequestLog[]>;
+        added: DeepReadonly<RequestLog[]>;
+        previews: DeepReadonly<RequestLog[]>;
+    };
+    apiTotalPages: number;
 }
 
 export function getPreviewRootURL(deploy: NetlifyDeployInterface): string {
     return `https://${deploy.id}--${deploy.name}.netlify.com`;
+}
+
+export function createRequestLog(req: http.ClientRequest): RequestLog {
+    const host = req.getHeader('host');
+    return {
+        ...(host !== undefined
+            ? {
+                  host: Array.isArray(host) ? host : [String(host)],
+              }
+            : null),
+        path: req.path,
+    };
 }
 
 const deployNameMap = new Map<string, string>();
@@ -103,13 +131,26 @@ export default async function create(
     siteID: string,
     fixtureFilename?: FixtureFilename,
 ): Promise<MockServer> {
+    const requestLogs: Record<keyof MockServer['requestLogs'], RequestLog[]> = {
+        api: [],
+        initial: [],
+        modified: [],
+        added: [],
+        previews: [],
+    };
+    let apiTotalPages = 0;
     const commitList = await getFirstParentCommits();
 
     const initialCommitDeploy = createDeploy(siteID, new Date(0));
     const otherCommitDeployList = randomChoiceList(commitList, 2).map(commit =>
         createDeploy(siteID, commit),
     );
-    const commitDeployList = [...otherCommitDeployList, initialCommitDeploy];
+    const commitDeployList: readonly (
+        | ArrayItemType<typeof otherCommitDeployList>
+        | typeof initialCommitDeploy)[] = [
+        ...otherCommitDeployList,
+        initialCommitDeploy,
+    ];
 
     const modifiedCommitDeploy = randomChoice(otherCommitDeployList);
     if (!modifiedCommitDeploy) {
@@ -125,7 +166,11 @@ export default async function create(
      * @see https://www.netlify.com/docs/api/#deploys
      */
     const apiScope = nock(API_ROOT_URL).persist();
-    commitDeployList.forEach((deploy, index, self) => {
+    const pageList: (ArrayItemType<typeof commitDeployList> | null)[] = [
+        ...commitDeployList,
+    ];
+    pageList.splice(pageList.length - 1, 0, null, null);
+    pageList.forEach((deploy, index, self) => {
         const page = index + 1;
         const lastPage = self.length;
         const apiPath = `sites/${siteID}/deploys`;
@@ -151,8 +196,21 @@ export default async function create(
                     ? String(actualQueryObject.page) === String(page)
                     : page === 1,
             )
-            .reply(200, [deploy], headers);
+            .reply(200, deploy ? [deploy] : [], headers);
+
+        apiTotalPages++;
     });
+
+    apiScope.on(
+        'request',
+        (
+            req: http.ClientRequest,
+            _interceptor: nock.Interceptor,
+            _body: string,
+        ) => {
+            requestLogs.api.push(createRequestLog(req));
+        },
+    );
 
     const previews: ([string, nock.Scope])[] = [];
     const previewState = {
@@ -162,6 +220,10 @@ export default async function create(
     [...commitDeployList].reverse().forEach(deploy => {
         const previewRootURL = getPreviewRootURL(deploy);
         const previewScope = nock(previewRootURL).persist();
+        const logKey2filenameMap = new Map<
+            Exclude<keyof (typeof requestLogs), 'api' | 'previews'>,
+            string
+        >();
 
         previews.push([previewRootURL, previewScope]);
 
@@ -178,18 +240,19 @@ export default async function create(
         if (fixtureFilename) {
             if (fixtureFilename.initial) {
                 const initialFilename = fixtureFilename.initial;
+                const urlPath = addSlash(initialFilename);
                 previewScope
-                    .get(addSlash(initialFilename))
+                    .get(urlPath)
                     .replyWithFile(
                         200,
                         path.resolve(fixtureFilename.root, initialFilename),
                     );
+                logKey2filenameMap.set('initial', urlPath);
             }
             if (fixtureFilename.modified) {
                 const modifiedFilename = fixtureFilename.modified;
-                const modifiedInterceptor = previewScope.get(
-                    addSlash(fixtureFilename.modified),
-                );
+                const urlPath = addSlash(modifiedFilename);
+                const modifiedInterceptor = previewScope.get(urlPath);
                 if (previewState.modified) {
                     modifiedInterceptor.replyWithFile(
                         200,
@@ -198,18 +261,39 @@ export default async function create(
                 } else {
                     modifiedInterceptor.reply(200);
                 }
+                logKey2filenameMap.set('modified', urlPath);
             }
             if (fixtureFilename.added && previewState.added) {
                 const addedFilename = fixtureFilename.added;
+                const urlPath = addSlash(addedFilename);
                 previewScope
-                    .get(addSlash(addedFilename))
+                    .get(urlPath)
                     .replyWithFile(
                         200,
                         path.resolve(fixtureFilename.root, addedFilename),
                     );
+                logKey2filenameMap.set('added', urlPath);
             }
         }
         previewScope.get(/(?:)/).reply(404);
+
+        previewScope.on(
+            'request',
+            (
+                req: http.ClientRequest,
+                _interceptor: nock.Interceptor,
+                _body: string,
+            ) => {
+                const requestLog = createRequestLog(req);
+
+                requestLogs.previews.push(requestLog);
+                logKey2filenameMap.forEach((urlpath, prop) => {
+                    if (requestLog.path === urlpath) {
+                        requestLogs[prop].push(requestLog);
+                    }
+                });
+            },
+        );
     });
     previews.reverse();
 
@@ -223,5 +307,7 @@ export default async function create(
             api: apiScope,
             previews: new Map(previews),
         },
+        requestLogs,
+        apiTotalPages,
     };
 }
