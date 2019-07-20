@@ -26,6 +26,10 @@ export interface WritableOptionsInterface {
     siteID: string;
     accessToken: string | null;
     cacheDir: string | null;
+    defaultDate:
+        | ((metadata: GeneratingPageMetadataInterface) => unknown)
+        | Date
+        | null;
     filename2urlPath(
         filename: string,
         metadata: Omit<GeneratingPageMetadataInterface, 'filename'>,
@@ -71,6 +75,36 @@ export interface CachedResponseInterface {
 /*
  * Utility functions
  */
+
+export function defaultDate2value<
+    TFuncRet,
+    TNotFunc extends DeepReadonly<Date>,
+    TMeta
+>({
+    dateStr,
+    defaultDate,
+    nowDate,
+    metadata,
+}: {
+    dateStr: string | null;
+    defaultDate: ((metadata: TMeta) => TFuncRet) | TNotFunc | null | undefined;
+    nowDate: number;
+    metadata: TMeta;
+}): Date | TFuncRet | TNotFunc {
+    if (dateStr) {
+        return new Date(dateStr);
+    }
+
+    if (defaultDate !== null && defaultDate !== undefined) {
+        const dateValue =
+            typeof defaultDate === 'function'
+                ? defaultDate(metadata)
+                : defaultDate;
+        return dateValue;
+    }
+
+    return new Date(nowDate);
+}
 
 export function getCachedResponse(
     value: unknown,
@@ -295,8 +329,28 @@ export async function eachFile({
         });
     }
 
-    fileData.published = new Date(published || nowDate);
-    fileData.modified = new Date(modified || nowDate);
+    fileData.published = defaultDate2value({
+        dateStr: published,
+        defaultDate: options.defaultDate,
+        nowDate,
+        metadata: {
+            files,
+            filename,
+            fileData,
+            metalsmith,
+        },
+    });
+    fileData.modified = defaultDate2value({
+        dateStr: modified,
+        defaultDate: options.defaultDate,
+        nowDate,
+        metadata: {
+            files,
+            filename,
+            fileData,
+            metalsmith,
+        },
+    });
 }
 
 /*
@@ -312,6 +366,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     siteID: defaultSiteID,
     accessToken: null,
     cacheDir: null,
+    defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
     contentsEquals: ({ file, deployedPage }) => file.equals(deployedPage),
@@ -323,7 +378,6 @@ export const defaultOptions: OptionsInterface = deepFreeze({
 
 export default createPluginGenerator((opts = {}) => {
     const options = { ...defaultOptions, ...opts };
-    const nowDate = Date.now();
     const cache = flatCache.create(
         'metalsmith-netlify-published-date',
         options.cacheDir || undefined,
@@ -331,6 +385,7 @@ export default createPluginGenerator((opts = {}) => {
     const deployList = getDeployList(options.siteID, options.accessToken);
 
     return (files, metalsmith, done) => {
+        const nowDate = Date.now();
         const matchedFiles = getMatchedFiles(files, options.pattern);
         Promise.all(
             matchedFiles.map(async filename =>
