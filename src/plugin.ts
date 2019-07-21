@@ -436,13 +436,16 @@ export default createPluginGenerator((opts = {}) => {
 
     const options = { ...defaultOptions, ...opts };
     const cache = new PreviewCache(options.cacheDir);
-    const deployList = getDeployList(options.siteID, options.accessToken);
 
     return (files, metalsmith, done) => {
         log('start plugin processing');
 
         const nowDate = Date.now();
         const matchedFiles = getMatchedFiles(files, options.pattern);
+        const deployList =
+            matchedFiles.length >= 1
+                ? getDeployList(options.siteID, options.accessToken)
+                : Promise.resolve([]);
         Promise.all(
             matchedFiles.map(async filename =>
                 eachFile({
