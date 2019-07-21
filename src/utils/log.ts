@@ -1,5 +1,5 @@
 import createDebugger from 'debug';
 
-import PKG_DATA from '../../package.json';
+import PKG_NAME from './pkg-name';
 
-export const debug = createDebugger(PKG_DATA.name);
+export const debug = createDebugger(PKG_NAME);

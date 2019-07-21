@@ -1,6 +1,5 @@
 import flatCache from 'flat-cache';
 
-import PKG_DATA from '../../package.json';
 import { isObject } from '../utils';
 import {
     buf2json,
@@ -8,6 +7,7 @@ import {
     isBufferJSON,
     json2buf,
 } from '../utils/buf-json';
+import PKG_NAME from '../utils/pkg-name';
 
 export interface CachedPreviewResponseInterface {
     body: Buffer;
@@ -26,7 +26,7 @@ export default class PreviewCache {
 
     public constructor(cacheDir?: string | null) {
         this._store = cacheDir
-            ? flatCache.create(`${PKG_DATA.name}/preview`, cacheDir)
+            ? flatCache.create(`${PKG_NAME}/preview`, cacheDir)
             : new Map();
     }
 
