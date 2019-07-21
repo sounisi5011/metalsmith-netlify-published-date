@@ -1,12 +1,11 @@
 import deepFreeze from 'deep-freeze-strict';
-import flatCache from 'flat-cache';
 import got from 'got';
 import Metalsmith from 'metalsmith';
 
+import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
-import { isObject, joinURL, path2url } from './utils';
-import { buf2json, json2buf } from './utils/buf-json';
+import { joinURL, path2url } from './utils';
 import { debug as log } from './utils/log';
 import {
     createPluginGenerator,
@@ -68,13 +67,8 @@ export type DeployedPageMetadataInterface = {
       }
     | {
           deployedPageResponse: null;
-          cachedResponse: CachedResponseInterface;
+          cachedResponse: CachedPreviewResponseInterface;
       });
-
-export interface CachedResponseInterface {
-    body: Buffer;
-    published: string;
-}
 
 /*
  * Utility functions
@@ -108,24 +102,6 @@ export function defaultDate2value<
     }
 
     return new Date(nowDate);
-}
-
-export function getCachedResponse(
-    value: unknown,
-): CachedResponseInterface | null {
-    if (isObject(value)) {
-        const { published } = value;
-        if (typeof published === 'string') {
-            const body = json2buf(value.body);
-            if (body) {
-                return {
-                    body,
-                    published,
-                };
-            }
-        }
-    }
-    return null;
 }
 
 export async function getDeployList(
@@ -170,7 +146,7 @@ export async function eachFile({
 }: {
     options: OptionsInterface;
     nowDate: number;
-    cache: flatCache.Cache;
+    cache: PreviewCache;
     deployList: ReturnType<typeof getDeployList>;
     metalsmith: Metalsmith;
     files: Metalsmith.Files;
@@ -207,7 +183,7 @@ export async function eachFile({
     for (const deploy of await deployList) {
         const deployedPageURL = joinURL(deploy.deployAbsoluteURL, urlPath);
 
-        const cachedResponse = getCachedResponse(cache.getKey(deployedPageURL));
+        const cachedResponse = cache.get(deployedPageURL);
         if (cachedResponse) {
             previewLog('%s / fetchd from cache', deployedPageURL);
 
@@ -395,14 +371,11 @@ export async function eachFile({
     if (published) {
         const publishedStr = published;
         deployedPageResponseMap.forEach((body, deployedPageURL) => {
-            const data: CachedResponseInterface = {
+            const data: CachedPreviewResponseInterface = {
                 body,
                 published: publishedStr,
             };
-            cache.setKey(deployedPageURL, {
-                ...data,
-                body: buf2json(data.body),
-            });
+            cache.set(deployedPageURL, data);
             previewLog('%s / stored in cache', deployedPageURL);
         });
     }
@@ -462,10 +435,7 @@ export default createPluginGenerator((opts = {}) => {
     log('initialize plugin');
 
     const options = { ...defaultOptions, ...opts };
-    const cache = flatCache.create(
-        'metalsmith-netlify-published-date',
-        options.cacheDir || undefined,
-    );
+    const cache = new PreviewCache(options.cacheDir);
     const deployList = getDeployList(options.siteID, options.accessToken);
 
     return (files, metalsmith, done) => {
