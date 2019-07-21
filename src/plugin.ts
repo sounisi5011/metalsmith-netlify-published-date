@@ -45,7 +45,7 @@ export interface WritableOptionsInterface {
     ): Buffer | Promise<Buffer>;
     contentsEquals(arg: {
         file: Buffer;
-        deployedPage: Buffer;
+        previewPage: Buffer;
         metadata: DeployedPageMetadataInterface &
             GeneratingPageMetadataInterface;
     }): boolean | Promise<boolean>;
@@ -62,11 +62,11 @@ export type DeployedPageMetadataInterface = {
     deploy: NetlifyDeployData;
 } & (
     | {
-          deployedPageResponse: got.Response<Buffer>;
+          previewPageResponse: got.Response<Buffer>;
           cachedResponse: null;
       }
     | {
-          deployedPageResponse: null;
+          previewPageResponse: null;
           cachedResponse: CachedPreviewResponseInterface;
       });
 
@@ -135,6 +135,10 @@ export async function fetchPage(
     }
 }
 
+export function publishedDate(deploy: NetlifyDeployData): string {
+    return deploy.published_at || deploy.created_at;
+}
+
 export async function eachFile({
     options,
     nowDate,
@@ -177,120 +181,135 @@ export async function eachFile({
 
     let published: string | null = null;
     let modified: string | null = null;
-    let searchOnlyPublished = false;
-    const deployedPageResponseMap = new Map<string, Buffer>();
+    let modifiedDateEstablished = false;
+    const previewPageResponseMap = new Map<string, Buffer>();
 
     for (const deploy of await deployList) {
-        const deployedPageURL = joinURL(deploy.deployAbsoluteURL, urlPath);
+        const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlPath);
 
-        const cachedResponse = cache.get(deployedPageURL);
+        const cachedResponse = cache.get(previewPageURL);
         if (cachedResponse) {
-            previewLog('%s / fetchd from cache', deployedPageURL);
+            previewLog('%s / fetchd from cache', previewPageURL);
 
             /*
              * Set the published date value from cached data.
+             * Note: This value is the date the web page was published on the Internet.
+             *       Therefore, the search for the published date is complete here.
              */
             published = cachedResponse.published;
 
             /*
-             * If only the published date of this page is searching, the subsequent loop is ended.
+             * If the modified date is not established, verifying that the file and preview content are equals.
+             * If the content does not equals, the current deploy published date will be the modified date.
              */
-            if (searchOnlyPublished) {
-                fileLog(
-                    '%s / published date is established: %s',
-                    filename,
-                    published,
+            if (!modifiedDateEstablished) {
+                /*
+                 * Verify the file contents and preview page contents are equals.
+                 */
+                const previewPageContents = await options.contentsConverter(
+                    cachedResponse.body,
+                    { deploy, previewPageResponse: null, cachedResponse },
                 );
-                break;
+                if (
+                    await options.contentsEquals({
+                        file: fileContents,
+                        previewPage: previewPageContents,
+                        metadata: {
+                            deploy,
+                            previewPageResponse: null,
+                            cachedResponse,
+                            files,
+                            filename,
+                            fileData,
+                            metalsmith,
+                        },
+                    })
+                ) {
+                    /*
+                     * If the contents are equals, set the published date of the current deploy as the modified date.
+                     */
+                    fileLog(
+                        '%s / matched the content of preview %s',
+                        filename,
+                        previewPageURL,
+                    );
+                    previewLog(
+                        '%s / matched the content of file %s',
+                        previewPageURL,
+                        filename,
+                    );
+
+                    modified = publishedDate(deploy);
+                } else {
+                    /*
+                     * If the contents are different, modified date is established.
+                     */
+                    fileLog(
+                        '%s / did not match the content of preview %s',
+                        filename,
+                        previewPageURL,
+                    );
+                    previewLog(
+                        '%s / did not match the content of file %s',
+                        previewPageURL,
+                        filename,
+                    );
+
+                    modifiedDateEstablished = true;
+                    fileLog(
+                        '%s / published date and modified date is established: %s / %s',
+                        filename,
+                        published,
+                        modified,
+                    );
+                }
             }
 
             /*
-             * Compare file and deployed page contents.
+             * If published date and modified date are established, end the search.
              */
-            const deployedPageContents = await options.contentsConverter(
-                cachedResponse.body,
-                { deploy, deployedPageResponse: null, cachedResponse },
-            );
-            if (
-                await options.contentsEquals({
-                    file: fileContents,
-                    deployedPage: deployedPageContents,
-                    metadata: {
-                        deploy,
-                        deployedPageResponse: null,
-                        cachedResponse,
-                        files,
-                        filename,
-                        fileData,
-                        metalsmith,
-                    },
-                })
-            ) {
-                /*
-                 * If the contents are different, set the deployed date of the previous file as the modified date.
-                 */
-                fileLog(
-                    '%s / matched the content of preview %s',
-                    filename,
-                    deployedPageURL,
-                );
-                previewLog(
-                    '%s / matched the content of file %s',
-                    deployedPageURL,
-                    filename,
-                );
-                modified = deploy.published_at || deploy.created_at;
-            } else {
-                /*
-                 * If the contents are different, the search for the modified date is ended.
-                 * From this point on, only the published date of this page is searched.
-                 */
-                fileLog(
-                    '%s / did not match the content of preview %s',
-                    filename,
-                    deployedPageURL,
-                );
-                previewLog(
-                    '%s / did not match the content of file %s',
-                    deployedPageURL,
-                    filename,
-                );
-                searchOnlyPublished = true;
-                fileLog(
-                    '%s / modified date is established: %s',
-                    filename,
-                    modified,
-                );
+            if (modifiedDateEstablished) {
+                break;
             }
         } else {
-            const deployedPageResponse = await fetchPage(deployedPageURL);
+            const previewPageResponse = await fetchPage(previewPageURL);
 
             /*
-             * If the page does not found (404 Not Found), end the search.
+             * If the preview page does not found (404 Not Found), end the search.
              */
-            if (!deployedPageResponse) {
-                previewLog('%s / 404 Not Found', deployedPageURL);
-                fileLog(
-                    '%s / published date is established: %s',
-                    filename,
-                    published,
-                );
+            if (!previewPageResponse) {
+                previewLog('%s / 404 Not Found', previewPageURL);
+
+                if (modifiedDateEstablished) {
+                    fileLog(
+                        '%s / published date is established: %s',
+                        filename,
+                        published,
+                    );
+                } else {
+                    fileLog(
+                        '%s / published date and modified date is established: %s / %s',
+                        filename,
+                        published,
+                        modified,
+                    );
+                }
                 break;
             }
-            previewLog('%s / fetchd', deployedPageURL);
+            previewLog('%s / fetchd', previewPageURL);
 
             new Set([
-                deployedPageURL,
-                deployedPageResponse.requestUrl,
-                ...(deployedPageResponse.redirectUrls || []),
-                deployedPageResponse.url,
-            ]).forEach(deployedPageURL => {
-                deployedPageResponseMap.set(
-                    deployedPageURL,
-                    deployedPageResponse.body,
+                previewPageURL,
+                previewPageResponse.requestUrl,
+                ...(previewPageResponse.redirectUrls || []),
+                previewPageResponse.url,
+            ]).forEach(previewPageURL => {
+                previewPageResponseMap.set(
+                    previewPageURL,
+                    previewPageResponse.body,
                 );
             });
-            previewLog('%s / enqueue to queue for cache', deployedPageURL);
+            previewLog('%s / enqueue to queue for cache', previewPageURL);
 
             /*
              * Set the published date value from published date of current deploy.
@@ -298,85 +317,86 @@ export async function eachFile({
              *       It is not the date when the page was published on the Internet.
              *       Therefore, in order to determine when a page was published, it is necessary to detect a snapshot in which the page does not exist.
              */
-            published = deploy.published_at || deploy.created_at;
+            published = publishedDate(deploy);
 
             /*
-             * If only the published date of this page is searching, the subsequent processing is skipped.
+             * If the modified date is not established, verifying that the file and preview content are equals.
+             * If the content does not equals, the current deploy published date will be the modified date.
              */
-            if (searchOnlyPublished) {
-                continue;
-            }
-
-            /*
-             * Compare file and deployed page contents.
-             */
-            const deployedPageContents = await options.contentsConverter(
-                deployedPageResponse.body,
-                { deploy, deployedPageResponse, cachedResponse: null },
-            );
-            if (
-                await options.contentsEquals({
-                    file: fileContents,
-                    deployedPage: deployedPageContents,
-                    metadata: {
-                        deploy,
-                        deployedPageResponse,
-                        cachedResponse: null,
-                        files,
+            if (!modifiedDateEstablished) {
+                /*
+                 * Verify the file contents and preview page contents are equals.
+                 */
+                const previewPageContents = await options.contentsConverter(
+                    previewPageResponse.body,
+                    { deploy, previewPageResponse, cachedResponse: null },
+                );
+                if (
+                    await options.contentsEquals({
+                        file: fileContents,
+                        previewPage: previewPageContents,
+                        metadata: {
+                            deploy,
+                            previewPageResponse,
+                            cachedResponse: null,
+                            files,
+                            filename,
+                            fileData,
+                            metalsmith,
+                        },
+                    })
+                ) {
+                    /*
+                     * If the contents are equals, set the published date of the current deploy as the modified date.
+                     */
+                    fileLog(
+                        '%s / matched the content of preview %s',
                         filename,
-                        fileData,
-                        metalsmith,
-                    },
-                })
-            ) {
-                /*
-                 * If the contents are different, set the deployed date of the previous file as the modified date.
-                 */
-                fileLog(
-                    '%s / matched the content of preview %s',
-                    filename,
-                    deployedPageURL,
-                );
-                previewLog(
-                    '%s / matched the content of file %s',
-                    deployedPageURL,
-                    filename,
-                );
-                modified = published;
-            } else {
-                /*
-                 * If the contents are different, the search for the modified date is ended.
-                 * From this point on, only the published date of this page is searched.
-                 */
-                fileLog(
-                    '%s / did not match the content of preview %s',
-                    filename,
-                    deployedPageURL,
-                );
-                previewLog(
-                    '%s / did not match the content of file %s',
-                    deployedPageURL,
-                    filename,
-                );
-                searchOnlyPublished = true;
-                fileLog(
-                    '%s / modified date is established: %s',
-                    filename,
-                    modified,
-                );
+                        previewPageURL,
+                    );
+                    previewLog(
+                        '%s / matched the content of file %s',
+                        previewPageURL,
+                        filename,
+                    );
+
+                    modified = published;
+                } else {
+                    /*
+                     * If the contents are different, modified date is established.
+                     * From this point on, only the published date of this page is searched.
+                     */
+                    fileLog(
+                        '%s / did not match the content of preview %s',
+                        filename,
+                        previewPageURL,
+                    );
+                    previewLog(
+                        '%s / did not match the content of file %s',
+                        previewPageURL,
+                        filename,
+                    );
+
+                    modifiedDateEstablished = true;
+                    fileLog(
+                        '%s / modified date is established: %s',
+                        filename,
+                        modified,
+                    );
+                }
             }
         }
     }
 
     if (published) {
         const publishedStr = published;
-        deployedPageResponseMap.forEach((body, deployedPageURL) => {
+        previewPageResponseMap.forEach((body, previewPageURL) => {
             const data: CachedPreviewResponseInterface = {
                 body,
                 published: publishedStr,
             };
-            cache.set(deployedPageURL, data);
-            previewLog('%s / stored in cache', deployedPageURL);
+            cache.set(previewPageURL, data);
+            previewLog('%s / stored in cache', previewPageURL);
         });
     }
 
@@ -424,7 +444,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
-    contentsEquals: ({ file, deployedPage }) => file.equals(deployedPage),
+    contentsEquals: ({ file, previewPage }) => file.equals(previewPage),
 });
 
 /*
