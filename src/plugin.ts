@@ -239,7 +239,7 @@ export async function eachFile({
                     deployedPageURL,
                     filename,
                 );
-                modified = published;
+                modified = deploy.published_at || deploy.created_at;
             } else {
                 /*
                  * If the contents are different, the search for the modified date is ended.
