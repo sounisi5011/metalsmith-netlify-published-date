@@ -1,6 +1,7 @@
 import deepFreeze from 'deep-freeze-strict';
 import got from 'got';
 import Metalsmith from 'metalsmith';
+import path from 'path';
 
 import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
 import { getFirstParentCommits } from './git';
@@ -440,7 +441,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     pattern: ['**/*.html'],
     siteID: defaultSiteID,
     accessToken: null,
-    cacheDir: null,
+    cacheDir: path.resolve(__dirname, '../.cache/'),
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,

@@ -56,3 +56,6 @@ typings/
 
 # Output directory
 /dist/
+
+# Cache directory
+/.cache/
