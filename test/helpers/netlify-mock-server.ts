@@ -24,6 +24,7 @@ export interface FixtureFilename {
 }
 
 export interface RequestLog {
+    statusCode?: number;
     host?: readonly string[];
     path: string;
 }
@@ -52,9 +53,16 @@ export function getPreviewRootURL(deploy: NetlifyDeployInterface): string {
     return `https://${deploy.id}--${deploy.name}.netlify.com`;
 }
 
-export function createRequestLog(req: http.ClientRequest): RequestLog {
+export function createRequestLog(
+    req: http.ClientRequest,
+    interceptor: nock.Interceptor,
+): RequestLog {
+    // @ts-ignore: TS2339
+    const statusCode: unknown = interceptor.statusCode;
     const host = req.getHeader('host');
+
     return {
+        ...(typeof statusCode === 'number' ? { statusCode } : null),
         ...(host !== undefined
             ? {
                   host: Array.isArray(host) ? host : [String(host)],
@@ -205,10 +213,10 @@ export default async function create(
         'request',
         (
             req: http.ClientRequest,
-            _interceptor: nock.Interceptor,
+            interceptor: nock.Interceptor,
             _body: string,
         ) => {
-            requestLogs.api.push(createRequestLog(req));
+            requestLogs.api.push(createRequestLog(req, interceptor));
         },
     );
 
@@ -281,10 +289,10 @@ export default async function create(
             'request',
             (
                 req: http.ClientRequest,
-                _interceptor: nock.Interceptor,
+                interceptor: nock.Interceptor,
                 _body: string,
             ) => {
-                const requestLog = createRequestLog(req);
+                const requestLog = createRequestLog(req, interceptor);
 
                 requestLogs.previews.push(requestLog);
                 logKey2filenameMap.forEach((urlpath, prop) => {
