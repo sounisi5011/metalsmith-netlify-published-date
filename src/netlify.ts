@@ -2,6 +2,11 @@ import got from 'got';
 import parseLink from 'parse-link-header';
 
 import { isObject } from './utils';
+import { debug } from './utils/log';
+
+const log = debug.extend('netlify-api');
+const requestLog = log.extend('request');
+const responseLog = log.extend('response');
 
 /**
  * @see https://github.com/netlify/open-api/blob/v0.11.4/swagger.yml#L1723-L1793
@@ -45,7 +50,7 @@ export async function netlifyDeploys(
         commitHashList?: readonly string[];
         fetchCallback?: (
             url: string,
-            headers: Record<string, string>,
+            headers: Partial<Record<string, string>>,
         ) => Promise<{ body: unknown; linkHeader?: string }>;
     } = {},
 ): Promise<readonly NetlifyDeployData[]> {
@@ -79,12 +84,11 @@ export async function netlifyDeploys(
     while (!fetchedURL.has(url)) {
         const lastURLSet = new Set<typeof lastURL>(lastURL);
 
-        const { body, linkHeader } = await fetch(
-            url,
-            options.accessToken
-                ? { authorization: `Bearer ${options.accessToken}` }
-                : {},
-        );
+        const headers = options.accessToken
+            ? { authorization: `Bearer ${options.accessToken}` }
+            : {};
+        const { body, linkHeader } = await fetch(url, headers);
+        requestLog('GET %s / headers %o', url, headers);
         fetchedURL.add(url);
 
         /**
@@ -93,6 +97,7 @@ export async function netlifyDeploys(
         let nextURL: string | null = null;
         if (linkHeader) {
             const linkData = parseLink(linkHeader);
+            responseLog('%s / pagination %o', url, linkData);
             if (linkData) {
                 const nextLink = linkData.next;
                 nextURL = (nextLink && nextLink.url) || null;
@@ -107,31 +112,52 @@ export async function netlifyDeploys(
 
         if (Array.isArray(body)) {
             const netlifyDeployList = body.filter(isNetlifyDeploy);
-
-            deployList.push(
-                ...netlifyDeployList.filter(deploy => {
-                    if (!commitHashSet) {
-                        return true;
-                    }
-
-                    const commitHash = deploy.commit_ref;
-                    if (commitHash !== null && commitHashSet.has(commitHash)) {
-                        commitHashSet.delete(commitHash);
-                        return true;
-                    }
-
-                    return false;
-                }),
+            responseLog(
+                '%s / deploy list count: %d',
+                url,
+                netlifyDeployList.length,
             );
+
+            const matchedDeployList = netlifyDeployList.filter(deploy => {
+                if (!commitHashSet) {
+                    return true;
+                }
+
+                const commitHash = deploy.commit_ref;
+                if (commitHash !== null && commitHashSet.has(commitHash)) {
+                    commitHashSet.delete(commitHash);
+                    return true;
+                }
+
+                return false;
+            });
+            if (
+                commitHashSet &&
+                netlifyDeployList.length === matchedDeployList.length
+            ) {
+                responseLog(
+                    '%s / deploy list count that matched Git commit hashes: %d',
+                    url,
+                    matchedDeployList.length,
+                );
+            }
+
+            deployList.push(...matchedDeployList);
 
             const isLastDeployList = !nextURL || lastURLSet.has(url);
             if (isLastDeployList && netlifyDeployList.length >= 1) {
                 const lastDeploy =
                     netlifyDeployList[netlifyDeployList.length - 1];
                 if (lastDeploy.commit_ref === null) {
+                    responseLog(
+                        '%s / get the initial deploy from the response',
+                        url,
+                    );
                     initialDeploy = lastDeploy;
                 }
             }
+        } else {
+            responseLog('%s / response body is not an array: %o', url, body);
         }
 
         if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {

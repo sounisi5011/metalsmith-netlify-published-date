@@ -7,6 +7,7 @@ import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { isObject, joinURL, path2url } from './utils';
 import { buf2json, json2buf } from './utils/buf-json';
+import { debug as log } from './utils/log';
 import {
     createPluginGenerator,
     FileInterface,
@@ -14,6 +15,9 @@ import {
     isFile,
 } from './utils/metalsmith';
 import { DeepReadonly } from './utils/types';
+
+const fileLog = log.extend('file');
+const previewLog = log.extend('netlify-preview');
 
 /*
  * Interfaces
@@ -129,10 +133,14 @@ export async function getDeployList(
     accessToken: string | null,
 ): ReturnType<typeof netlifyDeploys> {
     const commitList = await getFirstParentCommits();
+    log("got Git's commits hash");
+
     const deployList = await netlifyDeploys(siteID, {
         accessToken,
         commitHashList: commitList.map(commit => commit.hash),
     });
+    log('fetched Netlify deploys');
+
     return deployList;
 }
 
@@ -169,6 +177,8 @@ export async function eachFile({
     filename: string;
 }): Promise<void> {
     const fileData = files[filename];
+
+    fileLog('%s / checking file', filename);
     if (!isFile(fileData)) {
         return;
     }
@@ -180,6 +190,8 @@ export async function eachFile({
             metalsmith,
         }),
     );
+    fileLog('%s / get URL Path: %s', filename, urlPath);
+
     const fileContents = await options.contentsConverter(fileData.contents, {
         files,
         filename,
@@ -197,6 +209,8 @@ export async function eachFile({
 
         const cachedResponse = getCachedResponse(cache.getKey(deployedPageURL));
         if (cachedResponse) {
+            previewLog('%s / fetchd from cache', deployedPageURL);
+
             /*
              * Set the published date value from cached data.
              */
@@ -206,6 +220,11 @@ export async function eachFile({
              * If only the published date of this page is searching, the subsequent loop is ended.
              */
             if (searchOnlyPublished) {
+                fileLog(
+                    '%s / published date is established: %s',
+                    filename,
+                    published,
+                );
                 break;
             }
 
@@ -234,13 +253,38 @@ export async function eachFile({
                 /*
                  * If the contents are different, set the deployed date of the previous file as the modified date.
                  */
+                fileLog(
+                    '%s / matched the content of preview %s',
+                    filename,
+                    deployedPageURL,
+                );
+                previewLog(
+                    '%s / matched the content of file %s',
+                    deployedPageURL,
+                    filename,
+                );
                 modified = published;
             } else {
                 /*
                  * If the contents are different, the search for the modified date is ended.
                  * From this point on, only the published date of this page is searched.
                  */
+                fileLog(
+                    '%s / did not match the content of preview %s',
+                    filename,
+                    deployedPageURL,
+                );
+                previewLog(
+                    '%s / did not match the content of file %s',
+                    deployedPageURL,
+                    filename,
+                );
                 searchOnlyPublished = true;
+                fileLog(
+                    '%s / modified date is established: %s',
+                    filename,
+                    modified,
+                );
             }
         } else {
             const deployedPageResponse = await fetchPage(deployedPageURL);
@@ -249,8 +293,15 @@ export async function eachFile({
              * If the page does not found (404 Not Found), end the search.
              */
             if (!deployedPageResponse) {
+                previewLog('%s / 404 Not Found', deployedPageURL);
+                fileLog(
+                    '%s / published date is established: %s',
+                    filename,
+                    published,
+                );
                 break;
             }
+            previewLog('%s / fetchd', deployedPageURL);
 
             new Set([
                 deployedPageURL,
@@ -263,6 +314,7 @@ export async function eachFile({
                     deployedPageResponse.body,
                 );
             });
+            previewLog('%s / enqueue to queue for cache', deployedPageURL);
 
             /*
              * Set the published date value from published date of current deploy.
@@ -304,13 +356,38 @@ export async function eachFile({
                 /*
                  * If the contents are different, set the deployed date of the previous file as the modified date.
                  */
+                fileLog(
+                    '%s / matched the content of preview %s',
+                    filename,
+                    deployedPageURL,
+                );
+                previewLog(
+                    '%s / matched the content of file %s',
+                    deployedPageURL,
+                    filename,
+                );
                 modified = published;
             } else {
                 /*
                  * If the contents are different, the search for the modified date is ended.
                  * From this point on, only the published date of this page is searched.
                  */
+                fileLog(
+                    '%s / did not match the content of preview %s',
+                    filename,
+                    deployedPageURL,
+                );
+                previewLog(
+                    '%s / did not match the content of file %s',
+                    deployedPageURL,
+                    filename,
+                );
                 searchOnlyPublished = true;
+                fileLog(
+                    '%s / modified date is established: %s',
+                    filename,
+                    modified,
+                );
             }
         }
     }
@@ -326,6 +403,7 @@ export async function eachFile({
                 ...data,
                 body: buf2json(data.body),
             });
+            previewLog('%s / stored in cache', deployedPageURL);
         });
     }
 
@@ -350,6 +428,10 @@ export async function eachFile({
             fileData,
             metalsmith,
         },
+    });
+    fileLog('%s / stored metadata: %o', filename, {
+        published: fileData.published,
+        modified: fileData.modified,
     });
 }
 
@@ -377,6 +459,8 @@ export const defaultOptions: OptionsInterface = deepFreeze({
  */
 
 export default createPluginGenerator((opts = {}) => {
+    log('initialize plugin');
+
     const options = { ...defaultOptions, ...opts };
     const cache = flatCache.create(
         'metalsmith-netlify-published-date',
@@ -385,6 +469,8 @@ export default createPluginGenerator((opts = {}) => {
     const deployList = getDeployList(options.siteID, options.accessToken);
 
     return (files, metalsmith, done) => {
+        log('start plugin processing');
+
         const nowDate = Date.now();
         const matchedFiles = getMatchedFiles(files, options.pattern);
         Promise.all(
@@ -402,6 +488,7 @@ export default createPluginGenerator((opts = {}) => {
         )
             .then(() => {
                 cache.save();
+                log('complete plugin processing');
                 done(null, files, metalsmith);
             })
             .catch(error => done(error, files, metalsmith));
