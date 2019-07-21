@@ -18,12 +18,11 @@ test.before(t => {
 function genMetalsmith(
     options: Parameters<typeof netlifyPublishedDate>[0],
 ): Metalsmith {
-    const metalsmith = Metalsmith(path.join(fixtures, 'basic'));
-    metalsmith.use(
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
         netlifyPublishedDate({
             ...options,
             siteID: 'example.com',
-            cacheDir: path.join(metalsmith.directory(), 'cache'),
+            cacheDir: null,
         }),
     );
     return metalsmith;

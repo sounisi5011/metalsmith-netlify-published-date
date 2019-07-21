@@ -8,7 +8,12 @@ import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify from './helpers/netlify-mock-server';
 
 test.serial('should add correct dates to metadata', async t => {
-    const metalsmith = Metalsmith(path.join(fixtures, 'basic'));
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
+        netlifyPublishedDate({
+            siteID: 'example.net',
+            cacheDir: null,
+        }),
+    );
     const server = await createNetlify('example.net', {
         root: metalsmith.source(),
         initial: 'initial.html',
@@ -39,13 +44,6 @@ test.serial('should add correct dates to metadata', async t => {
         server.deploys.added.published_at || server.deploys.added.created_at,
     );
     const lastPublishedDate = new Date(Date.now() - 1);
-
-    metalsmith.use(
-        netlifyPublishedDate({
-            siteID: 'example.net',
-            cacheDir: path.join(metalsmith.directory(), 'cache'),
-        }),
-    );
 
     const files = await util.promisify(metalsmith.build.bind(metalsmith))();
     const initialPagePreviewLogs = server.requestLogs.initial;
