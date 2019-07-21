@@ -6,6 +6,7 @@ import util from 'util';
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify from './helpers/netlify-mock-server';
+import { hasProp } from './helpers/utils';
 
 test.serial('should add correct dates to metadata', async t => {
     const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
@@ -101,5 +102,34 @@ test.serial('should add correct dates to metadata', async t => {
         newPagePreviewLogs.length,
         1,
         'If the page has not been deployed yet, should have requested only the first preview',
+    );
+});
+
+test('should not process files that do not match by pattern', async t => {
+    const server = await createNetlify('do-not-match.test');
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
+        netlifyPublishedDate({
+            pattern: ['*.do-not-match-pattern'],
+            siteID: 'do-not-match.test',
+            cacheDir: null,
+        }),
+    );
+
+    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+
+    if (
+        Object.values(files).some(filedata =>
+            hasProp(filedata, ['published', 'modified']),
+        )
+    ) {
+        t.fail(
+            '"published" or "modified" property have been added to some files metadata',
+        );
+        t.log(files);
+    }
+    t.is(
+        server.requestLogs.api.length,
+        0,
+        'Do not fetch Netlify API if there is no file that matches the pattern',
     );
 });
