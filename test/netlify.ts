@@ -9,7 +9,13 @@ const test = anyTest as TestInterface<{
 }>;
 
 test.before(t => {
-    t.context.server = createNetlify('example.com');
+    t.context.server = createNetlify('example.com', [
+        { key: 'initial' },
+        {},
+        {},
+        { key: 'target' },
+        {},
+    ]);
 });
 
 test.serial(
@@ -48,7 +54,7 @@ test.serial(
             deployList.map(deploy =>
                 deleteProps(deploy, ['deployAbsoluteURL']),
             ),
-            [server.deploys.initial],
+            [server.deploys.getByKey('initial')],
         );
         if (server.apiTotalPages === 1) {
             t.is(newLogs.length, 1, 'should only request the first page');
@@ -64,10 +70,7 @@ test.serial(
 
 test('netlifyDeploys(): If commit hash is specified in commitHashList option, it is necessary to return two of target deploy and initial deploy', async t => {
     const server = await t.context.server;
-    const deploy =
-        server.deploys.find(
-            deploy => deploy.commit_ref && deploy !== server.deploys.initial,
-        ) || server.deploys.modified;
+    const deploy = server.deploys.getByKey('target');
 
     const deployList = await netlifyDeploys('example.com', {
         commitHashList: [deploy.commit_ref || ''],
@@ -75,6 +78,6 @@ test('netlifyDeploys(): If commit hash is specified in commitHashList option, it
 
     t.deepEqual(
         deployList.map(deploy => deleteProps(deploy, ['deployAbsoluteURL'])),
-        [deploy, server.deploys.initial],
+        [deploy, server.deploys.getByKey('initial')],
     );
 });
