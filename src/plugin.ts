@@ -456,12 +456,12 @@ export default createPluginGenerator((opts = {}) => {
     log('initialize plugin');
 
     const options = { ...defaultOptions, ...opts };
-    const cache = new PreviewCache(options.cacheDir);
 
     return (files, metalsmith, done) => {
         log('start plugin processing');
 
         const nowDate = Date.now();
+        const cache = new PreviewCache(options.cacheDir);
         const matchedFiles = getMatchedFiles(files, options.pattern);
         const deployList =
             matchedFiles.length >= 1

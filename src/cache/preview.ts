@@ -19,6 +19,8 @@ export type CachedPreviewResponseJSONInterface = Omit<
     'body'
 > & { body: BufferJSONInterface };
 
+const inMemoryCache = new Map();
+
 export default class PreviewCache {
     private _store:
         | flatCache.Cache
@@ -27,7 +29,7 @@ export default class PreviewCache {
     public constructor(cacheDir?: string | null) {
         this._store = cacheDir
             ? flatCache.create(`${PKG_NAME}/preview`, cacheDir)
-            : new Map();
+            : inMemoryCache;
     }
 
     public get(url: string): CachedPreviewResponseInterface | void {
@@ -73,7 +75,7 @@ export default class PreviewCache {
 
     public save(): void {
         if (!(this._store instanceof Map)) {
-            this._store.save();
+            this._store.save(true);
         }
     }
 
