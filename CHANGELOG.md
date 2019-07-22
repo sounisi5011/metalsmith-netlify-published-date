@@ -1,5 +1,5 @@
 # Change Log
 
-## [0.x]
+## [Unreleased]
 
-[0.x]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.0.0...HEAD
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.0.0...HEAD
