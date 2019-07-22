@@ -9,6 +9,7 @@ import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify from './helpers/netlify-mock-server';
+import { ArrayType } from './helpers/types';
 
 const fsStat = util.promisify(fs.stat);
 
@@ -33,6 +34,24 @@ function processEachGenPlugin<T>(
     };
 }
 
+const serverScheme = [
+    {
+        key: 'initial',
+        '/initial.html': { filepath: 'initial.html' },
+        '/modified.html': Buffer.from(''),
+    },
+    {},
+    {
+        key: 'added',
+        '/added.html': { filepath: 'added.html' },
+    },
+    {
+        key: 'modified',
+        '/modified.html': { filepath: 'modified.html' },
+    },
+    {},
+];
+
 test('filesystem', async t => {
     const siteID = 'filesystem.cache.test';
     const metalsmith = Metalsmith(path.join(fixtures, 'basic'));
@@ -40,11 +59,8 @@ test('filesystem', async t => {
 
     await del(cacheDir);
 
-    const server = await createNetlify(siteID, {
+    const server = await createNetlify(siteID, serverScheme, {
         root: metalsmith.source(),
-        initial: 'initial.html',
-        modified: 'modified.html',
-        added: 'added.html',
     });
 
     metalsmith.use(stripFileStatsPlugin()).use(
@@ -137,11 +153,8 @@ test('in-memory', async t => {
                 defaultDate: new Date(),
             }),
         );
-    const server = await createNetlify(siteID, {
+    const server = await createNetlify(siteID, serverScheme, {
         root: metalsmith.source(),
-        initial: 'initial.html',
-        modified: 'modified.html',
-        added: 'added.html',
     });
 
     const firstFiles = await util.promisify(
@@ -215,23 +228,20 @@ test('filesystem: unread cache entries should also be kept', async t => {
     const defaultDate = new Date();
     const metalsmith = Metalsmith(path.join(fixtures, 'basic'));
     const cacheDir = path.join(metalsmith.directory(), 'cache', siteID);
-    const server = await createNetlify(siteID, {
+    const server = await createNetlify(siteID, serverScheme, {
         root: metalsmith.source(),
-        initial: 'initial.html',
-        modified: 'modified.html',
-        added: 'added.html',
     });
 
     let firstFiles: Metalsmith.Files = {};
     let firstApiLogs: typeof server.requestLogs.api = [];
     let firstApiLogLen = 0;
-    let firstPreviewsLogs: typeof server.requestLogs.previews = [];
+    let firstPreviewsLogs: ArrayType<typeof server.requestLogs.previews> = [];
     let firstPreviewsLogLen = 0;
 
     let secondFiles: Metalsmith.Files = {};
     let secondApiLogs: typeof server.requestLogs.api = [];
     let secondApiLogLen = 0;
-    let secondPreviewsLogs: typeof server.requestLogs.previews = [];
+    let secondPreviewsLogs: ArrayType<typeof server.requestLogs.previews> = [];
     let secondPreviewsLogLen = 0;
 
     await del(cacheDir);

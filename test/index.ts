@@ -5,8 +5,15 @@ import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
-import createNetlify from './helpers/netlify-mock-server';
+import createNetlify, {
+    NetlifyDeploy,
+    requestLog2str,
+} from './helpers/netlify-mock-server';
 import { hasProp } from './helpers/utils';
+
+function getPublishedDate(deploy: NetlifyDeploy): Date {
+    return new Date(deploy.published_at || deploy.created_at);
+}
 
 test.serial('should add correct dates to metadata', async t => {
     const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
@@ -15,12 +22,27 @@ test.serial('should add correct dates to metadata', async t => {
             cacheDir: null,
         }),
     );
-    const server = await createNetlify('example.net', {
-        root: metalsmith.source(),
-        initial: 'initial.html',
-        modified: 'modified.html',
-        added: 'added.html',
-    });
+    const server = await createNetlify(
+        'example.net',
+        [
+            {
+                key: 'initial',
+                '/initial.html': { filepath: 'initial.html' },
+                '/modified.html': Buffer.from(''),
+            },
+            {},
+            {
+                key: 'added',
+                '/added.html': { filepath: 'added.html' },
+            },
+            {
+                key: 'modified',
+                '/modified.html': { filepath: 'modified.html' },
+            },
+            {},
+        ],
+        { root: metalsmith.source() },
+    );
 
     t.log({
         deploys: server.deploys,
@@ -33,23 +55,27 @@ test.serial('should add correct dates to metadata', async t => {
         requestLogs: server.requestLogs,
     });
 
-    const initialPublishedDate = new Date(
-        server.deploys.initial.published_at ||
-            server.deploys.initial.created_at,
+    const initialPublishedDate = getPublishedDate(
+        server.deploys.getByKey('initial'),
     );
-    const modifiedPublishedDate = new Date(
-        server.deploys.modified.published_at ||
-            server.deploys.modified.created_at,
+    const modifiedPublishedDate = getPublishedDate(
+        server.deploys.getByKey('modified'),
     );
-    const addedPublishedDate = new Date(
-        server.deploys.added.published_at || server.deploys.added.created_at,
+    const addedPublishedDate = getPublishedDate(
+        server.deploys.getByKey('added'),
     );
     const lastPublishedDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.build.bind(metalsmith))();
-    const initialPagePreviewLogs = server.requestLogs.initial;
-    const modifiedPagePreviewLogs = server.requestLogs.modified;
-    const addedPagePreviewLogs = server.requestLogs.added;
+    const initialPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/initial.html',
+    );
+    const modifiedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/modified.html',
+    );
+    const addedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/added.html',
+    );
     const newPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/new.html',
     );
@@ -63,10 +89,12 @@ test.serial('should add correct dates to metadata', async t => {
             lastPublishedDate,
         },
         requestLogs: {
-            initialPagePreviewLogs,
-            modifiedPagePreviewLogs,
-            addedPagePreviewLogs,
-            newPagePreviewLogs,
+            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
+                requestLog2str,
+            ),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
+            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
         },
     });
 
