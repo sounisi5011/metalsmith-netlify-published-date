@@ -4,7 +4,6 @@ import path from 'path';
 
 import { CommitInterface, getFirstParentCommits } from '../../src/git';
 import { NetlifyDeployInterface } from '../../src/netlify';
-import { DeepReadonly } from '../../src/utils/types';
 import {
     generatePronounceableRandStr,
     generateRandStr,
@@ -16,37 +15,47 @@ import { addSlash } from './utils';
 
 export const API_ROOT_URL = 'https://api.netlify.com/api/v1/';
 
-export interface FixtureFilename {
-    root: string;
-    initial?: string;
-    modified?: string;
-    added?: string;
+export interface DeployFileSchema {
+    readonly filepath: string;
+}
+
+export interface DeploySchema {
+    readonly key?: string;
+    readonly [urlpath: string]:
+        | DeployFileSchema
+        | string
+        | Buffer
+        | null
+        | void;
 }
 
 export interface RequestLog {
-    statusCode?: number;
-    host?: readonly string[];
-    path: string;
+    readonly statusCode?: number;
+    readonly host?: readonly string[];
+    readonly path: string;
 }
 
+export type NetlifyDeploy = NetlifyDeployInterface & Record<string, unknown>;
+
 export interface MockServer {
-    deploys: {
-        initial: NetlifyDeployInterface & Record<string, unknown>;
-        modified: NetlifyDeployInterface & Record<string, unknown>;
-        added: NetlifyDeployInterface & Record<string, unknown>;
-    } & readonly (NetlifyDeployInterface & Record<string, unknown>)[];
-    nockScope: {
-        api: nock.Scope;
-        previews: Map<string, nock.Scope>;
+    readonly deploys: readonly NetlifyDeploy[] & {
+        getByKey(key: string): NetlifyDeploy;
     };
-    requestLogs: {
-        api: DeepReadonly<RequestLog[]>;
-        initial: DeepReadonly<RequestLog[]>;
-        modified: DeepReadonly<RequestLog[]>;
-        added: DeepReadonly<RequestLog[]>;
-        previews: DeepReadonly<RequestLog[]>;
+    readonly nockScope: {
+        readonly api: nock.Scope;
+        readonly previews: ReadonlyMap<string, nock.Scope>;
     };
-    apiTotalPages: number;
+    readonly requestLogs: {
+        readonly api: readonly RequestLog[];
+        readonly previews: readonly RequestLog[] & {
+            readonly [urlpath: string]: readonly RequestLog[];
+        };
+    };
+    readonly apiTotalPages: number;
+}
+
+export interface MockServerOptions {
+    readonly root?: string;
 }
 
 export function getPreviewRootURL(deploy: NetlifyDeployInterface): string {
@@ -72,22 +81,31 @@ export function createRequestLog(
     };
 }
 
+export function requestLog2str(requestLog: RequestLog): string {
+    const { statusCode, host, path } = requestLog;
+    return [
+        statusCode !== undefined ? `HTTP ${statusCode} / ` : '',
+        host !== undefined
+            ? host.length > 1
+                ? `[ ${host.join(', ')} ] `
+                : host[0]
+            : '',
+        path,
+    ].join('');
+}
+
 const deployNameMap = new Map<string, string>();
-const deployIdSet = new Map<string, Set<string>>();
+const deployIdSet = new Set<string>();
 
 export function createDeploy(
     siteID: string,
     commit: CommitInterface | Date = new Date(),
-): NetlifyDeployInterface & Record<string, unknown> {
+): NetlifyDeploy {
     const id = (() => {
         do {
-            const idSet = deployIdSet.get(siteID) || new Set();
-            if (!deployIdSet.has(siteID)) {
-                deployIdSet.set(siteID, idSet);
-            }
-
             const id = generateRandStr(24, 16);
-            if (!idSet.has(id)) {
+            if (!deployIdSet.has(id)) {
+                deployIdSet.add(id);
                 return id;
             }
         } while (true);
@@ -135,24 +153,42 @@ export function createDeploy(
     /* eslint-enable */
 }
 
+const siteIDSet = new Set<string>();
+
 export default async function create(
     siteID: string,
-    fixtureFilename?: FixtureFilename,
+    deploysSchema: readonly (DeploySchema)[] = [],
+    options: MockServerOptions = {},
 ): Promise<MockServer> {
-    const requestLogs: Record<keyof MockServer['requestLogs'], RequestLog[]> = {
+    if (siteIDSet.has(siteID)) {
+        throw new Error(`This is a used site_id: ${siteID}`);
+    }
+    siteIDSet.add(siteID);
+
+    const requestLogs: {
+        api: RequestLog[];
+        previews: RequestLog[] & { [urlpath: string]: RequestLog[] };
+    } = {
         api: [],
-        initial: [],
-        modified: [],
-        added: [],
-        previews: [],
+        previews: Object.assign([]),
     };
     let apiTotalPages = 0;
     const commitList = await getFirstParentCommits();
 
+    if (commitList.length + 1 < deploysSchema.length) {
+        throw new Error(
+            [
+                'Too few commits on Git.',
+                `At least ${deploysSchema.length - 1} commits are required.`,
+            ].join(' '),
+        );
+    }
+
     const initialCommitDeploy = createDeploy(siteID, new Date(0));
-    const otherCommitDeployList = randomChoiceList(commitList, 2).map(commit =>
-        createDeploy(siteID, commit),
-    );
+    const otherCommitDeployList = randomChoiceList(
+        commitList,
+        deploysSchema.length - 1,
+    ).map(commit => createDeploy(siteID, commit));
     const commitDeployList: readonly (
         | ArrayItemType<typeof otherCommitDeployList>
         | typeof initialCommitDeploy)[] = [
@@ -160,25 +196,11 @@ export default async function create(
         initialCommitDeploy,
     ];
 
-    const modifiedCommitDeploy = randomChoice(otherCommitDeployList);
-    if (!modifiedCommitDeploy) {
-        throw new Error(
-            'Too few commits on Git. At least one commits are required.',
-        );
-    }
-    const addedCommitDeploy =
-        otherCommitDeployList.find(deploy => deploy !== modifiedCommitDeploy) ||
-        modifiedCommitDeploy;
-
     /**
      * @see https://www.netlify.com/docs/api/#deploys
      */
     const apiScope = nock(API_ROOT_URL).persist();
-    const pageList: (ArrayItemType<typeof commitDeployList> | null)[] = [
-        ...commitDeployList,
-    ];
-    pageList.splice(pageList.length - 1, 0, null, null);
-    pageList.forEach((deploy, index, self) => {
+    commitDeployList.forEach((deploy, index, self) => {
         const page = index + 1;
         const lastPage = self.length;
         const apiPath = `sites/${siteID}/deploys`;
@@ -220,69 +242,60 @@ export default async function create(
         },
     );
 
+    const key2deployMap = new Map<string, NetlifyDeploy>();
     const previews: ([string, nock.Scope])[] = [];
-    const previewState = {
-        modified: false,
-        added: false,
-    };
-    [...commitDeployList].reverse().forEach(deploy => {
+    const previewFilesState: DeploySchema = {};
+    [...commitDeployList].reverse().forEach((deploy, index) => {
+        const deploySchema = deploysSchema[index];
         const previewRootURL = getPreviewRootURL(deploy);
         const previewScope = nock(previewRootURL).persist();
-        const logKey2filenameMap = new Map<
-            Exclude<keyof (typeof requestLogs), 'api' | 'previews'>,
-            string
-        >();
+        const previewSchema = Object.assign(previewFilesState, deploySchema);
+
+        const logPagesMap = new Map<string, string[]>();
 
         previews.push([previewRootURL, previewScope]);
 
-        if (deploy === modifiedCommitDeploy) {
-            previewState.modified = true;
-        }
-        if (deploy === addedCommitDeploy) {
-            previewState.added = true;
+        if (deploySchema) {
+            const key = deploySchema.key;
+            if (key) {
+                if (key2deployMap.has(key)) {
+                    throw new Error(`Deploy key is duplicated: ${key}`);
+                }
+                key2deployMap.set(key, deploy);
+            }
         }
 
         /*
          * Define files
          */
-        if (fixtureFilename) {
-            if (fixtureFilename.initial) {
-                const initialFilename = fixtureFilename.initial;
-                const urlPath = addSlash(initialFilename);
-                previewScope
-                    .get(urlPath)
-                    .replyWithFile(
-                        200,
-                        path.resolve(fixtureFilename.root, initialFilename),
-                    );
-                logKey2filenameMap.set('initial', urlPath);
+        Object.entries(previewSchema).forEach(([filepath, filedata]) => {
+            if (filepath !== 'key' && filedata) {
+                const urlpathList = [addSlash(filepath)];
+
+                urlpathList.forEach(urlpath => {
+                    const interceptor = previewScope.get(urlpath);
+
+                    if (
+                        typeof filedata === 'string' ||
+                        Buffer.isBuffer(filedata)
+                    ) {
+                        interceptor.reply(200, filedata);
+                    } else if (filedata.filepath) {
+                        interceptor.replyWithFile(
+                            200,
+                            options.root
+                                ? path.join(options.root, filedata.filepath)
+                                : filedata.filepath,
+                        );
+                    } else {
+                        interceptor.reply(200);
+                    }
+                });
+
+                logPagesMap.set(filepath, urlpathList);
+                requestLogs.previews[filepath] = [];
             }
-            if (fixtureFilename.modified) {
-                const modifiedFilename = fixtureFilename.modified;
-                const urlPath = addSlash(modifiedFilename);
-                const modifiedInterceptor = previewScope.get(urlPath);
-                if (previewState.modified) {
-                    modifiedInterceptor.replyWithFile(
-                        200,
-                        path.resolve(fixtureFilename.root, modifiedFilename),
-                    );
-                } else {
-                    modifiedInterceptor.reply(200);
-                }
-                logKey2filenameMap.set('modified', urlPath);
-            }
-            if (fixtureFilename.added && previewState.added) {
-                const addedFilename = fixtureFilename.added;
-                const urlPath = addSlash(addedFilename);
-                previewScope
-                    .get(urlPath)
-                    .replyWithFile(
-                        200,
-                        path.resolve(fixtureFilename.root, addedFilename),
-                    );
-                logKey2filenameMap.set('added', urlPath);
-            }
-        }
+        });
         previewScope.get(/(?:)/).reply(404);
 
         previewScope.on(
@@ -293,12 +306,13 @@ export default async function create(
                 _body: string,
             ) => {
                 const requestLog = createRequestLog(req, interceptor);
-
                 requestLogs.previews.push(requestLog);
-                logKey2filenameMap.forEach((urlpath, prop) => {
-                    if (requestLog.path === urlpath) {
-                        requestLogs[prop].push(requestLog);
-                    }
+                logPagesMap.forEach((urlpathList, filepath) => {
+                    urlpathList.forEach(urlpath => {
+                        if (requestLog.path === urlpath) {
+                            requestLogs.previews[filepath].push(requestLog);
+                        }
+                    });
                 });
             },
         );
@@ -307,9 +321,13 @@ export default async function create(
 
     return {
         deploys: Object.assign(commitDeployList, {
-            initial: initialCommitDeploy,
-            modified: modifiedCommitDeploy,
-            added: addedCommitDeploy,
+            getByKey(key: string) {
+                const deploy = key2deployMap.get(key);
+                if (!deploy) {
+                    throw new Error(`Deploy key is not defined: ${key}`);
+                }
+                return deploy;
+            },
         }),
         nockScope: {
             api: apiScope,
