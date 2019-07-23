@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "@sounisi5011/metalsmith-netlify-published-date": {
+      "cacheDir": null
+    },
+    "./print-date": true
+  }
+}
