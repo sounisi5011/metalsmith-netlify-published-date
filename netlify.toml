@@ -1,0 +1,3 @@
+[build]
+command = 'cd example/ && npm install && npx metalsmith'
+publish = 'example/build'
