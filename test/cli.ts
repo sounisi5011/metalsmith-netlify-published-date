@@ -17,7 +17,7 @@ test.before(async t => {
     }
 });
 
-test('should add correct dates to metadata', async t => {
+test('should work with Metalsmith CLI', async t => {
     await t.notThrowsAsync(async () => {
         t.log(
             await exec(
