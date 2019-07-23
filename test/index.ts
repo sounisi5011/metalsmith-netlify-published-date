@@ -161,3 +161,123 @@ test('should not process files that do not match by pattern', async t => {
         'Do not fetch Netlify API if there is no file that matches the pattern',
     );
 });
+
+test('should add correct dates to metadata in binary files', async t => {
+    const siteID = 'binary-files.index.test';
+    const metalsmith = Metalsmith(path.join(fixtures, 'binary')).use(
+        netlifyPublishedDate({
+            pattern: '*',
+            siteID,
+            cacheDir: null,
+        }),
+    );
+    const server = await createNetlify(
+        siteID,
+        [
+            {
+                key: 'initial',
+                '/initial.png': { filepath: 'initial.png' },
+                '/modified.webp': { filepath: 'modified.orig.webp' },
+            },
+            {},
+            {
+                key: 'added',
+                '/added.gif': { filepath: 'added.gif' },
+            },
+            {
+                key: 'modified',
+                '/modified.webp': { filepath: 'modified.webp' },
+            },
+            {},
+        ],
+        { root: metalsmith.source() },
+    );
+
+    t.log({
+        deploys: server.deploys,
+        previews: new Map(
+            [...server.nockScope.previews.entries()].map(([url, scope]) => [
+                url,
+                scope.activeMocks(),
+            ]),
+        ),
+        requestLogs: server.requestLogs,
+    });
+
+    const initialPublishedDate = getPublishedDate(
+        server.deploys.getByKey('initial'),
+    );
+    const modifiedPublishedDate = getPublishedDate(
+        server.deploys.getByKey('modified'),
+    );
+    const addedPublishedDate = getPublishedDate(
+        server.deploys.getByKey('added'),
+    );
+    const lastPublishedDate = new Date(Date.now() - 1);
+
+    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const initialPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/initial.png',
+    );
+    const modifiedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/modified.webp',
+    );
+    const addedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/added.gif',
+    );
+    const newPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/new.jp2',
+    );
+
+    t.log({
+        files,
+        dates: {
+            initialPublishedDate,
+            modifiedPublishedDate,
+            addedPublishedDate,
+            lastPublishedDate,
+        },
+        requestLogs: {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
+                requestLog2str,
+            ),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
+            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
+        },
+    });
+
+    t.deepEqual(files['initial.png'].published, initialPublishedDate);
+    t.deepEqual(files['initial.png'].modified, initialPublishedDate);
+
+    t.deepEqual(files['modified.webp'].published, initialPublishedDate);
+    t.deepEqual(files['modified.webp'].modified, modifiedPublishedDate);
+
+    t.deepEqual(files['added.gif'].published, addedPublishedDate);
+    t.deepEqual(files['added.gif'].modified, addedPublishedDate);
+
+    t.true(files['new.jp2'].published instanceof Date);
+    t.true(files['new.jp2'].published > lastPublishedDate);
+    t.true(files['new.jp2'].modified instanceof Date);
+    t.true(files['new.jp2'].modified > lastPublishedDate);
+
+    t.is(
+        initialPagePreviewLogs.length,
+        server.deploys.length,
+        'If the page was deployed initial, should have requested all the previews',
+    );
+    t.is(
+        modifiedPagePreviewLogs.length,
+        server.deploys.length,
+        'If the page was deployed initial and modified midway, should have requested all the previews',
+    );
+    t.true(
+        addedPagePreviewLogs.length < server.deploys.length,
+        'If the page was deployed midway, should not have requested all previews',
+    );
+    t.is(
+        newPagePreviewLogs.length,
+        1,
+        'If the page has not been deployed yet, should have requested only the first preview',
+    );
+});
