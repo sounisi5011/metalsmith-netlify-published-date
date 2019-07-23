@@ -12,3 +12,13 @@ html(lang="en")
                 = pkgName
             |
             | Example Page
+        if published instanceof Date
+            p
+                | Published at
+                |
+                time= published.toISOString()
+        if modified instanceof Date
+            p
+                | Last updated at
+                |
+                time= modified.toISOString()
