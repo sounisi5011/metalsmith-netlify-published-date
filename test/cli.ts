@@ -7,7 +7,7 @@ import { fileExists } from './helpers/utils';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-test.before(async t => {
+test.before(async () => {
     if (!(await fileExists(PROJECT_ROOT, 'dist', 'index.js'))) {
         await exec(['npm', 'run', 'build'], {
             cwd: PROJECT_ROOT,
