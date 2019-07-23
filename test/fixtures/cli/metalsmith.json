@@ -3,7 +3,6 @@
     "@sounisi5011/metalsmith-netlify-published-date": {
       "pattern": "*.do-not-match-pattern",
       "cacheDir": null
-    },
-    "./print-date": true
+    }
   }
 }
