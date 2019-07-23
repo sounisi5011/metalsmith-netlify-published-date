@@ -1,3 +1,9 @@
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
+
+const fsStat = util.promisify(fs.stat);
+
 export function hasProp(
     value: unknown,
     props: readonly Parameters<typeof Object.prototype.hasOwnProperty>[0][],
@@ -19,4 +25,16 @@ export function deleteProps<T extends Record<U, unknown>, U extends string>(
 
 export function addSlash(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
+}
+
+export async function fileExists(...paths: string[]): Promise<boolean> {
+    try {
+        await fsStat(path.resolve(...paths));
+        return true;
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            return false;
+        }
+        throw err;
+    }
 }
