@@ -222,7 +222,7 @@ export default async function create(
                     ? String(actualQueryObject.page) === String(page)
                     : page === 1,
             )
-            .reply(200, deploy ? [deploy] : [], headers);
+            .reply(200, deploy ? () => [deploy] : [], headers);
 
         apiTotalPages++;
     });
