@@ -141,12 +141,9 @@ export async function netlifyDeploys(
 
                 return false;
             });
-            if (
-                commitHashSet &&
-                netlifyDeployList.length === matchedDeployList.length
-            ) {
+            if (netlifyDeployList.length !== matchedDeployList.length) {
                 responseLog(
-                    '%s / deploy list count that matched Git commit hashes: %d',
+                    '%s / deploy list count that valid: %d',
                     url,
                     matchedDeployList.length,
                 );
