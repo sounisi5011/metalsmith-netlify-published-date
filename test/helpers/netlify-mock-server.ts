@@ -21,8 +21,17 @@ export interface DeployFileSchema {
 
 export type DeploySchema = {
     readonly key?: string;
-    readonly buildFail?: boolean;
-} & { readonly [urlpath: string]: DeployFileSchema | string | Buffer | null };
+} & (
+    | {
+          readonly buildFail?: never;
+          readonly [urlpath: string]:
+              | DeployFileSchema
+              | string
+              | Buffer
+              | null
+              | void;
+      }
+    | { readonly buildFail: true });
 
 export interface RequestLog {
     readonly statusCode?: number;
