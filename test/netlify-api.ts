@@ -9,7 +9,7 @@ const API_PREFIX = 'https://api.netlify.com/api/v1/';
 const siteID = 'peaceful-shockley-c9f989.netlify.com';
 const accessToken = null;
 
-test.skip('.', async t => {
+test('Netlify API responses should be in a valid format', async t => {
     const fetchedURL = new Set<string>();
 
     /**
