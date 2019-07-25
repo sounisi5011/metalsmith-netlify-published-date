@@ -10,7 +10,7 @@ import {
     randomChoice,
     randomChoiceList,
 } from './random';
-import { ArrayItemType } from './types';
+import { ArrayItemType, Writeable } from './types';
 import { addSlash } from './utils';
 
 export const API_ROOT_URL = 'https://api.netlify.com/api/v1/';
@@ -19,15 +19,10 @@ export interface DeployFileSchema {
     readonly filepath: string;
 }
 
-export interface DeploySchema {
+export type DeploySchema = {
     readonly key?: string;
-    readonly [urlpath: string]:
-        | DeployFileSchema
-        | string
-        | Buffer
-        | null
-        | void;
-}
+    readonly buildFail?: boolean;
+} & { readonly [urlpath: string]: DeployFileSchema | string | Buffer | null };
 
 export interface RequestLog {
     readonly statusCode?: number;
@@ -245,7 +240,7 @@ export default async function create(
 
     const key2deployMap = new Map<string, NetlifyDeploy>();
     const previews: ([string, nock.Scope])[] = [];
-    const previewFilesState: DeploySchema = {};
+    const previewFilesState: Writeable<DeploySchema> = {};
     [...commitDeployList].reverse().forEach((deploy, index) => {
         const deploySchema = deploysSchema[index];
         const previewRootURL = getPreviewRootURL(deploy);
@@ -264,39 +259,50 @@ export default async function create(
                 }
                 key2deployMap.set(key, deploy);
             }
+
+            if (deploySchema.buildFail) {
+                deploy.state = 'error';
+            }
         }
 
         /*
          * Define files
          */
-        Object.entries(previewSchema).forEach(([filepath, filedata]) => {
-            if (filepath !== 'key' && filedata) {
-                const urlpathList = [addSlash(filepath)];
+        if (deploy.state !== 'error') {
+            Object.entries(previewSchema)
+                .filter(([prop]) => !['key', 'buildFail'].includes(prop))
+                .forEach(([filepath, filedata]) => {
+                    if (filedata) {
+                        const urlpathList = [addSlash(filepath)];
 
-                urlpathList.forEach(urlpath => {
-                    const interceptor = previewScope.get(urlpath);
+                        urlpathList.forEach(urlpath => {
+                            const interceptor = previewScope.get(urlpath);
 
-                    if (
-                        typeof filedata === 'string' ||
-                        Buffer.isBuffer(filedata)
-                    ) {
-                        interceptor.reply(200, filedata);
-                    } else if (filedata.filepath) {
-                        interceptor.replyWithFile(
-                            200,
-                            options.root
-                                ? path.join(options.root, filedata.filepath)
-                                : filedata.filepath,
-                        );
-                    } else {
-                        interceptor.reply(200);
+                            if (
+                                typeof filedata === 'string' ||
+                                Buffer.isBuffer(filedata)
+                            ) {
+                                interceptor.reply(200, filedata);
+                            } else if (filedata.filepath) {
+                                interceptor.replyWithFile(
+                                    200,
+                                    options.root
+                                        ? path.join(
+                                              options.root,
+                                              filedata.filepath,
+                                          )
+                                        : filedata.filepath,
+                                );
+                            } else {
+                                interceptor.reply(200);
+                            }
+                        });
+
+                        logPagesMap.set(filepath, urlpathList);
+                        requestLogs.previews[filepath] = [];
                     }
                 });
-
-                logPagesMap.set(filepath, urlpathList);
-                requestLogs.previews[filepath] = [];
-            }
-        });
+        }
         previewScope.get(/(?:)/).reply(404);
 
         previewScope.on(
