@@ -23,6 +23,14 @@ export function deleteProps<T extends Record<U, unknown>, U extends string>(
     return obj;
 }
 
+/**
+ * @see https://qiita.com/muddydixon/items/2edf6dcb84295eccf4f3
+ */
+
+export function isValidDate(date: Date): boolean {
+    return !Number.isNaN(date.getTime());
+}
+
 export function addSlash(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
 }
