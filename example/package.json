@@ -1,6 +1,6 @@
 {
   "private": true,
   "dependencies": {
-    "metalsmith": "file:../node_modules/metalsmith"
+    "metalsmith": "^2.3.0"
   }
 }
