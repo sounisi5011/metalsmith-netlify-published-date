@@ -132,6 +132,7 @@ export function createDeploy(
     /* eslint-disable @typescript-eslint/camelcase */
     return {
         id: id,
+        state: 'ready',
         name: name,
         url: `http://${name}.netlify.com`,
         admin_url: `https://app.netlify.com/sites/${name}`,
