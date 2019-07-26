@@ -5,6 +5,17 @@ export function isObject(value: unknown): value is Record<any, unknown> {
     return typeof value === 'object' && value !== null;
 }
 
+export function isStringArray(value: unknown[]): value is string[] {
+    return value.every(v => typeof v === 'string');
+}
+
+export function hasProp<
+    T extends object,
+    U extends (Parameters<typeof Object.prototype.hasOwnProperty>)[0]
+>(value: T, prop: U): value is (typeof value) & { [P in U]: unknown } {
+    return Object.prototype.hasOwnProperty.call(value, prop);
+}
+
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
 }
@@ -45,4 +56,18 @@ export function findEqualsPath(
         targetPath =>
             path.resolve(baseDirpath, targetPath) === absoluteFilepath,
     );
+}
+
+export function requireByCWD(
+    cwd: string,
+    id: string,
+    errorCallback: (error: unknown) => void,
+): unknown {
+    try {
+        const pathstr = require.resolve(id, { paths: [cwd] });
+        return require(pathstr);
+    } catch (error) {
+        errorCallback(error);
+    }
+    return undefined;
 }
