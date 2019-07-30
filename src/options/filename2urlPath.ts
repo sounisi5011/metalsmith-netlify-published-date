@@ -52,25 +52,42 @@ export function convertMetadata({
 }: {
     metadata: unknown;
 }): ReturnFuncType {
-    const propList: unknown[] = Array.isArray(schema) ? schema : [schema];
-    if (isStringArray(propList)) {
-        const propNameList = propList.join(', ');
+    if (typeof schema === 'string') {
         return (filename, { fileData }) => {
-            for (const prop of propList) {
-                const value = fileData[prop];
+            if (hasProp(fileData, schema)) {
+                const value = fileData[schema];
                 if (typeof value === 'string') {
                     return value;
+                } else {
+                    throw new Error(
+                        `The value of "${schema}" field of metadata of file "${filename}" is not a string`,
+                    );
                 }
+            } else {
+                throw new Error(
+                    `"${schema}" field does not exist in metadata of file "${filename}"`,
+                );
             }
-            throw new Error(
-                `The following fields that stored string values in the metadata of file "${filename}" were not found: ${propNameList}`,
-            );
         };
-    } else {
-        if (!Array.isArray(schema)) {
+    } else if (Array.isArray(schema)) {
+        const propList = schema;
+        if (propList.length < 1) {
             throw new TypeError(
-                `The value of the "metadata" field specified in option "${PROP}" is neither a string nor an array: ${typeof schema}`,
+                `The value of the "metadata" field specified in option "${PROP}" is an empty array`,
             );
+        } else if (isStringArray(propList)) {
+            const propNameList = propList.join(', ');
+            return (filename, { fileData }) => {
+                for (const prop of propList) {
+                    const value = fileData[prop];
+                    if (typeof value === 'string') {
+                        return value;
+                    }
+                }
+                throw new Error(
+                    `The following fields that stored string values in the metadata of file "${filename}" were not found: ${propNameList}`,
+                );
+            };
         } else {
             const propListType =
                 '[' + propList.map(prop => typeof prop).join(', ') + ']';
@@ -78,6 +95,10 @@ export function convertMetadata({
                 `The value of the "metadata" field specified in option "${PROP}" is not an array of strings: ${propListType}`,
             );
         }
+    } else {
+        throw new TypeError(
+            `The value of the "metadata" field specified in option "${PROP}" is neither a string nor an array: ${typeof schema}`,
+        );
     }
 }
 
@@ -127,8 +148,18 @@ export function convertReplace({
     if (hasProp(schema, 'fromRegExp')) {
         const from = schema.fromRegExp;
         if (typeof from === 'string') {
-            const fromPattern = new RegExp(from);
-            return filename => filename.replace(fromPattern, to);
+            try {
+                const fromPattern = new RegExp(from);
+                return filename => filename.replace(fromPattern, to);
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    throw new SyntaxError(
+                        `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a valid regular expression: ${error.message}`,
+                    );
+                } else {
+                    throw error;
+                }
+            }
         } else {
             throw new TypeError(
                 `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof from}`,
@@ -160,6 +191,11 @@ export function normalize(value: unknown): ReturnFuncType {
         return convertStr(value);
     } else if (isObject(value)) {
         if (hasProp(value, 'metadata')) {
+            if (hasProp(value, 'replace')) {
+                throw new TypeError(
+                    `Object of option "${PROP}" must not contain both the "replace" property and "metadata" property`,
+                );
+            }
             return convertMetadata(value);
         } else if (hasProp(value, 'replace')) {
             return convertReplace(value);
