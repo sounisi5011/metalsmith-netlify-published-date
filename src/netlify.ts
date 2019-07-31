@@ -13,7 +13,6 @@ const responseLog = log.extend('response');
  */
 export interface NetlifyDeployInterface {
     id: string;
-    state: string;
     name: string;
     deploy_ssl_url: string;
     commit_ref: string | null;
@@ -31,14 +30,9 @@ export function isNetlifyDeploy(
 ): value is NetlifyDeployInterface {
     if (isObject(value)) {
         return (
-            [
-                'id',
-                'state',
-                'name',
-                'deploy_ssl_url',
-                'created_at',
-                'updated_at',
-            ].every(prop => typeof value[prop] === 'string') &&
+            ['id', 'name', 'deploy_ssl_url', 'created_at', 'updated_at'].every(
+                prop => typeof value[prop] === 'string',
+            ) &&
             ['commit_ref', 'published_at'].every(
                 prop => typeof value[prop] === 'string' || value[prop] === null,
             )
@@ -125,10 +119,6 @@ export async function netlifyDeploys(
             );
 
             const matchedDeployList = netlifyDeployList.filter(deploy => {
-                if (deploy.state === 'error') {
-                    return false;
-                }
-
                 if (!commitHashSet) {
                     return true;
                 }
@@ -141,9 +131,12 @@ export async function netlifyDeploys(
 
                 return false;
             });
-            if (netlifyDeployList.length !== matchedDeployList.length) {
+            if (
+                commitHashSet &&
+                netlifyDeployList.length === matchedDeployList.length
+            ) {
                 responseLog(
-                    '%s / deploy list count that valid: %d',
+                    '%s / deploy list count that matched Git commit hashes: %d',
                     url,
                     matchedDeployList.length,
                 );

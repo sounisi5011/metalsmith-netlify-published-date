@@ -23,29 +23,8 @@ export function deleteProps<T extends Record<U, unknown>, U extends string>(
     return obj;
 }
 
-/**
- * @see https://qiita.com/muddydixon/items/2edf6dcb84295eccf4f3
- */
-
-export function isValidDate(date: Date): boolean {
-    return !Number.isNaN(date.getTime());
-}
-
 export function addSlash(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
-}
-
-export async function chdir(
-    dirpath: string | string[],
-    callback: () => void | Promise<void>,
-): Promise<void> {
-    const cwd = process.cwd();
-
-    process.chdir(Array.isArray(dirpath) ? path.resolve(...dirpath) : dirpath);
-
-    await callback();
-
-    process.chdir(cwd);
 }
 
 export async function fileExists(...paths: string[]): Promise<boolean> {
