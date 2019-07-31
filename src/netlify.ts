@@ -125,7 +125,7 @@ export async function netlifyDeploys(
             );
 
             const matchedDeployList = netlifyDeployList.filter(deploy => {
-                if (deploy.state === 'error') {
+                if (deploy.state !== 'ready') {
                     return false;
                 }
 
