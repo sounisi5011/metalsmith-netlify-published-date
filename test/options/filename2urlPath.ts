@@ -437,7 +437,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
         },
         'The "replace" property should not accept empty objects',
     );
@@ -455,7 +455,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
         },
         'The object value of the "replace" property should contain the "fromRegExp" or "fromStr" property and the "to" property',
     );
@@ -473,7 +473,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "to"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
         },
         'The object value of the "replace" property should contain the "to" property',
     );
@@ -491,7 +491,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "to"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
         },
         'The object value of the "replace" property should contain the "to" property',
     );
@@ -509,7 +509,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
         },
         'The object value of the "replace" property should contain the "fromRegExp" property or the "fromStr" property',
     );
@@ -549,7 +549,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* not contain both .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
+            message: /"replace" (?:property|field) .* "filename2urlPath" option .* not contain both .* "fromRegExp"(?: .+)? and(?: .+)? "fromStr"/,
         },
         'The "replace" property should only accept objects that have either the "fromRegExp" property or the "fromStr" property',
     );
