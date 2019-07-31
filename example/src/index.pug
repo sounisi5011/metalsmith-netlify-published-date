@@ -20,9 +20,9 @@ html(lang="en")
             p
                 | Published at
                 |
-                time= published.toISOString()
+                time.published= published.toISOString()
         if modified instanceof Date
             p
                 | Last updated at
                 |
-                time= modified.toISOString()
+                time.modified= modified.toISOString()
