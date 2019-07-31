@@ -3,6 +3,110 @@ import Metalsmith from 'metalsmith';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
+import { chdir } from '../helpers/utils';
+
+test('should import external script file', async t => {
+    const metadata = {
+        files: {},
+        fileData: { contents: Buffer.from([]) },
+        metalsmith: Metalsmith(__dirname),
+    };
+
+    await chdir([__dirname, 'fixtures'], async () => {
+        {
+            const options = normalizeOptions(
+                { filename2urlPath: '.' },
+                netlifyPublishedDate.defaultOptions,
+            );
+            t.is(
+                await options.filename2urlPath('', metadata),
+                '/',
+                'should to import index.js file',
+            );
+        }
+
+        {
+            const options = normalizeOptions(
+                { filename2urlPath: './mod.js' },
+                netlifyPublishedDate.defaultOptions,
+            );
+            t.is(
+                await options.filename2urlPath('', metadata),
+                '/mod',
+                'should to import script file',
+            );
+        }
+
+        {
+            const options = normalizeOptions(
+                { filename2urlPath: './mod' },
+                netlifyPublishedDate.defaultOptions,
+            );
+            t.is(
+                await options.filename2urlPath('', metadata),
+                '/mod',
+                'should to import script file without .js extension',
+            );
+        }
+
+        t.throws(
+            () => {
+                normalizeOptions(
+                    { filename2urlPath: './not-found-mod' },
+                    netlifyPublishedDate.defaultOptions,
+                );
+            },
+            {
+                instanceOf: TypeError,
+                message: /[Mm]odule "\.\/not-found-mod" .* option "filename2urlPath"/,
+            },
+            'import of non-existent script file should fail',
+        );
+
+        t.throws(
+            () => {
+                normalizeOptions(
+                    { filename2urlPath: './no-func' },
+                    netlifyPublishedDate.defaultOptions,
+                );
+            },
+            {
+                instanceOf: TypeError,
+                message: /[Mm]odule "\.\/no-func" .* option "filename2urlPath"/,
+            },
+            'import of script files that do not export functions should fail',
+        );
+
+        t.throwsAsync(
+            async () => {
+                const options = normalizeOptions(
+                    { filename2urlPath: './invalid-func' },
+                    netlifyPublishedDate.defaultOptions,
+                );
+                await options.filename2urlPath('', metadata);
+            },
+            {
+                instanceOf: TypeError,
+                message: /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath"/,
+            },
+            'import of script files exporting functions that do not return strings should fail',
+        );
+
+        t.throws(
+            () => {
+                normalizeOptions(
+                    { filename2urlPath: '@sounisi5011/example' },
+                    netlifyPublishedDate.defaultOptions,
+                );
+            },
+            {
+                instanceOf: TypeError,
+                message: /[Mm]odule "@sounisi5011\/example" .* option "filename2urlPath"/,
+            },
+            'If the module name does not start with "." and "/", should to import it like require() function',
+        );
+    });
+});
 
 test('should read url path from metadata', t => {
     const metadata = {
