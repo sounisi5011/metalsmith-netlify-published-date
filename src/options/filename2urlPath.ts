@@ -14,8 +14,14 @@ type ReturnFuncType = OptionsInterface[typeof PROP];
  * }
  */
 export function convertStr(filepath: string): ReturnFuncType {
-    let func: unknown;
+    /**
+     * @see https://github.com/nodejs/node/blob/v12.7.0/lib/internal/modules/cjs/loader.js#L677-L680
+     */
+    if (filepath === '') {
+        throw new TypeError(`"${PROP}" option must be a non-empty string`);
+    }
 
+    let func: unknown;
     try {
         func = importCwd(filepath);
     } catch (err) {
@@ -139,11 +145,29 @@ export function convertReplace({
         );
     }
 
-    if (!hasProp(schema, 'to')) {
+    if (hasProp(schema, 'fromRegExp') && hasProp(schema, 'fromStr')) {
         throw new TypeError(
-            `The "to" property must exist for an object in the "replace" field specified by the option "${PROP}"`,
+            `An object in the "replace" field of the "${PROP}" option can not contain both the "fromRegExp" property and the "fromStr" property`,
         );
     }
+    if (hasProp(schema, 'fromRegExp') || hasProp(schema, 'fromStr')) {
+        if (!hasProp(schema, 'to')) {
+            throw new TypeError(
+                `The value of the "replace" field of the "${PROP}" option must contain the "to" property`,
+            );
+        }
+    } else {
+        if (hasProp(schema, 'to')) {
+            throw new TypeError(
+                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property`,
+            );
+        } else {
+            throw new TypeError(
+                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property and the "to" property`,
+            );
+        }
+    }
+
     const to = schema.to;
     if (typeof to !== 'string') {
         throw new TypeError(
@@ -160,7 +184,7 @@ export function convertReplace({
             } catch (error) {
                 if (error instanceof SyntaxError) {
                     throw new SyntaxError(
-                        `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a valid regular expression: ${error.message}`,
+                        `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is an invalid regular expression: ${error.message}`,
                     );
                 } else {
                     throw error;
@@ -171,7 +195,7 @@ export function convertReplace({
                 `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof from}`,
             );
         }
-    } else if (hasProp(schema, 'fromStr')) {
+    } else {
         const from = schema.fromStr;
         if (typeof from === 'string') {
             return filename => filename.replace(from, to);
@@ -180,10 +204,6 @@ export function convertReplace({
                 `The "fromStr" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof from}`,
             );
         }
-    } else {
-        throw new TypeError(
-            `Object of "replace" field specified by option "${PROP}" must contain "fromRegExp" property or "fromStr" property`,
-        );
     }
 }
 
