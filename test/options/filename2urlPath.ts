@@ -58,7 +58,7 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "\.\/not-found-mod" .* option "filename2urlPath"/,
+                message: /[Ff]ailed to import module "\.\/not-found-mod" .* option "filename2urlPath"/,
             },
             'import of non-existent script file should fail',
         );
@@ -72,7 +72,7 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "\.\/no-func" .* option "filename2urlPath"/,
+                message: /[Mm]odule "\.\/no-func" .* option "filename2urlPath" .* not export the function/,
             },
             'import of script files that do not export functions should fail',
         );
@@ -87,7 +87,7 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath"/,
+                message: /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath" .* not return a string/,
             },
             'import of script files exporting functions that do not return strings should fail',
         );
@@ -101,7 +101,7 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "@sounisi5011\/example" .* option "filename2urlPath"/,
+                message: /[Ff]ailed to import module "@sounisi5011\/example" .* option "filename2urlPath"/,
             },
             'If the module name does not start with "." and "/", should to import it like require() function',
         );
@@ -153,7 +153,10 @@ test('should read url path from metadata', t => {
             );
             return options.filename2urlPath('', metadata);
         },
-        { instanceOf: Error, message: /"prop4" (?:property|field)/ },
+        {
+            instanceOf: Error,
+            message: /"prop4" (?:property|field) does not exist/,
+        },
         'reading of properties not present in metadata should fail',
     );
 
@@ -165,7 +168,10 @@ test('should read url path from metadata', t => {
             );
             return options.filename2urlPath('', metadata);
         },
-        { instanceOf: Error, message: /"prop1" (?:property|field)/ },
+        {
+            instanceOf: Error,
+            message: /"prop1" (?:property|field) .* is not a string/,
+        },
         'reading of non-string value in metadata should fail',
     );
 
@@ -177,7 +183,10 @@ test('should read url path from metadata', t => {
             );
             return options.filename2urlPath('', metadata);
         },
-        { instanceOf: Error, message: /prop6, prop1, prop4/ },
+        {
+            instanceOf: Error,
+            message: /following fields .* not found: prop6, prop1, prop4/,
+        },
         'should fail if all metadata properties are invalid',
     );
 });
@@ -264,8 +273,27 @@ test('should throw an error if the invalid option is specified', t => {
                 netlifyPublishedDate.defaultOptions,
             );
         },
-        { instanceOf: TypeError, message: /option "filename2urlPath"/ },
+        {
+            instanceOf: TypeError,
+            message: /option "filename2urlPath" .* a function, a string, or an object/,
+        },
         'The value of "filename2urlPath" should be a valid value',
+    );
+
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    filename2urlPath: '',
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /"filename2urlPath" option must be a non-empty string/,
+        },
+        'The value of "filename2urlPath" should be a non-empty string',
     );
 
     t.throws(
@@ -277,7 +305,10 @@ test('should throw an error if the invalid option is specified', t => {
                 netlifyPublishedDate.defaultOptions,
             );
         },
-        { instanceOf: TypeError, message: /option "filename2urlPath"/ },
+        {
+            instanceOf: TypeError,
+            message: /option "filename2urlPath" must contain .* (?:properties|property)/,
+        },
         'The value of "filename2urlPath" should be a non-empty object',
     );
 
@@ -292,7 +323,10 @@ test('should throw an error if the invalid option is specified', t => {
                 netlifyPublishedDate.defaultOptions,
             );
         },
-        { instanceOf: TypeError, message: /option "filename2urlPath"/ },
+        {
+            instanceOf: TypeError,
+            message: /option "filename2urlPath" must contain .* (?:properties|property)/,
+        },
         'The value of "filename2urlPath" should be an object that also has valid property',
     );
 
@@ -313,7 +347,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /option "filename2urlPath"/,
+            message: /option "filename2urlPath" .* not contain both .* "replace" .* and "metadata"/,
         },
         'The object value of "filename2urlPath" should not contain more than one valid property',
     );
@@ -331,9 +365,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"metadata" (?:property|field) .* option "filename2urlPath"/,
+            message: /"metadata" (?:property|field) .* option "filename2urlPath" .* neither a string nor an array/,
         },
-        'The "metadata" property of "filename2urlPath" should be a valid value',
+        'The "metadata" property should be a valid value',
     );
 
     t.throws(
@@ -349,9 +383,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"metadata" (?:property|field) .* option "filename2urlPath"/,
+            message: /"metadata" (?:property|field) .* option "filename2urlPath" .* not an array of strings/,
         },
-        'The "metadata" property of "filename2urlPath" should be an array of valid values',
+        'The "metadata" property should be an array of valid values',
     );
 
     t.throws(
@@ -367,9 +401,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"metadata" (?:property|field) .* option "filename2urlPath"/,
+            message: /"metadata" (?:property|field) .* option "filename2urlPath" .* empty array/,
         },
-        'The "metadata" property of "filename2urlPath" should not accept empty arrays',
+        'The "metadata" property should not accept empty array',
     );
 
     t.throws(
@@ -385,9 +419,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* not a object/,
         },
-        'The "replace" property of "filename2urlPath" should be a valid value',
+        'The "replace" property should be a valid value',
     );
 
     t.throws(
@@ -403,9 +437,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
         },
-        'The "replace" property of "filename2urlPath" should not accept empty objects',
+        'The "replace" property should not accept empty objects',
     );
 
     t.throws(
@@ -413,7 +447,7 @@ test('should throw an error if the invalid option is specified', t => {
             normalizeOptions(
                 {
                     filename2urlPath: {
-                        replace: { to: 42 },
+                        replace: { xxxx: 42 },
                     },
                 },
                 netlifyPublishedDate.defaultOptions,
@@ -421,7 +455,79 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"to" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
+        },
+        'The object value of the "replace" property should contain the "fromRegExp" or "fromStr" property and the "to" property',
+    );
+
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    filename2urlPath: {
+                        replace: { fromRegExp: '\\.pug$' },
+                    },
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "to"/,
+        },
+        'The object value of the "replace" property should contain the "to" property',
+    );
+
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    filename2urlPath: {
+                        replace: { fromStr: '.pug' },
+                    },
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "to"/,
+        },
+        'The object value of the "replace" property should contain the "to" property',
+    );
+
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    filename2urlPath: {
+                        replace: { to: '.html' },
+                    },
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
+        },
+        'The object value of the "replace" property should contain the "fromRegExp" property or the "fromStr" property',
+    );
+
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    filename2urlPath: {
+                        replace: { fromStr: '.ext', to: 42 },
+                    },
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /"to" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
         },
         'The "to" property of the "replace" property of "filename2urlPath" should be a valid value',
     );
@@ -431,7 +537,11 @@ test('should throw an error if the invalid option is specified', t => {
             normalizeOptions(
                 {
                     filename2urlPath: {
-                        replace: { to: '42' },
+                        replace: {
+                            fromRegExp: '\\.pug$',
+                            fromStr: '.pug',
+                            to: '42',
+                        },
                     },
                 },
                 netlifyPublishedDate.defaultOptions,
@@ -439,9 +549,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"replace" (?:property|field) .* option "filename2urlPath" .* not contain both .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
         },
-        'The "replace" property of "filename2urlPath" should only accept objects with "fromRegExp" or "fromStr" properties',
+        'The "replace" property should only accept objects that have either the "fromRegExp" property or the "fromStr" property',
     );
 
     t.throws(
@@ -457,9 +567,9 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
         },
-        'The "fromRegExp" property of the "replace" property of "filename2urlPath" should be a valid value',
+        'The "fromRegExp" property of the "replace" property should be a valid value',
     );
 
     t.throws(
@@ -475,7 +585,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: SyntaxError,
-            message: /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* invalid regular expression/,
         },
         'The "fromRegExp" property of the "replace" property of "filename2urlPath" should be a valid regular expression',
     );
@@ -493,7 +603,7 @@ test('should throw an error if the invalid option is specified', t => {
         },
         {
             instanceOf: TypeError,
-            message: /"fromStr" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath"/,
+            message: /"fromStr" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
         },
         'The "fromStr" property of the "replace" property of "filename2urlPath" should be a valid value',
     );
