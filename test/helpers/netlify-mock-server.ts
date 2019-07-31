@@ -19,19 +19,16 @@ export interface DeployFileSchema {
     readonly filepath: string;
 }
 
-export type DeploySchema = {
+export interface DeploySchema {
     readonly key?: string;
-} & (
-    | {
-          readonly buildFail?: never;
-          readonly [urlpath: string]:
-              | DeployFileSchema
-              | string
-              | Buffer
-              | null
-              | void;
-      }
-    | { readonly buildFail: true });
+    readonly state?: string;
+    readonly [urlpath: string]:
+        | DeployFileSchema
+        | string
+        | Buffer
+        | null
+        | void;
+}
 
 export interface RequestLog {
     readonly statusCode?: number;
@@ -269,17 +266,17 @@ export default async function create(
                 key2deployMap.set(key, deploy);
             }
 
-            if (deploySchema.buildFail) {
-                deploy.state = 'error';
+            if (deploySchema.state) {
+                deploy.state = deploySchema.state;
             }
         }
 
         /*
          * Define files
          */
-        if (deploy.state !== 'error') {
+        if (deploy.state === 'ready') {
             Object.entries(previewSchema)
-                .filter(([prop]) => !['key', 'buildFail'].includes(prop))
+                .filter(([prop]) => !['key', 'state'].includes(prop))
                 .forEach(([filepath, filedata]) => {
                     if (filedata) {
                         const urlpathList = [addSlash(filepath)];
