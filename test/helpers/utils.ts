@@ -35,6 +35,19 @@ export function addSlash(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
 }
 
+export async function chdir(
+    dirpath: string | string[],
+    callback: () => void | Promise<void>,
+): Promise<void> {
+    const cwd = process.cwd();
+
+    process.chdir(Array.isArray(dirpath) ? path.resolve(...dirpath) : dirpath);
+
+    await callback();
+
+    process.chdir(cwd);
+}
+
 export async function fileExists(...paths: string[]): Promise<boolean> {
     try {
         await fsStat(path.resolve(...paths));

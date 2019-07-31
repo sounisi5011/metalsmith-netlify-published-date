@@ -58,7 +58,7 @@
     }
   },
   "lint-staged": {
-    "!(package).json|*.{html,yaml,yml,toml}": [
+    "!(package).json|*.{html,js,yaml,yml,toml}": [
       "prettier --write",
       "git add"
     ],
@@ -83,6 +83,7 @@
     "deep-freeze-strict": "1.1.1",
     "flat-cache": "2.0.1",
     "got": "9.6.0",
+    "import-cwd": "3.0.0",
     "multimatch": "4.0.0",
     "parse-link-header": "1.0.1"
   },
