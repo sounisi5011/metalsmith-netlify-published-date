@@ -1,8 +1,4 @@
 overrides:
-  - files: "*.js"
-    options:
-      singleQuote: true
-      trailingComma: all
   - files: "*.ts"
     options:
       singleQuote: true

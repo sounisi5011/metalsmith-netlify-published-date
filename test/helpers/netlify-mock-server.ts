@@ -10,7 +10,7 @@ import {
     randomChoice,
     randomChoiceList,
 } from './random';
-import { ArrayItemType, Writeable } from './types';
+import { ArrayItemType } from './types';
 import { addSlash } from './utils';
 
 export const API_ROOT_URL = 'https://api.netlify.com/api/v1/';
@@ -19,19 +19,15 @@ export interface DeployFileSchema {
     readonly filepath: string;
 }
 
-export type DeploySchema = {
+export interface DeploySchema {
     readonly key?: string;
-} & (
-    | {
-          readonly buildFail?: never;
-          readonly [urlpath: string]:
-              | DeployFileSchema
-              | string
-              | Buffer
-              | null
-              | void;
-      }
-    | { readonly buildFail: true });
+    readonly [urlpath: string]:
+        | DeployFileSchema
+        | string
+        | Buffer
+        | null
+        | void;
+}
 
 export interface RequestLog {
     readonly statusCode?: number;
@@ -136,7 +132,6 @@ export function createDeploy(
     /* eslint-disable @typescript-eslint/camelcase */
     return {
         id: id,
-        state: 'ready',
         name: name,
         url: `http://${name}.netlify.com`,
         admin_url: `https://app.netlify.com/sites/${name}`,
@@ -231,7 +226,7 @@ export default async function create(
                     ? String(actualQueryObject.page) === String(page)
                     : page === 1,
             )
-            .reply(200, deploy ? () => [deploy] : [], headers);
+            .reply(200, deploy ? [deploy] : [], headers);
 
         apiTotalPages++;
     });
@@ -249,7 +244,7 @@ export default async function create(
 
     const key2deployMap = new Map<string, NetlifyDeploy>();
     const previews: ([string, nock.Scope])[] = [];
-    const previewFilesState: Writeable<DeploySchema> = {};
+    const previewFilesState: DeploySchema = {};
     [...commitDeployList].reverse().forEach((deploy, index) => {
         const deploySchema = deploysSchema[index];
         const previewRootURL = getPreviewRootURL(deploy);
@@ -268,50 +263,39 @@ export default async function create(
                 }
                 key2deployMap.set(key, deploy);
             }
-
-            if (deploySchema.buildFail) {
-                deploy.state = 'error';
-            }
         }
 
         /*
          * Define files
          */
-        if (deploy.state !== 'error') {
-            Object.entries(previewSchema)
-                .filter(([prop]) => !['key', 'buildFail'].includes(prop))
-                .forEach(([filepath, filedata]) => {
-                    if (filedata) {
-                        const urlpathList = [addSlash(filepath)];
+        Object.entries(previewSchema).forEach(([filepath, filedata]) => {
+            if (filepath !== 'key' && filedata) {
+                const urlpathList = [addSlash(filepath)];
 
-                        urlpathList.forEach(urlpath => {
-                            const interceptor = previewScope.get(urlpath);
+                urlpathList.forEach(urlpath => {
+                    const interceptor = previewScope.get(urlpath);
 
-                            if (
-                                typeof filedata === 'string' ||
-                                Buffer.isBuffer(filedata)
-                            ) {
-                                interceptor.reply(200, filedata);
-                            } else if (filedata.filepath) {
-                                interceptor.replyWithFile(
-                                    200,
-                                    options.root
-                                        ? path.join(
-                                              options.root,
-                                              filedata.filepath,
-                                          )
-                                        : filedata.filepath,
-                                );
-                            } else {
-                                interceptor.reply(200);
-                            }
-                        });
-
-                        logPagesMap.set(filepath, urlpathList);
-                        requestLogs.previews[filepath] = [];
+                    if (
+                        typeof filedata === 'string' ||
+                        Buffer.isBuffer(filedata)
+                    ) {
+                        interceptor.reply(200, filedata);
+                    } else if (filedata.filepath) {
+                        interceptor.replyWithFile(
+                            200,
+                            options.root
+                                ? path.join(options.root, filedata.filepath)
+                                : filedata.filepath,
+                        );
+                    } else {
+                        interceptor.reply(200);
                     }
                 });
-        }
+
+                logPagesMap.set(filepath, urlpathList);
+                requestLogs.previews[filepath] = [];
+            }
+        });
         previewScope.get(/(?:)/).reply(404);
 
         previewScope.on(
