@@ -1,6 +1,7 @@
 {
   "extends": ["config:base"],
   "commitMessagePrefix": "\u2B06\uFE0F",
+  "ignorePaths": ["example/package.json"],
   "packageRules": [
     {
       "updateTypes": ["pin"],
