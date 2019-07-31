@@ -6,6 +6,7 @@ import path from 'path';
 import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
+import { normalizeOptions } from './options';
 import { joinURL, path2url } from './utils';
 import { debug as log } from './utils/log';
 import {
@@ -455,7 +456,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
 export default createPluginGenerator((opts = {}) => {
     log('initialize plugin');
 
-    const options = { ...defaultOptions, ...opts };
+    const options = normalizeOptions(opts, defaultOptions);
 
     return (files, metalsmith, done) => {
         log('start plugin processing');
