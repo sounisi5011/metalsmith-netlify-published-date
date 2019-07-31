@@ -356,3 +356,80 @@ test('failed deploy should be ignored', async t => {
     t.deepEqual(files['modified.html'].published, initialPublishedDate);
     t.deepEqual(files['modified.html'].modified, modifiedPublishedDate);
 });
+
+test('enqueued and building deploy should be ignored', async t => {
+    const siteID = 'build-in-progress.index.test';
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
+        netlifyPublishedDate({
+            siteID,
+            cacheDir: null,
+        }),
+    );
+    const server = await createNetlify(
+        siteID,
+        [
+            {
+                key: 'initial',
+                '/initial.html': { filepath: 'initial.html' },
+                '/modified.html': Buffer.from(''),
+            },
+            {
+                key: 'modified',
+                '/modified.html': { filepath: 'modified.html' },
+            },
+            {
+                state: 'building',
+            },
+            {
+                state: 'enqueued',
+            },
+        ],
+        { root: metalsmith.source() },
+    );
+
+    t.log({
+        deploys: server.deploys,
+        previews: new Map(
+            [...server.nockScope.previews.entries()].map(([url, scope]) => [
+                url,
+                scope.activeMocks(),
+            ]),
+        ),
+        requestLogs: server.requestLogs,
+    });
+
+    const initialPublishedDate = getPublishedDate(
+        server.deploys.getByKey('initial'),
+    );
+    const modifiedPublishedDate = getPublishedDate(
+        server.deploys.getByKey('modified'),
+    );
+
+    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const initialPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/initial.html',
+    );
+    const modifiedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/modified.html',
+    );
+
+    t.log({
+        files,
+        dates: {
+            initialPublishedDate,
+            modifiedPublishedDate,
+        },
+        requestLogs: {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
+                requestLog2str,
+            ),
+        },
+    });
+
+    t.deepEqual(files['initial.html'].published, initialPublishedDate);
+    t.deepEqual(files['initial.html'].modified, initialPublishedDate);
+
+    t.deepEqual(files['modified.html'].published, initialPublishedDate);
+    t.deepEqual(files['modified.html'].modified, modifiedPublishedDate);
+});
