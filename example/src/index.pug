@@ -1,0 +1,28 @@
+---
+canonicalPath: /
+---
+
+- const pkgName = '@sounisi5011/metalsmith-netlify-published-date';
+doctype html
+html(lang="en")
+    head
+        meta(charset="utf-8")
+        meta(name="viewport" content="width=device-width,initial-scale=1")
+        meta(name="format-detection" content="telephone=no,email=no,address=no")
+        title= `${pkgName} Example Page`
+    body
+        h1
+            a(href="https://github.com/sounisi5011/metalsmith-netlify-published-date")
+                = pkgName
+            |
+            | Example Page
+        if published instanceof Date
+            p
+                | Published at
+                |
+                time.published= published.toISOString()
+        if modified instanceof Date
+            p
+                | Last updated at
+                |
+                time.modified= modified.toISOString()

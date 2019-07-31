@@ -1,3 +1,14 @@
 {
-  "plugins": {}
+  "plugins": {
+    "@sounisi5011/metalsmith-netlify-published-date": {
+      "pattern": "**/*.pug",
+      "cacheDir": "./node_modules/.cache/",
+      "filename2urlPath": {
+        "metadata": "canonicalPath"
+      }
+    },
+    "metalsmith-in-place": {
+      "setFilename": true
+    }
+  }
 }
