@@ -299,7 +299,7 @@ test('failed deploy should be ignored', async t => {
                 '/modified.html': Buffer.from(''),
             },
             {
-                buildFail: true,
+                state: 'error',
             },
             {
                 key: 'modified',
