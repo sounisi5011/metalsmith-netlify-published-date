@@ -1,3 +1,4 @@
 [build]
-command = 'echo "1. pwd: $(pwd)" && npm run build && echo "2. pwd: $(pwd)" && cd example/ && echo "3. pwd: $(pwd)" && npm install && echo "4. pwd: $(pwd)" && node_modules/.bin/metalsmith && echo "5. pwd: $(pwd)"'
+base = 'example/'
+command = 'echo "1. pwd: $(pwd)" && node_modules/.bin/metalsmith && echo "2. pwd: $(pwd)"'
 publish = 'example/build'
