@@ -57,17 +57,3 @@ export function findEqualsPath(
             path.resolve(baseDirpath, targetPath) === absoluteFilepath,
     );
 }
-
-export function requireByCWD(
-    cwd: string,
-    id: string,
-    errorCallback: (error: unknown) => void,
-): unknown {
-    try {
-        const pathstr = require.resolve(id, { paths: [cwd] });
-        return require(pathstr);
-    } catch (error) {
-        errorCallback(error);
-    }
-    return undefined;
-}
