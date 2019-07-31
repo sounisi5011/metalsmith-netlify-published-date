@@ -1,8 +1,9 @@
+import importCwd from 'import-cwd';
+
 import { OptionsInterface } from '../plugin';
-import { hasProp, isObject, isStringArray, requireByCWD } from '../utils';
+import { hasProp, isObject, isStringArray } from '../utils';
 import { strReturnFunc } from './utils';
 
-const CWD = process.cwd();
 const PROP = 'filename2urlPath';
 type ReturnFuncType = OptionsInterface[typeof PROP];
 
@@ -13,11 +14,16 @@ type ReturnFuncType = OptionsInterface[typeof PROP];
  * }
  */
 export function convertStr(filepath: string): ReturnFuncType {
-    const func = requireByCWD(CWD, filepath, () => {
+    let func: unknown;
+
+    try {
+        func = importCwd(filepath);
+    } catch (err) {
         throw new TypeError(
             `Failed to import module "${filepath}" specified in option "${PROP}"`,
         );
-    });
+    }
+
     if (typeof func !== 'function') {
         throw new TypeError(
             `Module "${filepath}" specified in option "${PROP}" did not export the function: ${typeof func}`,
