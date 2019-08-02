@@ -1,4 +1,5 @@
 import test from 'ava';
+import cloneDeep from 'lodash.clonedeep';
 import Metalsmith from 'metalsmith';
 import Mustache from 'mustache';
 import path from 'path';
@@ -9,9 +10,14 @@ import { isFile } from '../src/utils/metalsmith';
 import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
 
-function processCountPlugin(list: Metalsmith.Files[]): Metalsmith.Plugin {
+function processCountPlugin(
+    list: ({ clone: Metalsmith.Files; ref: Metalsmith.Files })[],
+): Metalsmith.Plugin {
     return (files, metalsmith, done) => {
-        list.push(files);
+        list.push({
+            clone: cloneDeep(files),
+            ref: files,
+        });
         done(null, files, metalsmith);
     };
 }
@@ -44,7 +50,7 @@ function convertMustachePlugin(): Metalsmith.Plugin {
 
 test('Plugins specified in the "plugins" option should be execute', async t => {
     const siteID = 'template.test';
-    const pluginsRunLogs: Metalsmith.Files[] = [];
+    const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
         netlifyPublishedDate({
             siteID,
@@ -148,28 +154,34 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     const firstLog = pluginsRunLogs[0];
     pluginsRunLogs.forEach((log, index) => {
+        t.deepEqual(
+            log.clone,
+            firstLog.clone,
+            `Object value in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+        );
         t.is(
-            log,
-            firstLog,
-            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0] === pluginsRunLogs[${index}]`,
+            log.ref,
+            firstLog.ref,
+            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref === pluginsRunLogs[${index}].ref`,
         );
 
-        new Set([...Object.keys(firstLog), ...Object.keys(log)]).forEach(
-            filename => {
-                const escapedFilename = JSON.stringify(filename);
-                t.is(
-                    log[filename],
-                    firstLog[filename],
-                    `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0][${escapedFilename}] === pluginsRunLogs[${index}][${escapedFilename}]`,
-                );
-            },
-        );
+        new Set([
+            ...Object.keys(firstLog.ref),
+            ...Object.keys(log.ref),
+        ]).forEach(filename => {
+            const escapedFilename = JSON.stringify(filename);
+            t.is(
+                log.ref[filename],
+                firstLog.ref[filename],
+                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
+            );
+        });
     });
 });
 
 test('If the plugin gets progressing build of self, make the published date and the modified date of the new file the deploy created date', async t => {
     const siteID = 'progressing-deploy.template.test';
-    const pluginsRunLogs: Metalsmith.Files[] = [];
+    const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
         netlifyPublishedDate({
             siteID,
@@ -294,21 +306,27 @@ test('If the plugin gets progressing build of self, make the published date and 
 
     const firstLog = pluginsRunLogs[0];
     pluginsRunLogs.forEach((log, index) => {
+        t.deepEqual(
+            log.clone,
+            firstLog.clone,
+            `Object value in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+        );
         t.is(
-            log,
-            firstLog,
-            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0] === pluginsRunLogs[${index}]`,
+            log.ref,
+            firstLog.ref,
+            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref === pluginsRunLogs[${index}].ref`,
         );
 
-        new Set([...Object.keys(firstLog), ...Object.keys(log)]).forEach(
-            filename => {
-                const escapedFilename = JSON.stringify(filename);
-                t.is(
-                    log[filename],
-                    firstLog[filename],
-                    `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0][${escapedFilename}] === pluginsRunLogs[${index}][${escapedFilename}]`,
-                );
-            },
-        );
+        new Set([
+            ...Object.keys(firstLog.ref),
+            ...Object.keys(log.ref),
+        ]).forEach(filename => {
+            const escapedFilename = JSON.stringify(filename);
+            t.is(
+                log.ref[filename],
+                firstLog.ref[filename],
+                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
+            );
+        });
     });
 });
