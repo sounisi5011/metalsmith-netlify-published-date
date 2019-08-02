@@ -89,6 +89,7 @@
   },
   "devDependencies": {
     "@sounisi5011/check-peer-deps": "github:sounisi5011/check-peer-deps",
+    "@types/mustache": "0.8.32",
     "@types/nock": "10.0.3",
     "@typescript-eslint/eslint-plugin": "1.13.0",
     "@typescript-eslint/parser": "1.13.0",
@@ -110,6 +111,7 @@
     "is-git-status-clean": "1.0.0",
     "lint-staged": "9.2.1",
     "metalsmith": "2.3.0",
+    "mustache": "3.0.1",
     "nock": "11.0.0-beta.13",
     "npm-run-all": "4.1.5",
     "package-version-git-tag": "1.1.0",
