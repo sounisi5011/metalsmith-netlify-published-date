@@ -133,7 +133,7 @@ test('import of script files that do not export functions should fail', t => {
         },
         {
             instanceOf: TypeError,
-            message: /[Pp]lugin "\.\.\/no-func" .* option "plugins" .* not export the function/,
+            message: /[Pp]lugin "\.\/no-func" .* option "plugins" .* not export the function/,
         },
     );
 });
@@ -152,7 +152,7 @@ test('import of script files exporting functions that do not return function sho
         },
         {
             instanceOf: TypeError,
-            message: /[Pp]lugin "\.\.\/invalid-func" .* option "plugins" .* not return the function/,
+            message: /[Pp]lugin "\.\/invalid-func" .* option "plugins" .* not return the function/,
         },
     );
 });
