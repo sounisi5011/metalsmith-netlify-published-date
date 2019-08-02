@@ -31,6 +31,7 @@ export interface WritableOptionsInterface {
     siteID: string;
     accessToken: string | null;
     cacheDir: string | null;
+    plugins: Metalsmith.Plugin[];
     defaultDate:
         | ((metadata: GeneratingPageMetadataInterface) => unknown)
         | Date
@@ -443,6 +444,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     siteID: defaultSiteID,
     accessToken: null,
     cacheDir: path.resolve(__dirname, '../.cache/'),
+    plugins: [],
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
