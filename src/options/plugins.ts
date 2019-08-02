@@ -69,5 +69,8 @@ export function normalize(value: unknown): ReturnValueType {
                 return plugin;
             }),
         )
-        .reduce((pluginList1, pluginList2) => [...pluginList1, ...pluginList2]);
+        .reduce(
+            (pluginList1, pluginList2) => [...pluginList1, ...pluginList2],
+            [],
+        );
 }
