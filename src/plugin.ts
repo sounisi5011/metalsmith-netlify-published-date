@@ -4,12 +4,13 @@ import Metalsmith from 'metalsmith';
 import path from 'path';
 
 import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
-import { getFirstParentCommits } from './git';
-import { NetlifyDeployData, netlifyDeploys } from './netlify';
+import lookup, { getDeployList } from './lookup';
+import { NetlifyDeployData } from './netlify';
 import { normalizeOptions } from './options';
-import { joinURL, path2url } from './utils';
+import { isNotVoid, joinURL, path2url } from './utils';
 import { debug as log } from './utils/log';
 import {
+    createPlugin,
     createPluginGenerator,
     FileInterface,
     getMatchedFiles,
@@ -107,22 +108,6 @@ export function defaultDate2value<
     return new Date(nowDate);
 }
 
-export async function getDeployList(
-    siteID: string,
-    accessToken: string | null,
-): ReturnType<typeof netlifyDeploys> {
-    const commitList = await getFirstParentCommits();
-    log("got Git's commits hash");
-
-    const deployList = await netlifyDeploys(siteID, {
-        accessToken,
-        commitHashList: commitList.map(commit => commit.hash),
-    });
-    log('fetched Netlify deploys');
-
-    return deployList;
-}
-
 export async function fetchPage(
     url: string,
 ): Promise<got.Response<Buffer> | null> {
@@ -140,6 +125,40 @@ export async function fetchPage(
 
 export function publishedDate(deploy: NetlifyDeployData): string {
     return deploy.published_at || deploy.created_at;
+}
+
+export async function getTargetFileList({
+    options,
+    files,
+    metalsmith,
+}: {
+    options: OptionsInterface;
+    files: Metalsmith.Files;
+    metalsmith: Metalsmith;
+}): Promise<{ filename: string; urlpath: string }[]> {
+    const matchedFiles = getMatchedFiles(files, options.pattern);
+    const targetFileList = (await Promise.all(
+        matchedFiles.map(async filename => {
+            const fileData = files[filename];
+
+            fileLog('%s / checking file', filename);
+            if (!isFile(fileData)) {
+                return;
+            }
+
+            const urlpath = path2url(
+                await options.filename2urlPath(filename, {
+                    files,
+                    fileData,
+                    metalsmith,
+                }),
+            );
+            fileLog('%s / get URL Path: %s', filename, urlpath);
+
+            return { filename, urlpath };
+        }),
+    )).filter(isNotVoid);
+    return targetFileList;
 }
 
 export async function eachFile({
@@ -460,34 +479,31 @@ export default createPluginGenerator((opts = {}) => {
 
     const options = normalizeOptions(opts, defaultOptions);
 
-    return (files, metalsmith, done) => {
+    return createPlugin(async (files, metalsmith) => {
         log('start plugin processing');
 
         const nowDate = Date.now();
-        const cache = new PreviewCache(options.cacheDir);
-        const matchedFiles = getMatchedFiles(files, options.pattern);
-        const deployList =
-            matchedFiles.length >= 1
-                ? getDeployList(options.siteID, options.accessToken)
-                : Promise.resolve([]);
-        Promise.all(
-            matchedFiles.map(async filename =>
-                eachFile({
-                    options,
-                    nowDate,
-                    cache,
-                    deployList,
-                    metalsmith,
-                    files,
-                    filename,
-                }),
-            ),
-        )
-            .then(() => {
-                cache.save();
-                log('complete plugin processing');
-                done(null, files, metalsmith);
-            })
-            .catch(error => done(error, files, metalsmith));
-    };
+        const targetFileList = await getTargetFileList({
+            options,
+            files,
+            metalsmith,
+        });
+
+        if (targetFileList.length >= 1) {
+            fileLog(
+                'start lookup of published date and modified date in this files: %o',
+                targetFileList,
+            );
+
+            await lookup({
+                targetFileList,
+                options,
+                metalsmith,
+                files,
+                nowDate,
+            });
+        }
+
+        log('complete plugin processing');
+    });
 }, defaultOptions);

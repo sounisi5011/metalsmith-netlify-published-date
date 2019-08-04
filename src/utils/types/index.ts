@@ -8,4 +8,6 @@ export type isReadonlyOrWritableArray = (
     value: unknown,
 ) => value is unknown[] | readonly unknown[];
 
+export type PromiseValueType<T> = T extends PromiseLike<infer U> ? U : never;
+
 export * from './deep-readonly';

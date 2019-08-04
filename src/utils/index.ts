@@ -1,5 +1,9 @@
 import path from 'path';
 
+export function isNotVoid<T>(value: T | undefined | void): value is T {
+    return value !== undefined;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isObject(value: unknown): value is Record<any, unknown> {
     return typeof value === 'object' && value !== null;
@@ -16,8 +20,43 @@ export function hasProp<
     return Object.prototype.hasOwnProperty.call(value, prop);
 }
 
+/**
+ * @see https://github.com/lodash/lodash/blob/f8c7064d450cc068144c4dad1d63535cba25ae6d/.internal/getAllKeys.js
+ */
+export function getAllProps(value: object): PropertyKey[] {
+    const symbolProps = Object.getOwnPropertySymbols(value).filter(symbol =>
+        Object.prototype.propertyIsEnumerable.call(value, symbol),
+    );
+    return [...Object.keys(value), ...symbolProps];
+}
+
+export function deleteAllProp<T extends Record<PropertyKey, unknown>>(
+    value: T,
+): T {
+    getAllProps(value).forEach(prop => {
+        // @ts-ignore: TS2538 -- Type 'symbol' cannot be used as an index type.
+        delete value[prop];
+    });
+    return value;
+}
+
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
+}
+
+export function mapGetWithDefault<K, V>(map: {
+    get(key: K): V | undefined;
+    set(key: K, value: V): unknown;
+}): (key: K, defaultValue: V) => V {
+    return (key, defaultValue) => {
+        const value = map.get(key);
+        if (value !== undefined) {
+            return value;
+        } else {
+            map.set(key, defaultValue);
+            return defaultValue;
+        }
+    };
 }
 
 export function rfc3986EncodeURIComponent(uriComponent: string): string {
@@ -56,4 +95,27 @@ export function findEqualsPath(
         targetPath =>
             path.resolve(baseDirpath, targetPath) === absoluteFilepath,
     );
+}
+
+/**
+ * @see https://stackoverflow.com/a/51321724/4907315
+ */
+export class MapWithDefault<K, V> extends Map<K, V> {
+    private defaultGenerator: (key: K) => V;
+
+    public constructor(defaultGenerator: (key: K) => V) {
+        super();
+        this.defaultGenerator = defaultGenerator;
+    }
+
+    public get(key: K): V {
+        const value = super.get(key);
+        if (value !== undefined) {
+            return value;
+        } else {
+            const defaultValue = this.defaultGenerator(key);
+            this.set(key, defaultValue);
+            return defaultValue;
+        }
+    }
 }

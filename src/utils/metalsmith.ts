@@ -47,6 +47,35 @@ export function getMatchedFiles(
     return matchedFiles;
 }
 
+export async function processFiles(
+    metalsmith: Metalsmith,
+    files: Metalsmith.Files,
+    plugins: readonly Metalsmith.Plugin[],
+): Promise<Metalsmith.Files> {
+    return new Promise((resolve, reject) => {
+        metalsmith.run(files, [...plugins], (err, files) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files);
+            }
+        });
+    });
+}
+
+export function createPlugin(
+    callback: (
+        files: Metalsmith.Files,
+        metalsmith: Metalsmith,
+    ) => Promise<void>,
+): Metalsmith.Plugin {
+    return (files, metalsmith, done) => {
+        callback(files, metalsmith)
+            .then(() => done(null, files, metalsmith))
+            .catch(error => done(error, files, metalsmith));
+    };
+}
+
 export function createEachPlugin(
     callback: (
         filename: string,
