@@ -6,9 +6,23 @@ import path from 'path';
 import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
+import { isObject } from '../src/utils';
 import { isFile } from '../src/utils/metalsmith';
 import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import { deleteProps, entries2obj } from './helpers/utils';
+
+function deleteMetadataProps(
+    files: Metalsmith.Files,
+    props: readonly string[],
+): Metalsmith.Files {
+    return entries2obj(
+        Object.entries<unknown>(files).map(([prop, value]) => [
+            prop,
+            isObject(value) ? deleteProps(value, props) : value,
+        ]),
+    );
+}
 
 function processCountPlugin(
     list: ({ clone: Metalsmith.Files; ref: Metalsmith.Files })[],
@@ -69,7 +83,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         [
             {
                 key: 'initial',
-                '/initial.html': 'initial',
+                '/initial.html': { filepath: 'initial.html' },
             },
             {},
             {},
@@ -140,7 +154,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     t.is(
         initialPagePreviewLogs.length,
-        server.deploys.length - 1,
+        server.deploys.length,
         'If the page was deployed initial, should have requested all the previews',
     );
 
@@ -158,9 +172,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     const firstLog = pluginsRunLogs[0];
     pluginsRunLogs.forEach((log, index) => {
         t.deepEqual(
-            log.clone,
-            firstLog.clone,
-            `Object value in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+            deleteMetadataProps(log.clone, ['published', 'modified']),
+            deleteMetadataProps(firstLog.clone, ['published', 'modified']),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
         );
         t.is(
             log.ref,
@@ -203,7 +217,7 @@ test('If the plugin gets progressing build of self, make the published date and 
         [
             {
                 key: 'initial',
-                '/initial.html': 'initial',
+                '/initial.html': { filepath: 'initial.html' },
             },
             {},
             {},
@@ -295,7 +309,7 @@ test('If the plugin gets progressing build of self, make the published date and 
 
     t.is(
         initialPagePreviewLogs.length,
-        server.deploys.length - 1,
+        server.deploys.filter(deploy => deploy.state === 'ready').length,
         'If the page was deployed initial, should have requested all the previews',
     );
 
@@ -313,9 +327,9 @@ test('If the plugin gets progressing build of self, make the published date and 
     const firstLog = pluginsRunLogs[0];
     pluginsRunLogs.forEach((log, index) => {
         t.deepEqual(
-            log.clone,
-            firstLog.clone,
-            `Object value in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+            deleteMetadataProps(log.clone, ['published', 'modified']),
+            deleteMetadataProps(firstLog.clone, ['published', 'modified']),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
         );
         t.is(
             log.ref,
