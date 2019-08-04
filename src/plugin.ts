@@ -15,6 +15,7 @@ import {
     FileInterface,
     getMatchedFiles,
     isFile,
+    processFiles,
 } from './utils/metalsmith';
 import { DeepReadonly } from './utils/types';
 
@@ -159,6 +160,48 @@ export async function getTargetFileList({
         }),
     )).filter(isNotVoid);
     return targetFileList;
+}
+
+export function setMetadata({
+    fileData,
+    files,
+    filename,
+    metalsmith,
+    metadata,
+    options,
+    nowDate,
+}: {
+    fileData: FileInterface;
+    files: Metalsmith.Files;
+    filename: string;
+    metalsmith: Metalsmith;
+    metadata: { published: string | null; modified: string | null };
+    options: OptionsInterface;
+    nowDate: number;
+}): { fileData: FileInterface } {
+    fileData.published = defaultDate2value({
+        dateStr: metadata.published,
+        defaultDate: options.defaultDate,
+        nowDate,
+        metadata: {
+            files,
+            filename,
+            fileData,
+            metalsmith,
+        },
+    });
+    fileData.modified = defaultDate2value({
+        dateStr: metadata.modified,
+        defaultDate: options.defaultDate,
+        nowDate,
+        metadata: {
+            files,
+            filename,
+            fileData,
+            metalsmith,
+        },
+    });
+    return { fileData };
 }
 
 export async function eachFile({
@@ -414,27 +457,14 @@ export async function eachFile({
         });
     }
 
-    fileData.published = defaultDate2value({
-        dateStr: published,
-        defaultDate: options.defaultDate,
+    setMetadata({
+        fileData,
+        files,
+        filename,
+        metalsmith,
+        metadata: { published, modified },
+        options,
         nowDate,
-        metadata: {
-            files,
-            filename,
-            fileData,
-            metalsmith,
-        },
-    });
-    fileData.modified = defaultDate2value({
-        dateStr: modified,
-        defaultDate: options.defaultDate,
-        nowDate,
-        metadata: {
-            files,
-            filename,
-            fileData,
-            metalsmith,
-        },
     });
     fileLog('%s / stored metadata: %o', filename, {
         published: fileData.published,
@@ -504,13 +534,27 @@ export default createPluginGenerator((opts = {}) => {
                     targetFileList,
                 );
 
-                await lookup({
+                const metaMap = await lookup({
                     targetFileList,
                     options,
                     metalsmith,
                     files,
                     nowDate,
                 });
+
+                metaMap.forEach((metadata, filename) => {
+                    setMetadata({
+                        fileData: files[filename],
+                        files,
+                        filename,
+                        metalsmith,
+                        metadata,
+                        options,
+                        nowDate,
+                    });
+                });
+
+                await processFiles(metalsmith, files, options.plugins);
             }
         }
 

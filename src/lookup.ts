@@ -15,6 +15,11 @@ const log = debug.extend('lookup');
 const fileLog = log.extend('file');
 const previewLog = log.extend('netlify-preview');
 
+export interface FileMetadataInterface {
+    published: string;
+    modified: string;
+}
+
 export interface FileDateStateInterface {
     published: DateState;
     modified: DateState;
@@ -375,7 +380,7 @@ export default async function({
     metalsmith: Metalsmith;
     files: Metalsmith.Files;
     nowDate: number;
-}): Promise<void> {
+}): Promise<Map<string, FileMetadataInterface>> {
     /**
      * @see https://github.com/sounisi5011/sounisi5011.jp/issues/39#issuecomment-508548319
      */
@@ -436,4 +441,14 @@ export default async function({
     }
 
     cache.save();
+
+    return new Map(
+        [...dateStateMap.entries()].map(([filename, dateState]) => [
+            filename,
+            {
+                published: String(dateState.published),
+                modified: String(dateState.modified),
+            },
+        ]),
+    );
 }
