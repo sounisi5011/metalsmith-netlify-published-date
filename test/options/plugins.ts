@@ -9,6 +9,19 @@ test.before(() => {
     process.chdir(path.join(__dirname, 'fixtures'));
 });
 
+test('should pass the plugin function array to the options value', t => {
+    const plugin1: Metalsmith.Plugin = () => {};
+    const plugin2: Metalsmith.Plugin = (...args: unknown[]) => args;
+    const options = normalizeOptions(
+        {
+            plugins: [plugin1, plugin2],
+        },
+        netlifyPublishedDate.defaultOptions,
+    );
+
+    t.deepEqual(options.plugins, [plugin1, plugin2]);
+});
+
 test('should to import plugin files by plain object', t => {
     const cwd = process.cwd();
     const options = normalizeOptions(
