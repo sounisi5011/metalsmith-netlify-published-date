@@ -169,6 +169,7 @@ export async function eachFile({
     metalsmith,
     files,
     filename,
+    urlpath,
 }: {
     options: OptionsInterface;
     nowDate: number;
@@ -177,22 +178,13 @@ export async function eachFile({
     metalsmith: Metalsmith;
     files: Metalsmith.Files;
     filename: string;
+    urlpath: string;
 }): Promise<void> {
     const fileData = files[filename];
 
-    fileLog('%s / checking file', filename);
     if (!isFile(fileData)) {
         return;
     }
-
-    const urlPath = path2url(
-        await options.filename2urlPath(filename, {
-            files,
-            fileData,
-            metalsmith,
-        }),
-    );
-    fileLog('%s / get URL Path: %s', filename, urlPath);
 
     const fileContents = await options.contentsConverter(fileData.contents, {
         files,
@@ -207,7 +199,7 @@ export async function eachFile({
     const previewPageResponseMap = new Map<string, Buffer>();
 
     for (const deploy of await deployList) {
-        const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlPath);
+        const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlpath);
 
         const cachedResponse = cache.get(previewPageURL);
         if (cachedResponse) {
@@ -488,20 +480,38 @@ export default createPluginGenerator((opts = {}) => {
             files,
             metalsmith,
         });
+        if (options.plugins.length >= 1) {
+            if (targetFileList.length >= 1) {
+                fileLog(
+                    'start lookup of published date and modified date in this files: %o',
+                    targetFileList,
+                );
 
-        if (targetFileList.length >= 1) {
-            fileLog(
-                'start lookup of published date and modified date in this files: %o',
-                targetFileList,
+                await lookup({
+                    targetFileList,
+                    options,
+                    metalsmith,
+                    files,
+                    nowDate,
+                });
+            }
+        } else if (targetFileList.length >= 1) {
+            const cache = new PreviewCache(options.cacheDir);
+            const deployList = getDeployList(options);
+
+            await Promise.all(
+                targetFileList.map(async targetFile =>
+                    eachFile({
+                        ...targetFile,
+                        options,
+                        nowDate,
+                        cache,
+                        deployList,
+                        metalsmith,
+                        files,
+                    }),
+                ),
             );
-
-            await lookup({
-                targetFileList,
-                options,
-                metalsmith,
-                files,
-                nowDate,
-            });
         }
 
         log('complete plugin processing');
