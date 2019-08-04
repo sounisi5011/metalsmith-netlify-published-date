@@ -249,7 +249,7 @@ export async function getPreviewDataList({
                 fileData.modified = new Date(metadata.modified);
 
                 if (!dateState.published.established) {
-                    dateState.published.date = metadata.published;
+                    dateState.published.date = publishedDate(deploy);
                 }
             }
 
@@ -348,7 +348,7 @@ export async function comparePages({
                     previewPageURL,
                 );
 
-                dateState.published.date = metadata.published;
+                dateState.modified.date = publishedDate(deploy);
             } else {
                 fileLog(
                     '%s / did not match the content of preview %s',
