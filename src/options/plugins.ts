@@ -10,10 +10,15 @@ type ReturnValueType = OptionsInterface[typeof PROP];
 /**
  * @see https://github.com/segmentio/metalsmith/blob/f9c5bd82701683ce648431e51ea2ee87ac07048f/bin/_metalsmith#L143-L161
  */
-export function getPluginList(obj: unknown): Record<string, unknown>[] {
+export function getPluginList(
+    obj: unknown,
+): (Function | Record<string, unknown>)[] {
     if (Array.isArray(obj)) {
         const list: unknown[] = obj;
-        return list.filter(isObject);
+        return list.filter(
+            (plugin): plugin is Function | Record<string, unknown> =>
+                isObject(plugin) || typeof plugin === 'function',
+        );
     }
     if (isObject(obj)) {
         return Object.entries(obj).map(([key, value]) => ({ [key]: value }));
@@ -57,18 +62,22 @@ export function importFunc(filepath: string): Function {
 
 export function normalize(value: unknown): ReturnValueType {
     return getPluginList(value)
-        .map(plugins =>
-            Object.entries(plugins).map(([name, opts]) => {
-                const pluginGenerator = importFunc(name);
-                const plugin: unknown = pluginGenerator(opts);
-                if (!isPlugin(plugin)) {
-                    throw new TypeError(
-                        `Plugin "${name}" specified in option "${PROP}" did not return the function: ${typeof plugin}`,
-                    );
-                }
-                return plugin;
-            }),
-        )
+        .map(plugins => {
+            if (isPlugin(plugins)) {
+                return [plugins];
+            } else {
+                return Object.entries(plugins).map(([name, opts]) => {
+                    const pluginGenerator = importFunc(name);
+                    const plugin: unknown = pluginGenerator(opts);
+                    if (!isPlugin(plugin)) {
+                        throw new TypeError(
+                            `Plugin "${name}" specified in option "${PROP}" did not return the function: ${typeof plugin}`,
+                        );
+                    }
+                    return plugin;
+                });
+            }
+        })
         .reduce(
             (pluginList1, pluginList2) => [...pluginList1, ...pluginList2],
             [],
