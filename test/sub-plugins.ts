@@ -138,14 +138,14 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         'mustache template files should be converted to html',
     );
 
-    // t.deepEqual(
-    //     files['initial.html'].published,
-    //     new Date(initialDeploy.published_at || initialDeploy.created_at),
-    // );
-    // t.deepEqual(
-    //     files['initial.html'].modified,
-    //     new Date(initialDeploy.published_at || initialDeploy.created_at),
-    // );
+    t.deepEqual(
+        files['initial.html'].published,
+        new Date(initialDeploy.published_at || initialDeploy.created_at),
+    );
+    t.deepEqual(
+        files['initial.html'].modified,
+        new Date(initialDeploy.published_at || initialDeploy.created_at),
+    );
 
     // t.true(files['new.html'].published instanceof Date);
     // t.true(files['new.html'].published > lastPublishedDate);
@@ -287,14 +287,14 @@ test('If the plugin gets progressing build of self, make the published date and 
         'mustache template files should be converted to html',
     );
 
-    // t.deepEqual(
-    //     files['initial.html'].published,
-    //     new Date(initialDeploy.published_at || initialDeploy.created_at),
-    // );
-    // t.deepEqual(
-    //     files['initial.html'].modified,
-    //     new Date(initialDeploy.published_at || initialDeploy.created_at),
-    // );
+    t.deepEqual(
+        files['initial.html'].published,
+        new Date(initialDeploy.published_at || initialDeploy.created_at),
+    );
+    t.deepEqual(
+        files['initial.html'].modified,
+        new Date(initialDeploy.published_at || initialDeploy.created_at),
+    );
 
     // t.deepEqual(
     //     files['new.html'].published,
