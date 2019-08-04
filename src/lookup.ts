@@ -1,5 +1,4 @@
 import got from 'got';
-import cloneDeep from 'lodash.clonedeep';
 import Metalsmith from 'metalsmith';
 
 import PreviewCache from './cache/preview';
@@ -9,6 +8,7 @@ import { OptionsInterface } from './plugin';
 import { joinURL, MapWithDefault } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
+import createState from './utils/obj-restore';
 import { PromiseValueType } from './utils/types';
 
 const log = debug.extend('lookup');
@@ -386,6 +386,7 @@ export default async function({
      */
 
     const cache = new PreviewCache(pluginOptions.cacheDir);
+    const filesState = createState(files);
     const dateStateMap = new MapWithDefault<string, FileDateStateInterface>(
         () => ({
             published: new DateState(nowDate),
@@ -400,7 +401,7 @@ export default async function({
             dateStateMap: previewUpdatedDateStateMap,
         } = await getPreviewDataList({
             targetFileList,
-            files: cloneDeep(files),
+            files,
             dateStateMap,
             deploy,
             pluginOptions,
@@ -438,8 +439,11 @@ export default async function({
         if (isAllfileEstablished(updatedDateStateMap)) {
             break;
         }
+
+        filesState.restore();
     }
 
+    filesState.restore();
     cache.save();
 
     return new Map(

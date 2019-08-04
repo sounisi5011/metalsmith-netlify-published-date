@@ -23,18 +23,16 @@ export function hasProp<
 /**
  * @see https://github.com/lodash/lodash/blob/f8c7064d450cc068144c4dad1d63535cba25ae6d/.internal/getAllKeys.js
  */
-export function getAllProps(value: object): PropertyKey[] {
+export function getAllProps<T extends object>(value: T): (keyof T)[] {
     const symbolProps = Object.getOwnPropertySymbols(value).filter(symbol =>
         Object.prototype.propertyIsEnumerable.call(value, symbol),
     );
+    // @ts-ignore: TS2322 -- Type '(string | symbol)[]' is not assignable to type '(keyof T)[]'.
     return [...Object.keys(value), ...symbolProps];
 }
 
-export function deleteAllProp<T extends Record<PropertyKey, unknown>>(
-    value: T,
-): T {
+export function deleteAllProp<T extends object>(value: T): T {
     getAllProps(value).forEach(prop => {
-        // @ts-ignore: TS2538 -- Type 'symbol' cannot be used as an index type.
         delete value[prop];
     });
     return value;
