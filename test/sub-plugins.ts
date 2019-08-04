@@ -53,6 +53,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
         netlifyPublishedDate({
+            pattern: ['**/*.html', '**/*.mustache'],
+            filename2urlPath: filename =>
+                filename.replace(/\.mustache$/, '.html'),
             siteID,
             cacheDir: null,
             plugins: [
@@ -184,6 +187,9 @@ test('If the plugin gets progressing build of self, make the published date and 
     const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
         netlifyPublishedDate({
+            pattern: ['**/*.html', '**/*.mustache'],
+            filename2urlPath: filename =>
+                filename.replace(/\.mustache$/, '.html'),
             siteID,
             cacheDir: null,
             plugins: [
