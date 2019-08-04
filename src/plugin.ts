@@ -480,8 +480,25 @@ export default createPluginGenerator((opts = {}) => {
             files,
             metalsmith,
         });
-        if (options.plugins.length >= 1) {
-            if (targetFileList.length >= 1) {
+        if (targetFileList.length >= 1) {
+            if (options.plugins.length < 1) {
+                const cache = new PreviewCache(options.cacheDir);
+                const deployList = getDeployList(options);
+
+                await Promise.all(
+                    targetFileList.map(async targetFile =>
+                        eachFile({
+                            ...targetFile,
+                            options,
+                            nowDate,
+                            cache,
+                            deployList,
+                            metalsmith,
+                            files,
+                        }),
+                    ),
+                );
+            } else {
                 fileLog(
                     'start lookup of published date and modified date in this files: %o',
                     targetFileList,
@@ -495,23 +512,6 @@ export default createPluginGenerator((opts = {}) => {
                     nowDate,
                 });
             }
-        } else if (targetFileList.length >= 1) {
-            const cache = new PreviewCache(options.cacheDir);
-            const deployList = getDeployList(options);
-
-            await Promise.all(
-                targetFileList.map(async targetFile =>
-                    eachFile({
-                        ...targetFile,
-                        options,
-                        nowDate,
-                        cache,
-                        deployList,
-                        metalsmith,
-                        files,
-                    }),
-                ),
-            );
         }
 
         log('complete plugin processing');
