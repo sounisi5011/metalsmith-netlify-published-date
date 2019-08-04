@@ -135,7 +135,7 @@ export async function fetchPageData({
         const previewPageResponse = await got(previewPageURL, {
             encoding: null,
         });
-        previewLog('%s / fetchd', previewPageURL);
+        previewLog('fetch is successful / %s', previewPageURL);
 
         const published = publishedDate(deploy);
         const modified = publishedDate(deploy);
@@ -155,11 +155,14 @@ export async function fetchPageData({
         };
     } catch (error) {
         if (error instanceof got.HTTPError) {
-            previewLog('%s / fetchd', previewPageURL);
+            previewLog(
+                'fetch fails with HTTP %s %s / %s',
+                error.statusCode,
+                error.statusMessage,
+                previewPageURL,
+            );
 
             if (error.statusCode === 404) {
-                previewLog('%s / 404 Not Found', previewPageURL);
-
                 return {
                     filename,
                     urlpath,
@@ -205,8 +208,6 @@ export async function getPreviewDataList({
             });
 
             if (previewData.previewPageNotFound) {
-                previewLog('%s / 404 Not Found', previewPageURL);
-
                 if (!dateState.published.established) {
                     fileLog(
                         !dateState.modified.established
@@ -390,6 +391,10 @@ export default async function({
             metalsmith,
             updatedFiles,
             pluginOptions.plugins,
+        );
+        log(
+            'generated a files to compare to the preview pages / %s',
+            deploy.deployAbsoluteURL,
         );
 
         const { dateStateMap: compareUpdatedDateStateMap } = await comparePages(
