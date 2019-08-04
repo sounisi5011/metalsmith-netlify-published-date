@@ -12,6 +12,25 @@ import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
 import { deleteProps, entries2obj } from './helpers/utils';
 
+function replaceMetadataPropsValue(
+    files: Metalsmith.Files,
+    props: readonly string[],
+    value: unknown,
+): Metalsmith.Files {
+    return entries2obj(
+        Object.entries<unknown>(files).map(([filename, filedata]) => {
+            if (isObject(filedata)) {
+                props.forEach(prop => {
+                    if (prop in filedata) {
+                        filedata[prop] = value;
+                    }
+                });
+            }
+            return [filename, filedata];
+        }),
+    );
+}
+
 function deleteMetadataProps(
     files: Metalsmith.Files,
     props: readonly string[],
@@ -64,20 +83,23 @@ function convertMustachePlugin(): Metalsmith.Plugin {
 
 test('Plugins specified in the "plugins" option should be execute', async t => {
     const siteID = 'template.test';
+    const beforeFilesList: (Parameters<typeof processCountPlugin>)[0] = [];
     const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
-    const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
-        netlifyPublishedDate({
-            pattern: ['**/*.html', '**/*.mustache'],
-            filename2urlPath: filename =>
-                filename.replace(/\.mustache$/, '.html'),
-            siteID,
-            cacheDir: null,
-            plugins: [
-                convertMustachePlugin(),
-                processCountPlugin(pluginsRunLogs),
-            ],
-        }),
-    );
+    const metalsmith = Metalsmith(path.join(fixtures, 'template'))
+        .use(processCountPlugin(beforeFilesList))
+        .use(
+            netlifyPublishedDate({
+                pattern: ['**/*.html', '**/*.mustache'],
+                filename2urlPath: filename =>
+                    filename.replace(/\.mustache$/, '.html'),
+                siteID,
+                cacheDir: null,
+                plugins: [
+                    processCountPlugin(pluginsRunLogs),
+                    convertMustachePlugin(),
+                ],
+            }),
+        );
     const server = await createNetlify(
         siteID,
         [
@@ -107,6 +129,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     // const lastPublishedDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -129,6 +152,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
             initialPage: initialPagePreviewLogs.map(requestLog2str),
         },
         requestCountPerPage,
+        beforeFiles,
         pluginsRunLogs,
     });
 
@@ -169,28 +193,41 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         'Plugins specified in the "plugins" option should be executed the maximum number of preview requests + 1 times',
     );
 
-    const firstLog = pluginsRunLogs[0];
+    const lastLog = pluginsRunLogs[pluginsRunLogs.length - 1];
     pluginsRunLogs.forEach((log, index) => {
         t.deepEqual(
             deleteMetadataProps(log.clone, ['published', 'modified']),
-            deleteMetadataProps(firstLog.clone, ['published', 'modified']),
-            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+            deleteMetadataProps(beforeFiles.clone, ['published', 'modified']),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: beforeFiles.clone equals pluginsRunLogs[${index}].clone`,
+        );
+        t.deepEqual(
+            replaceMetadataPropsValue(
+                log.clone,
+                ['published', 'modified'],
+                '[ value replaced by test ]',
+            ),
+            replaceMetadataPropsValue(
+                lastLog.clone,
+                ['published', 'modified'],
+                '[ value replaced by test ]',
+            ),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties value difference: pluginsRunLogs[{last index}].clone equals pluginsRunLogs[${index}].clone`,
         );
         t.is(
             log.ref,
-            firstLog.ref,
-            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref === pluginsRunLogs[${index}].ref`,
+            beforeFiles.ref,
+            `Object references in the "files" variable should be the same for each execution of the plugins: beforeFiles.ref === pluginsRunLogs[${index}].ref`,
         );
 
         new Set([
-            ...Object.keys(firstLog.ref),
+            ...Object.keys(beforeFiles.ref),
             ...Object.keys(log.ref),
         ]).forEach(filename => {
             const escapedFilename = JSON.stringify(filename);
             t.is(
                 log.ref[filename],
-                firstLog.ref[filename],
-                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
+                beforeFiles.ref[filename],
+                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: beforeFiles.ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
             );
         });
     });
@@ -198,20 +235,23 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
 test('If the plugin gets progressing build of self, make the published date and the modified date of the new file the deploy created date', async t => {
     const siteID = 'progressing-deploy.template.test';
+    const beforeFilesList: (Parameters<typeof processCountPlugin>)[0] = [];
     const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
-    const metalsmith = Metalsmith(path.join(fixtures, 'template')).use(
-        netlifyPublishedDate({
-            pattern: ['**/*.html', '**/*.mustache'],
-            filename2urlPath: filename =>
-                filename.replace(/\.mustache$/, '.html'),
-            siteID,
-            cacheDir: null,
-            plugins: [
-                convertMustachePlugin(),
-                processCountPlugin(pluginsRunLogs),
-            ],
-        }),
-    );
+    const metalsmith = Metalsmith(path.join(fixtures, 'template'))
+        .use(processCountPlugin(beforeFilesList))
+        .use(
+            netlifyPublishedDate({
+                pattern: ['**/*.html', '**/*.mustache'],
+                filename2urlPath: filename =>
+                    filename.replace(/\.mustache$/, '.html'),
+                siteID,
+                cacheDir: null,
+                plugins: [
+                    processCountPlugin(pluginsRunLogs),
+                    convertMustachePlugin(),
+                ],
+            }),
+        );
     const server = await createNetlify(
         siteID,
         [
@@ -256,6 +296,7 @@ test('If the plugin gets progressing build of self, make the published date and 
     });
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -324,28 +365,41 @@ test('If the plugin gets progressing build of self, make the published date and 
         'Plugins specified in the "plugins" option should be executed the maximum number of preview requests + 1 times',
     );
 
-    const firstLog = pluginsRunLogs[0];
+    const lastLog = pluginsRunLogs[pluginsRunLogs.length - 1];
     pluginsRunLogs.forEach((log, index) => {
         t.deepEqual(
             deleteMetadataProps(log.clone, ['published', 'modified']),
-            deleteMetadataProps(firstLog.clone, ['published', 'modified']),
-            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: pluginsRunLogs[0].clone equals pluginsRunLogs[${index}].clone`,
+            deleteMetadataProps(beforeFiles.clone, ['published', 'modified']),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties: beforeFiles.clone equals pluginsRunLogs[${index}].clone`,
+        );
+        t.deepEqual(
+            replaceMetadataPropsValue(
+                log.clone,
+                ['published', 'modified'],
+                '[ value replaced by test ]',
+            ),
+            replaceMetadataPropsValue(
+                lastLog.clone,
+                ['published', 'modified'],
+                '[ value replaced by test ]',
+            ),
+            `Object value in the "files" variable should be the same for each execution of the plugins, except for the "published" and "modified" properties value difference: pluginsRunLogs[{last index}].clone equals pluginsRunLogs[${index}].clone`,
         );
         t.is(
             log.ref,
-            firstLog.ref,
-            `Object references in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref === pluginsRunLogs[${index}].ref`,
+            beforeFiles.ref,
+            `Object references in the "files" variable should be the same for each execution of the plugins: beforeFiles.ref === pluginsRunLogs[${index}].ref`,
         );
 
         new Set([
-            ...Object.keys(firstLog.ref),
+            ...Object.keys(beforeFiles.ref),
             ...Object.keys(log.ref),
         ]).forEach(filename => {
             const escapedFilename = JSON.stringify(filename);
             t.is(
                 log.ref[filename],
-                firstLog.ref[filename],
-                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: pluginsRunLogs[0].ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
+                beforeFiles.ref[filename],
+                `Object references for each file data in the "files" variable should be the same for each execution of the plugins: beforeFiles.ref[${escapedFilename}] === pluginsRunLogs[${index}].ref[${escapedFilename}]`,
             );
         });
     });
