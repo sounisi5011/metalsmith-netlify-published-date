@@ -59,6 +59,20 @@ export function isEstablished(dateState: FileDateStateInterface): boolean {
     return dateState.published.established && dateState.modified.established;
 }
 
+export function isAllfileModifiedEstablished(
+    dateStateMap: Map<string, FileDateStateInterface>,
+): boolean {
+    return [...dateStateMap.values()].every(
+        dateState => dateState.modified.established,
+    );
+}
+
+export function isAllfileEstablished(
+    dateStateMap: Map<string, FileDateStateInterface>,
+): boolean {
+    return [...dateStateMap.values()].every(isEstablished);
+}
+
 export function publishedDate(deploy: NetlifyDeployData): string {
     return deploy.published_at || deploy.created_at;
 }
@@ -387,31 +401,36 @@ export default async function({
             pluginOptions,
         });
 
-        const processedFiles = await processFiles(
-            metalsmith,
-            updatedFiles,
-            pluginOptions.plugins,
-        );
-        log(
-            'generated a files to compare to the preview pages / %s',
-            deploy.deployAbsoluteURL,
-        );
+        let updatedDateStateMap: typeof dateStateMap;
 
-        const { dateStateMap: compareUpdatedDateStateMap } = await comparePages(
-            {
+        if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
+            updatedDateStateMap = previewUpdatedDateStateMap;
+        } else {
+            const processedFiles = await processFiles(
+                metalsmith,
+                updatedFiles,
+                pluginOptions.plugins,
+            );
+            log(
+                'generated a files to compare to the preview pages / %s',
+                deploy.deployAbsoluteURL,
+            );
+
+            const {
+                dateStateMap: compareUpdatedDateStateMap,
+            } = await comparePages({
                 previewDataList,
                 processedFiles,
                 dateStateMap: previewUpdatedDateStateMap,
                 deploy,
                 pluginOptions,
                 metalsmith,
-            },
-        );
+            });
 
-        const isAllfileEstablished = [
-            ...compareUpdatedDateStateMap.values(),
-        ].every(isEstablished);
-        if (isAllfileEstablished) {
+            updatedDateStateMap = compareUpdatedDateStateMap;
+        }
+
+        if (isAllfileEstablished(updatedDateStateMap)) {
             break;
         }
     }
