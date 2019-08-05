@@ -1,11 +1,18 @@
 import got from 'got';
 import Metalsmith from 'metalsmith';
+import { URL } from 'url';
 
 import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
-import { isNotVoid, joinURL, MapWithDefault, pickProps } from './utils';
+import {
+    isNotVoid,
+    joinURL,
+    MapWithDefault,
+    pickProps,
+    url2path,
+} from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
 import createState from './utils/obj-restore';
@@ -114,6 +121,13 @@ export function isAllfileEstablished(
 
 export function publishedDate(deploy: NetlifyDeployData): string {
     return deploy.published_at || deploy.created_at;
+}
+
+// TODO: Make it user-definable
+export function previewPageURL2filename(previewPageURL: string): string {
+    const urlpath = new URL(previewPageURL).pathname;
+    const filename = url2path(urlpath.replace(/^\/+/, ''));
+    return filename;
 }
 
 export async function getDeployList({
@@ -380,13 +394,16 @@ export async function comparePages({
             }
 
             const {
-                filename,
+                filename: beforeFilename,
                 previewPageURL,
                 contents: previewPageContents,
                 metadata,
             } = previewData;
-            const dateState = dateStateMap.get(filename);
-            const fileData: unknown = processedFiles[filename];
+            const dateState = dateStateMap.get(beforeFilename);
+            // TODO: Make it user-definable
+            // TODO: Support /pathname/ -> pathname/index.html
+            const processedFilename = previewPageURL2filename(previewPageURL);
+            const fileData: unknown = processedFiles[processedFilename];
 
             if (dateState.modified.established) {
                 return;
@@ -395,7 +412,7 @@ export async function comparePages({
             if (!isFile(fileData)) {
                 fileLog(
                     '%s / contents was not generated. used metadata: %o',
-                    filename,
+                    beforeFilename,
                     {
                         ...metadata,
                         published: new Date(metadata.published),
@@ -414,7 +431,7 @@ export async function comparePages({
                 fileData.contents,
                 {
                     files: processedFiles,
-                    filename,
+                    filename: processedFilename,
                     fileData,
                     metalsmith,
                 },
@@ -436,7 +453,7 @@ export async function comparePages({
                                   'cachedResponse',
                               ])),
                         files: processedFiles,
-                        filename,
+                        filename: processedFilename,
                         fileData,
                         metalsmith,
                     },
@@ -444,7 +461,7 @@ export async function comparePages({
             ) {
                 fileLog(
                     '%s / matched the content of preview %s',
-                    filename,
+                    beforeFilename,
                     previewPageURL,
                 );
 
@@ -452,14 +469,14 @@ export async function comparePages({
             } else {
                 fileLog(
                     '%s / did not match the content of preview %s',
-                    filename,
+                    beforeFilename,
                     previewPageURL,
                 );
 
                 dateState.modified.established = true;
                 fileLog(
                     '%s / modified date is established: %s',
-                    filename,
+                    beforeFilename,
                     dateState.modified.date,
                 );
             }

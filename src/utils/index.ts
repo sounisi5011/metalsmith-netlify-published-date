@@ -74,6 +74,13 @@ export function path2url(pathstr: string): string {
         .join('/');
 }
 
+export function url2path(urlpath: string): string {
+    return urlpath
+        .split('/')
+        .map(decodeURIComponent)
+        .join(path.sep);
+}
+
 export function findEqualsPath(
     baseDirpath: string,
     filepath: string,
