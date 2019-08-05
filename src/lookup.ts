@@ -135,24 +135,6 @@ export async function getDeployList({
     return deployList;
 }
 
-export async function fetchPage(
-    url: string,
-): Promise<got.Response<Buffer> | null> {
-    try {
-        const response = await got(url, { encoding: null });
-        previewLog('%s / fetchd', url);
-        return response;
-    } catch (error) {
-        if (error instanceof got.HTTPError) {
-            previewLog('%s / fetchd', url);
-            if (error.statusCode === 404) {
-                return null;
-            }
-        }
-        throw error;
-    }
-}
-
 export async function fetchPageData({
     filename,
     urlpath,

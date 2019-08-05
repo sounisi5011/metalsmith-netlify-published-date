@@ -31,13 +31,6 @@ export function getAllProps<T extends object>(value: T): (keyof T)[] {
     return [...Object.keys(value), ...symbolProps];
 }
 
-export function deleteAllProp<T extends object>(value: T): T {
-    getAllProps(value).forEach(prop => {
-        delete value[prop];
-    });
-    return value;
-}
-
 export function pickProps<T extends object, U extends keyof T>(
     obj: T,
     props: readonly U[],
@@ -53,21 +46,6 @@ export function pickProps<T extends object, U extends keyof T>(
 
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
-}
-
-export function mapGetWithDefault<K, V>(map: {
-    get(key: K): V | undefined;
-    set(key: K, value: V): unknown;
-}): (key: K, defaultValue: V) => V {
-    return (key, defaultValue) => {
-        const value = map.get(key);
-        if (value !== undefined) {
-            return value;
-        } else {
-            map.set(key, defaultValue);
-            return defaultValue;
-        }
-    };
 }
 
 export function rfc3986EncodeURIComponent(uriComponent: string): string {
