@@ -106,6 +106,19 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
             {
                 key: 'initial',
                 '/initial.html': { filepath: 'initial.html' },
+                '/modified.html': Buffer.from(''),
+            },
+            {},
+            {
+                key: 'added',
+                '/added.html': { filepath: 'added.html' },
+                '/add-modified.html': '',
+            },
+            {},
+            {
+                key: 'modified',
+                '/modified.html': { filepath: 'modified.mustache' },
+                '/add-modified.html': { filepath: 'add-modified.mustache' },
             },
             {},
             {},
@@ -114,9 +127,15 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     );
 
     const initialDeploy = server.deploys.getByKey('initial');
+    const addedDeploy = server.deploys.getByKey('added');
+    const modifiedDeploy = server.deploys.getByKey('modified');
 
     t.log({
-        deploys: Object.assign([...server.deploys], { initialDeploy }),
+        deploys: Object.assign([...server.deploys], {
+            initialDeploy,
+            addedDeploy,
+            modifiedDeploy,
+        }),
         previews: new Map(
             [...server.nockScope.previews.entries()].map(([url, scope]) => [
                 url,
@@ -126,12 +145,24 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         requestLogs: server.requestLogs,
     });
 
-    // const lastPublishedDate = new Date(Date.now() - 1);
+    const lastPublishedDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
     const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
+    );
+    const modifiedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/modified.html',
+    );
+    const addedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/added.html',
+    );
+    const addModifiedPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/add-modified.html',
+    );
+    const newPagePreviewLogs = server.requestLogs.previews.filter(
+        requestLog => requestLog.path === '/new.html',
     );
     const requestCountPerPage = server.requestLogs.previews.reduce(
         (requestCountPerPage, requestLog) => {
@@ -150,6 +181,10 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         requestLogs: {
             previews: server.requestLogs.previews.map(requestLog2str),
             initialPage: initialPagePreviewLogs.map(requestLog2str),
+            modifiedPage: modifiedPagePreviewLogs.map(requestLog2str),
+            addedPage: addedPagePreviewLogs.map(requestLog2str),
+            addModifiedPage: addModifiedPagePreviewLogs.map(requestLog2str),
+            newPage: newPagePreviewLogs.map(requestLog2str),
         },
         requestCountPerPage,
         beforeFiles,
@@ -157,8 +192,14 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     });
 
     t.deepEqual(
-        Object.keys(files),
-        ['initial.html', 'new.html'],
+        Object.keys(files).sort(),
+        [
+            'initial.html',
+            'added.html',
+            'add-modified.html',
+            'modified.html',
+            'new.html',
+        ].sort(),
         'mustache template files should be converted to html',
     );
 
@@ -171,15 +212,56 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         new Date(initialDeploy.published_at || initialDeploy.created_at),
     );
 
-    // t.true(files['new.html'].published instanceof Date);
-    // t.true(files['new.html'].published > lastPublishedDate);
-    // t.true(files['new.html'].modified instanceof Date);
-    // t.true(files['new.html'].modified > lastPublishedDate);
+    t.deepEqual(
+        files['added.html'].published,
+        new Date(addedDeploy.published_at || addedDeploy.created_at),
+    );
+    t.deepEqual(
+        files['added.html'].modified,
+        new Date(addedDeploy.published_at || addedDeploy.created_at),
+    );
+
+    t.deepEqual(
+        files['modified.html'].published,
+        new Date(initialDeploy.published_at || initialDeploy.created_at),
+    );
+    t.deepEqual(
+        files['modified.html'].modified,
+        new Date(modifiedDeploy.published_at || modifiedDeploy.created_at),
+    );
+
+    t.deepEqual(
+        files['add-modified.html'].published,
+        new Date(addedDeploy.published_at || addedDeploy.created_at),
+    );
+    t.deepEqual(
+        files['add-modified.html'].modified,
+        new Date(modifiedDeploy.published_at || modifiedDeploy.created_at),
+    );
+
+    t.true(files['new.html'].published instanceof Date);
+    t.true(files['new.html'].published > lastPublishedDate);
+    t.true(files['new.html'].modified instanceof Date);
+    t.true(files['new.html'].modified > lastPublishedDate);
 
     t.is(
         initialPagePreviewLogs.length,
         server.deploys.length,
         'If the page was deployed initial, should have requested all the previews',
+    );
+    t.is(
+        modifiedPagePreviewLogs.length,
+        server.deploys.length,
+        'If the page was deployed initial and modified midway, should have requested all the previews',
+    );
+    t.true(
+        addedPagePreviewLogs.length < server.deploys.length,
+        'If the page was deployed midway, should not have requested all previews',
+    );
+    t.is(
+        newPagePreviewLogs.length,
+        1,
+        'If the page has not been deployed yet, should have requested only the first preview',
     );
 
     /*
@@ -323,8 +405,14 @@ test('If the plugin gets progressing build of self, make the published date and 
     });
 
     t.deepEqual(
-        Object.keys(files),
-        ['initial.html', 'new.html'],
+        Object.keys(files).sort(),
+        [
+            'initial.html',
+            'added.html',
+            'add-modified.html',
+            'modified.html',
+            'new.html',
+        ].sort(),
         'mustache template files should be converted to html',
     );
 
