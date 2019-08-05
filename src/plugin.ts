@@ -528,6 +528,8 @@ export default createPluginGenerator((opts = {}) => {
                         }),
                     ),
                 );
+
+                cache.save();
             } else {
                 fileLog(
                     'start lookup of published date and modified date in this files: %o',
