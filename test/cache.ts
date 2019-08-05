@@ -79,10 +79,12 @@ test('filesystem', async t => {
     const firstPreviewsLogs = [...server.requestLogs.previews];
     const firstPreviewsLogLen = server.requestLogs.previews.length;
 
-    t.true(
-        (await fsStat(cacheDir)).isDirectory(),
-        'cache directory should exist',
-    );
+    t.notThrowsAsync(async () => {
+        t.true(
+            (await fsStat(cacheDir)).isDirectory(),
+            'cache directory should exist',
+        );
+    }, 'cache directory should exist');
 
     const secondFiles = await util.promisify(
         metalsmith.process.bind(metalsmith),
