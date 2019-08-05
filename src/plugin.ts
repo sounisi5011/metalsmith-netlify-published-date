@@ -511,53 +511,32 @@ export default createPluginGenerator((opts = {}) => {
             metalsmith,
         });
         if (targetFileList.length >= 1) {
-            if (options.plugins.length < 1) {
-                const cache = new PreviewCache(options.cacheDir);
-                const deployList = getDeployList(options);
+            fileLog(
+                'start lookup of published date and modified date in this files: %o',
+                targetFileList,
+            );
 
-                await Promise.all(
-                    targetFileList.map(async targetFile =>
-                        eachFile({
-                            ...targetFile,
-                            options,
-                            nowDate,
-                            cache,
-                            deployList,
-                            metalsmith,
-                            files,
-                        }),
-                    ),
-                );
+            const metaMap = await lookup({
+                targetFileList,
+                options,
+                metalsmith,
+                files,
+                nowDate,
+            });
 
-                cache.save();
-            } else {
-                fileLog(
-                    'start lookup of published date and modified date in this files: %o',
-                    targetFileList,
-                );
-
-                const metaMap = await lookup({
-                    targetFileList,
-                    options,
-                    metalsmith,
+            metaMap.forEach((metadata, filename) => {
+                setMetadata({
+                    fileData: files[filename],
                     files,
+                    filename,
+                    metalsmith,
+                    metadata,
+                    options,
                     nowDate,
                 });
+            });
 
-                metaMap.forEach((metadata, filename) => {
-                    setMetadata({
-                        fileData: files[filename],
-                        files,
-                        filename,
-                        metalsmith,
-                        metadata,
-                        options,
-                        nowDate,
-                    });
-                });
-
-                await processFiles(metalsmith, files, options.plugins);
-            }
+            await processFiles(metalsmith, files, options.plugins);
         }
 
         log('complete plugin processing');
