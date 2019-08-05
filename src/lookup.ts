@@ -4,7 +4,7 @@ import Metalsmith from 'metalsmith';
 import PreviewCache from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
-import { OptionsInterface } from './plugin';
+import { OptionsInterface, setMetadata } from './plugin';
 import { isNotVoid, joinURL, MapWithDefault } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
@@ -16,8 +16,8 @@ const fileLog = log.extend('file');
 const previewLog = log.extend('netlify-preview');
 
 export interface FileMetadataInterface {
-    published: string;
-    modified: string;
+    published: string | null;
+    modified: string | null;
 }
 
 export interface FileDateStateInterface {
@@ -26,23 +26,20 @@ export interface FileDateStateInterface {
 }
 
 export class DateState {
-    private _datestr: string;
+    private _date: string | null;
     private _isEstablished: boolean;
 
-    public constructor(date: string | number | Date) {
-        this._datestr =
-            typeof date === 'string'
-                ? date
-                : (date instanceof Date ? date : new Date(date)).toISOString();
+    public constructor() {
+        this._date = null;
         this._isEstablished = false;
     }
 
-    public get date(): string {
-        return this._datestr;
+    public get date(): string | null {
+        return this._date;
     }
-    public set date(datestr: string) {
+    public set date(datestr: string | null) {
         if (!this.established) {
-            this._datestr = datestr;
+            this._date = datestr;
         }
     }
 
@@ -53,10 +50,6 @@ export class DateState {
         if (isEstablished) {
             this._isEstablished = true;
         }
-    }
-
-    public toString(): string {
-        return this._datestr;
     }
 }
 
@@ -202,12 +195,16 @@ export async function getPreviewDataList({
     dateStateMap,
     deploy,
     pluginOptions,
+    metalsmith,
+    nowDate,
 }: {
     targetFileList: readonly { filename: string; urlpath: string }[];
     files: Metalsmith.Files;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
     deploy: NetlifyDeployData;
     pluginOptions: OptionsInterface;
+    metalsmith: Metalsmith;
+    nowDate: number;
 }): Promise<{
     previewDataList: (PromiseValueType<ReturnType<typeof fetchPageData>>)[];
     files: Metalsmith.Files;
@@ -218,8 +215,18 @@ export async function getPreviewDataList({
             const dateState = dateStateMap.get(filename);
             const fileData = files[filename];
 
-            fileData.published = new Date(dateState.published.date);
-            fileData.modified = new Date(dateState.modified.date);
+            setMetadata({
+                fileData,
+                files,
+                filename,
+                metalsmith,
+                metadata: {
+                    published: dateState.published.date,
+                    modified: dateState.modified.date,
+                },
+                options: pluginOptions,
+                nowDate,
+            });
 
             if (isEstablished(dateState)) {
                 return;
@@ -241,8 +248,8 @@ export async function getPreviewDataList({
                             ? '%s / published date and modified date is established: %s / %s'
                             : '%s / published date is established: %s',
                         filename,
-                        dateState.published,
-                        dateState.modified,
+                        dateState.published.date,
+                        dateState.modified.date,
                     );
                 }
 
@@ -251,8 +258,15 @@ export async function getPreviewDataList({
             } else {
                 const { metadata } = previewData;
 
-                fileData.published = new Date(metadata.published);
-                fileData.modified = new Date(metadata.modified);
+                setMetadata({
+                    fileData,
+                    files,
+                    filename,
+                    metalsmith,
+                    metadata,
+                    options: pluginOptions,
+                    nowDate,
+                });
 
                 if (!dateState.published.established) {
                     dateState.published.date = publishedDate(deploy);
@@ -366,7 +380,7 @@ export async function comparePages({
                 fileLog(
                     '%s / modified date is established: %s',
                     filename,
-                    dateState.modified,
+                    dateState.modified.date,
                 );
             }
         }),
@@ -395,8 +409,8 @@ export default async function({
     const filesState = createState(files);
     const dateStateMap = new MapWithDefault<string, FileDateStateInterface>(
         () => ({
-            published: new DateState(nowDate),
-            modified: new DateState(nowDate),
+            published: new DateState(),
+            modified: new DateState(),
         }),
     );
 
@@ -411,6 +425,8 @@ export default async function({
             dateStateMap,
             deploy,
             pluginOptions,
+            metalsmith,
+            nowDate,
         });
 
         let updatedDateStateMap: typeof dateStateMap;
@@ -456,8 +472,8 @@ export default async function({
         [...dateStateMap.entries()].map(([filename, dateState]) => [
             filename,
             {
-                published: String(dateState.published),
-                modified: String(dateState.modified),
+                published: dateState.published.date,
+                modified: dateState.modified.date,
             },
         ]),
     );
