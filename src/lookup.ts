@@ -5,7 +5,7 @@ import PreviewCache from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface } from './plugin';
-import { joinURL, MapWithDefault } from './utils';
+import { isNotVoid, joinURL, MapWithDefault } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
 import createState from './utils/obj-restore';
@@ -213,9 +213,17 @@ export async function getPreviewDataList({
     files: Metalsmith.Files;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
 }> {
-    const previewDataList = await Promise.all(
+    const previewDataList = (await Promise.all(
         targetFileList.map(async ({ filename, urlpath }) => {
             const dateState = dateStateMap.get(filename);
+            const fileData = files[filename];
+
+            fileData.published = new Date(dateState.published.date);
+            fileData.modified = new Date(dateState.modified.date);
+
+            if (isEstablished(dateState)) {
+                return;
+            }
 
             const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlpath);
             const previewData = await fetchPageData({
@@ -238,11 +246,9 @@ export async function getPreviewDataList({
                     );
                 }
 
-                delete files[filename];
                 dateState.published.established = true;
                 dateState.modified.established = true;
             } else {
-                const fileData = files[filename];
                 const { metadata } = previewData;
 
                 fileData.published = new Date(metadata.published);
@@ -255,7 +261,7 @@ export async function getPreviewDataList({
 
             return previewData;
         }),
-    );
+    )).filter(isNotVoid);
 
     return {
         previewDataList,
