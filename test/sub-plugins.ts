@@ -105,13 +105,13 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         [
             {
                 key: 'initial',
-                '/initial.html': { filepath: 'initial.html' },
+                '/initial.html': { filepath: 'initial.mustache' },
                 '/modified.html': Buffer.from(''),
             },
             {},
             {
                 key: 'added',
-                '/added.html': { filepath: 'added.html' },
+                '/added.html': { filepath: 'added.mustache' },
                 '/add-modified.html': '',
             },
             {},
@@ -339,7 +339,7 @@ test('If the plugin gets progressing build of self, make the published date and 
         [
             {
                 key: 'initial',
-                '/initial.html': { filepath: 'initial.html' },
+                '/initial.html': { filepath: 'initial.mustache' },
             },
             {},
             {},
