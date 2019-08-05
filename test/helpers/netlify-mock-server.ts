@@ -278,7 +278,7 @@ export default async function create(
             Object.entries(previewSchema)
                 .filter(([prop]) => !['key', 'state'].includes(prop))
                 .forEach(([filepath, filedata]) => {
-                    if (filedata) {
+                    if (filedata !== null && filedata !== undefined) {
                         const urlpathList = [addSlash(filepath)];
 
                         urlpathList.forEach(urlpath => {
