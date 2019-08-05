@@ -38,6 +38,19 @@ export function deleteAllProp<T extends object>(value: T): T {
     return value;
 }
 
+export function pickProps<T extends object, U extends keyof T>(
+    obj: T,
+    props: readonly U[],
+): Pick<T, U> {
+    const desc = Object.getOwnPropertyDescriptors(obj);
+    getAllProps(desc).forEach(prop => {
+        if (!props.includes(prop as U)) {
+            delete desc[prop];
+        }
+    });
+    return Object.defineProperties({}, desc);
+}
+
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
 }

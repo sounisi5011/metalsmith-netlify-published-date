@@ -1,15 +1,14 @@
 import got from 'got';
 import Metalsmith from 'metalsmith';
 
-import PreviewCache from './cache/preview';
+import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
 import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
-import { isNotVoid, joinURL, MapWithDefault } from './utils';
+import { isNotVoid, joinURL, MapWithDefault, pickProps } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
 import createState from './utils/obj-restore';
-import { PromiseValueType } from './utils/types';
 
 const log = debug.extend('lookup');
 const fileLog = log.extend('file');
@@ -18,6 +17,48 @@ const previewLog = log.extend('netlify-preview');
 export interface FileMetadataInterface {
     published: string | null;
     modified: string | null;
+}
+
+export type PreviewDataType =
+    | PreviewDataInterface
+    | PreviewNotFoundDataInterface
+    | PreviewCacheDataInterface;
+
+export interface PreviewBaseDataInterface {
+    filename: string;
+    urlpath: string;
+    previewPageURL: string;
+    contents: Buffer | null;
+    previewPageResponse: got.Response<Buffer> | null;
+    cachedResponse: CachedPreviewResponseInterface | null;
+    previewPageNotFound: boolean;
+    fromCache: boolean;
+}
+
+export interface PreviewDataInterface extends PreviewBaseDataInterface {
+    metadata: { published: string; modified: string };
+    contents: Buffer;
+    previewPageResponse: got.Response<Buffer>;
+    cachedResponse: null;
+    previewPageNotFound: false;
+    fromCache: false;
+}
+
+export interface PreviewNotFoundDataInterface extends PreviewBaseDataInterface {
+    contents: null;
+    previewPageResponse: null;
+    cachedResponse: null;
+    previewPageNotFound: true;
+    fromCache: false;
+}
+
+export interface PreviewCacheDataInterface extends PreviewBaseDataInterface {
+    metadata: { published: string };
+    contents: Buffer;
+    previewPageResponse: null;
+    cachedResponse: CachedPreviewResponseInterface;
+    previewPageNotFound: false;
+    fromCache: true;
 }
 
 export interface FileDateStateInterface {
@@ -118,31 +159,38 @@ export async function fetchPageData({
     previewPageURL,
     deploy,
     pluginOptions,
+    cache,
 }: {
     filename: string;
     urlpath: string;
     previewPageURL: string;
     deploy: NetlifyDeployData;
     pluginOptions: OptionsInterface;
-}): Promise<
-    | {
-          filename: string;
-          urlpath: string;
-          previewPageURL: string;
-          previewPageResponse: got.Response<Buffer>;
-          contents: Buffer;
-          metadata: { published: string; modified: string };
-          previewPageNotFound: false;
-      }
-    | {
-          filename: string;
-          urlpath: string;
-          previewPageURL: string;
-          previewPageResponse: null;
-          contents: null;
-          previewPageNotFound: true;
-      }
-> {
+    cache: PreviewCache;
+}): Promise<PreviewDataType> {
+    const cachedResponse = cache.get(previewPageURL);
+    if (cachedResponse) {
+        previewLog('fetch from cache / %s', previewPageURL);
+
+        const contents = await pluginOptions.contentsConverter(
+            cachedResponse.body,
+            { deploy, previewPageResponse: null, cachedResponse },
+        );
+
+        const ret: PreviewCacheDataInterface = {
+            filename,
+            urlpath,
+            previewPageURL,
+            previewPageResponse: null,
+            cachedResponse,
+            contents,
+            metadata: { published: cachedResponse.published },
+            previewPageNotFound: false,
+            fromCache: true,
+        };
+        return ret;
+    }
+
     try {
         const previewPageResponse = await got(previewPageURL, {
             encoding: null,
@@ -156,15 +204,18 @@ export async function fetchPageData({
             { deploy, previewPageResponse, cachedResponse: null },
         );
 
-        return {
+        const ret: PreviewDataInterface = {
             filename,
             urlpath,
             previewPageURL,
             previewPageResponse,
+            cachedResponse: null,
             contents,
             metadata: { published, modified },
             previewPageNotFound: false,
+            fromCache: false,
         };
+        return ret;
     } catch (error) {
         if (error instanceof got.HTTPError) {
             previewLog(
@@ -175,14 +226,17 @@ export async function fetchPageData({
             );
 
             if (error.statusCode === 404) {
-                return {
+                const ret: PreviewNotFoundDataInterface = {
                     filename,
                     urlpath,
                     previewPageURL,
                     previewPageResponse: null,
+                    cachedResponse: null,
                     contents: null,
                     previewPageNotFound: true,
+                    fromCache: false,
                 };
+                return ret;
             }
         }
         throw error;
@@ -196,6 +250,8 @@ export async function getPreviewDataList({
     deploy,
     pluginOptions,
     metalsmith,
+    cache,
+    cacheQueue,
     nowDate,
 }: {
     targetFileList: readonly { filename: string; urlpath: string }[];
@@ -204,9 +260,11 @@ export async function getPreviewDataList({
     deploy: NetlifyDeployData;
     pluginOptions: OptionsInterface;
     metalsmith: Metalsmith;
+    cache: PreviewCache;
+    cacheQueue: MapWithDefault<string, Map<string, Buffer>>;
     nowDate: number;
 }): Promise<{
-    previewDataList: (PromiseValueType<ReturnType<typeof fetchPageData>>)[];
+    previewDataList: PreviewDataType[];
     files: Metalsmith.Files;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
 }> {
@@ -233,15 +291,35 @@ export async function getPreviewDataList({
             }
 
             const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlpath);
+
             const previewData = await fetchPageData({
                 filename,
                 urlpath,
                 previewPageURL,
                 deploy,
                 pluginOptions,
+                cache,
             });
 
-            if (previewData.previewPageNotFound) {
+            if (previewData.fromCache) {
+                const { metadata } = previewData;
+
+                setMetadata({
+                    fileData,
+                    files,
+                    filename,
+                    metalsmith,
+                    metadata: {
+                        modified: dateState.modified.date,
+                        ...metadata,
+                    },
+                    options: pluginOptions,
+                    nowDate,
+                });
+
+                dateState.published.date = metadata.published;
+                dateState.published.established = true;
+            } else if (previewData.previewPageNotFound) {
                 if (!dateState.published.established) {
                     fileLog(
                         !dateState.modified.established
@@ -256,7 +334,19 @@ export async function getPreviewDataList({
                 dateState.published.established = true;
                 dateState.modified.established = true;
             } else {
-                const { metadata } = previewData;
+                const { metadata, previewPageResponse } = previewData;
+
+                new Set([
+                    previewPageURL,
+                    previewPageResponse.requestUrl,
+                    ...(previewPageResponse.redirectUrls || []),
+                    previewPageResponse.url,
+                ]).forEach(previewPageURL => {
+                    cacheQueue
+                        .get(filename)
+                        .set(previewPageURL, previewPageResponse.body);
+                });
+                previewLog('%s / enqueue to queue for cache', previewPageURL);
 
                 setMetadata({
                     fileData,
@@ -292,9 +382,7 @@ export async function comparePages({
     pluginOptions,
     metalsmith,
 }: {
-    previewDataList: PromiseValueType<
-        ReturnType<typeof getPreviewDataList>
-    >['previewDataList'];
+    previewDataList: PreviewDataType[];
     processedFiles: Metalsmith.Files;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
     deploy: NetlifyDeployData;
@@ -312,7 +400,6 @@ export async function comparePages({
             const {
                 filename,
                 previewPageURL,
-                previewPageResponse,
                 contents: previewPageContents,
                 metadata,
             } = previewData;
@@ -330,7 +417,11 @@ export async function comparePages({
                     {
                         ...metadata,
                         published: new Date(metadata.published),
-                        modified: new Date(metadata.modified),
+                        modified: new Date(
+                            previewData.fromCache
+                                ? publishedDate(deploy)
+                                : previewData.metadata.modified,
+                        ),
                     },
                 );
                 // TODO: processedFilesに対象のファイルのコンテンツが存在しなかった場合の処理
@@ -353,8 +444,15 @@ export async function comparePages({
                     previewPage: previewPageContents,
                     metadata: {
                         deploy,
-                        previewPageResponse,
-                        cachedResponse: null,
+                        ...(previewData.fromCache
+                            ? pickProps(previewData, [
+                                  'previewPageResponse',
+                                  'cachedResponse',
+                              ])
+                            : pickProps(previewData, [
+                                  'previewPageResponse',
+                                  'cachedResponse',
+                              ])),
                         files: processedFiles,
                         filename,
                         fileData,
@@ -406,6 +504,9 @@ export default async function({
      */
 
     const cache = new PreviewCache(pluginOptions.cacheDir);
+    const cacheQueue = new MapWithDefault<string, Map<string, Buffer>>(
+        () => new Map(),
+    );
     const filesState = createState(files);
     const dateStateMap = new MapWithDefault<string, FileDateStateInterface>(
         () => ({
@@ -426,6 +527,8 @@ export default async function({
             deploy,
             pluginOptions,
             metalsmith,
+            cache,
+            cacheQueue,
             nowDate,
         });
 
@@ -466,6 +569,19 @@ export default async function({
     }
 
     filesState.restore();
+
+    cacheQueue.forEach((cacheQueue, filename) => {
+        const dateState = dateStateMap.get(filename);
+        const published = dateState.published.date;
+        if (published) {
+            cacheQueue.forEach((body, previewPageURL) => {
+                cache.set(previewPageURL, {
+                    body,
+                    published,
+                });
+            });
+        }
+    });
     cache.save();
 
     return new Map(
