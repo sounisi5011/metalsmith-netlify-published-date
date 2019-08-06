@@ -3,7 +3,7 @@ import Metalsmith from 'metalsmith';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
-import { chdir } from '../helpers/utils';
+import { appendValueReportPattern, chdir } from '../helpers/utils';
 
 test('should import external script file', async t => {
     const metadata = {
@@ -72,7 +72,10 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "\.\/no-func" .* option "filename2urlPath" .* not export the function/,
+                message: appendValueReportPattern(
+                    /[Mm]odule "\.\/no-func" .* option "filename2urlPath" .* not export the function/,
+                    require('./fixtures/no-func'),
+                ),
             },
             'import of script files that do not export functions should fail',
         );
@@ -87,7 +90,10 @@ test('should import external script file', async t => {
             },
             {
                 instanceOf: TypeError,
-                message: /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath" .* not return a string/,
+                message: appendValueReportPattern(
+                    /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath" .* not return a string/,
+                    require('./fixtures/invalid-func')(),
+                ),
             },
             'import of script files exporting functions that do not return strings should fail',
         );
@@ -155,7 +161,10 @@ test('should read url path from metadata', t => {
         },
         {
             instanceOf: Error,
-            message: /"prop4" (?:property|field) does not exist/,
+            message: appendValueReportPattern(
+                /"prop4" (?:property|field) does not exist/,
+                metadata.fileData,
+            ),
         },
         'reading of properties not present in metadata should fail',
     );
@@ -170,7 +179,10 @@ test('should read url path from metadata', t => {
         },
         {
             instanceOf: Error,
-            message: /"prop1" (?:property|field) .* is not a string/,
+            message: appendValueReportPattern(
+                /"prop1" (?:property|field) .* is not a string/,
+                metadata.fileData,
+            ),
         },
         'reading of non-string value in metadata should fail',
     );
@@ -264,21 +276,24 @@ test('should to replace filenames with sub string', t => {
 });
 
 test('should throw an error if the invalid option is specified', t => {
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: 42,
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /option "filename2urlPath" .* a function, a string, or an object/,
-        },
-        'The value of "filename2urlPath" should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: 42,
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /option "filename2urlPath" .* a function, a string, or an object/,
+                    options.filename2urlPath,
+                ),
+            },
+            'The value of "filename2urlPath" should be a valid value',
+        );
+    }
 
     t.throws(
         () => {
@@ -296,97 +311,112 @@ test('should throw an error if the invalid option is specified', t => {
         'The value of "filename2urlPath" should be a non-empty string',
     );
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {},
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /option "filename2urlPath" must contain .* (?:properties|property)/,
-        },
-        'The value of "filename2urlPath" should be a non-empty object',
-    );
+    {
+        const options = {
+            filename2urlPath: {},
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /option "filename2urlPath" must contain .* (?:properties|property)/,
+                    options.filename2urlPath,
+                ),
+            },
+            'The value of "filename2urlPath" should be a non-empty object',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        xxxx: true,
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /option "filename2urlPath" must contain .* (?:properties|property)/,
-        },
-        'The value of "filename2urlPath" should be an object that also has valid property',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                xxxx: true,
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /option "filename2urlPath" must contain .* (?:properties|property)/,
+                    options.filename2urlPath,
+                ),
+            },
+            'The value of "filename2urlPath" should be an object that also has valid property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        metadata: 'canonical',
-                        replace: {
-                            fromRegExp: '\\.pug$',
-                            to: '.html',
-                        },
-                    },
+    {
+        const options = {
+            filename2urlPath: {
+                metadata: 'canonical',
+                replace: {
+                    fromRegExp: '\\.pug$',
+                    to: '.html',
                 },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /option "filename2urlPath" .* not contain both .* "replace" .* and "metadata"/,
-        },
-        'The object value of "filename2urlPath" should not contain more than one valid property',
-    );
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /option "filename2urlPath" .* not contain both .* "replace" .* and "metadata"/,
+                    options.filename2urlPath,
+                ),
+            },
+            'The object value of "filename2urlPath" should not contain more than one valid property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        metadata: null,
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"metadata" (?:property|field) .* option "filename2urlPath" .* neither a string nor an array/,
-        },
-        'The "metadata" property should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                metadata: null,
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"metadata" (?:property|field) .* option "filename2urlPath" .* neither a string nor an array/,
+                    options.filename2urlPath.metadata,
+                ),
+            },
+            'The "metadata" property should be a valid value',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        metadata: ['x', 42],
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"metadata" (?:property|field) .* option "filename2urlPath" .* not an array of strings/,
-        },
-        'The "metadata" property should be an array of valid values',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                metadata: ['x', 42],
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"metadata" (?:property|field) .* option "filename2urlPath" .* not an array of strings/,
+                    options.filename2urlPath.metadata,
+                ),
+            },
+            'The "metadata" property should be an array of valid values',
+        );
+    }
 
     t.throws(
         () => {
@@ -406,171 +436,198 @@ test('should throw an error if the invalid option is specified', t => {
         'The "metadata" property should not accept empty array',
     );
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: null,
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* option "filename2urlPath" .* not a object/,
-        },
-        'The "replace" property should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: null,
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* option "filename2urlPath" .* not a object/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The "replace" property should be a valid value',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: {},
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
-        },
-        'The "replace" property should not accept empty objects',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: {},
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The "replace" property should not accept empty objects',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { xxxx: 42 },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
-        },
-        'The object value of the "replace" property should contain the "fromRegExp" or "fromStr" property and the "to" property',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { xxxx: 42 },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The object value of the "replace" property should contain the "fromRegExp" or "fromStr" property and the "to" property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { fromRegExp: '\\.pug$' },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
-        },
-        'The object value of the "replace" property should contain the "to" property',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { fromRegExp: '\\.pug$' },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The object value of the "replace" property should contain the "to" property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { fromStr: '.pug' },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
-        },
-        'The object value of the "replace" property should contain the "to" property',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { fromStr: '.pug' },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The object value of the "replace" property should contain the "to" property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { to: '.html' },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
-        },
-        'The object value of the "replace" property should contain the "fromRegExp" property or the "fromStr" property',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { to: '.html' },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The object value of the "replace" property should contain the "fromRegExp" property or the "fromStr" property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { fromStr: '.ext', to: 42 },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"to" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
-        },
-        'The "to" property of the "replace" property of "filename2urlPath" should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { fromStr: '.ext', to: 42 },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"to" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
+                    options.filename2urlPath.replace.to,
+                ),
+            },
+            'The "to" property of the "replace" property of "filename2urlPath" should be a valid value',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: {
-                            fromRegExp: '\\.pug$',
-                            fromStr: '.pug',
-                            to: '42',
-                        },
-                    },
+    {
+        const options = {
+            filename2urlPath: {
+                replace: {
+                    fromRegExp: '\\.pug$',
+                    fromStr: '.pug',
+                    to: '42',
                 },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"replace" (?:property|field) .* "filename2urlPath" option .* not contain both .* "fromRegExp"(?: .+)? and(?: .+)? "fromStr"/,
-        },
-        'The "replace" property should only accept objects that have either the "fromRegExp" property or the "fromStr" property',
-    );
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"replace" (?:property|field) .* "filename2urlPath" option .* not contain both .* "fromRegExp"(?: .+)? and(?: .+)? "fromStr"/,
+                    options.filename2urlPath.replace,
+                ),
+            },
+            'The "replace" property should only accept objects that have either the "fromRegExp" property or the "fromStr" property',
+        );
+    }
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { fromRegExp: true, to: '42' },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
-        },
-        'The "fromRegExp" property of the "replace" property should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { fromRegExp: true, to: '42' },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"fromRegExp" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
+                    options.filename2urlPath.replace.fromRegExp,
+                ),
+            },
+            'The "fromRegExp" property of the "replace" property should be a valid value',
+        );
+    }
 
     t.throws(
         () => {
@@ -590,21 +647,24 @@ test('should throw an error if the invalid option is specified', t => {
         'The "fromRegExp" property of the "replace" property of "filename2urlPath" should be a valid regular expression',
     );
 
-    t.throws(
-        () => {
-            normalizeOptions(
-                {
-                    filename2urlPath: {
-                        replace: { fromStr: true, to: '42' },
-                    },
-                },
-                netlifyPublishedDate.defaultOptions,
-            );
-        },
-        {
-            instanceOf: TypeError,
-            message: /"fromStr" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
-        },
-        'The "fromStr" property of the "replace" property of "filename2urlPath" should be a valid value',
-    );
+    {
+        const options = {
+            filename2urlPath: {
+                replace: { fromStr: true, to: '42' },
+            },
+        };
+        t.throws(
+            () => {
+                normalizeOptions(options, netlifyPublishedDate.defaultOptions);
+            },
+            {
+                instanceOf: TypeError,
+                message: appendValueReportPattern(
+                    /"fromStr" (?:property|field) .* "replace" (?:property|field) .* option "filename2urlPath" .* not a string/,
+                    options.filename2urlPath.replace.fromStr,
+                ),
+            },
+            'The "fromStr" property of the "replace" property of "filename2urlPath" should be a valid value',
+        );
+    }
 });

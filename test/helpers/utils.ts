@@ -1,3 +1,4 @@
+import escapeRegExp from 'escape-string-regexp';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -67,4 +68,21 @@ export async function fileExists(...paths: string[]): Promise<boolean> {
         }
         throw err;
     }
+}
+
+export function inspectSingleLine(value: unknown): string {
+    return util.inspect(value, { breakLength: Infinity });
+}
+
+export function appendValueReportPattern(
+    pattern: RegExp,
+    value: unknown,
+): RegExp {
+    return new RegExp(
+        pattern.source.replace(
+            /\$?$/,
+            `( .+)?: ${escapeRegExp(inspectSingleLine(value))}$`,
+        ),
+        pattern.flags,
+    );
 }
