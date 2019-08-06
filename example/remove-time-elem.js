@@ -18,7 +18,7 @@ module.exports = contents => {
       });
       return Buffer.from($.html());
     }
-  } finally {
-    return contents;
-  }
+  } catch (err) {}
+
+  return contents;
 };
