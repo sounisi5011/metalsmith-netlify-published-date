@@ -7,6 +7,7 @@ import { getFirstParentCommits } from './git';
 import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
 import {
+    findEqualsPath,
     isNotVoid,
     joinURL,
     MapWithDefault,
@@ -124,10 +125,24 @@ export function publishedDate(deploy: NetlifyDeployData): string {
 }
 
 // TODO: Make it user-definable
-export function previewPageURL2filename(previewPageURL: string): string {
+export function previewPageURL2filename(
+    previewPageURL: string,
+    pathList: readonly string[],
+    baseDirpath: string,
+): string | null {
     const urlpath = new URL(previewPageURL).pathname;
-    const filename = url2path(urlpath.replace(/^\/+/, ''));
-    return filename;
+
+    for (const filepath of [
+        url2path(urlpath.replace(/^\/+/, '')),
+        url2path(urlpath.replace(/^\/+/, '').replace(/\/*$/, '/index.html')),
+    ]) {
+        const filename = findEqualsPath(baseDirpath, filepath, pathList);
+        if (filename !== undefined) {
+            return filename;
+        }
+    }
+
+    return null;
 }
 
 export async function getDeployList({
@@ -397,34 +412,44 @@ export async function comparePages({
                 filename: beforeFilename,
                 previewPageURL,
                 contents: previewPageContents,
-                metadata,
             } = previewData;
             const dateState = dateStateMap.get(beforeFilename);
-            // TODO: Make it user-definable
-            // TODO: Support /pathname/ -> pathname/index.html
-            const processedFilename = previewPageURL2filename(previewPageURL);
-            const fileData: unknown = processedFiles[processedFilename];
 
             if (dateState.modified.established) {
                 return;
             }
 
+            // TODO: Make it user-definable
+            const processedFilename = previewPageURL2filename(
+                previewPageURL,
+                Object.keys(processedFiles),
+                metalsmith.path(metalsmith.destination()),
+            );
+            if (typeof processedFilename !== 'string') {
+                fileLog(
+                    '%s / contents was not generated. The generated file corresponding to the URL cannot be found: %s',
+                    beforeFilename,
+                    previewPageURL,
+                );
+
+                // TODO: Processing when generated file corresponding to URL does not exist
+                throw new Error(
+                    `${beforeFilename} / contents was not generated. The generated file corresponding to the URL cannot be found: ${previewPageURL} -> undefined`,
+                );
+            }
+
+            const fileData: unknown = processedFiles[processedFilename];
             if (!isFile(fileData)) {
                 fileLog(
-                    '%s / contents was not generated. used metadata: %o',
+                    '%s / contents was not generated. The content of the file corresponding to the URL was not generated: %o',
                     beforeFilename,
-                    {
-                        ...metadata,
-                        published: new Date(metadata.published),
-                        modified: new Date(
-                            previewData.fromCache
-                                ? publishedDate(deploy)
-                                : previewData.metadata.modified,
-                        ),
-                    },
+                    { previewPageURL, processedFilename },
                 );
-                // TODO: processedFilesに対象のファイルのコンテンツが存在しなかった場合の処理
-                return;
+
+                // TODO: Processing when the content of the file corresponding to the URL is not generated
+                throw new Error(
+                    `${beforeFilename} / contents was not generated. The content of the file corresponding to the URL was not generated: ${previewPageURL} -> ${processedFilename}`,
+                );
             }
 
             const fileContents = await pluginOptions.contentsConverter(
