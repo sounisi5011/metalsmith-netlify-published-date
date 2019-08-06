@@ -355,14 +355,20 @@ export async function getPreviewDataList({
                 }
             } else if (previewData.previewPageNotFound) {
                 if (!dateState.published.established) {
-                    fileLog(
-                        !dateState.modified.established
-                            ? '%s / published date and modified date is established: %s / %s'
-                            : '%s / published date is established: %s',
-                        filename,
-                        dateState.published.date,
-                        dateState.modified.date,
-                    );
+                    if (!dateState.modified.established) {
+                        fileLog(
+                            '%s / published date and modified date is established: %s / %s',
+                            filename,
+                            dateState.published.date,
+                            dateState.modified.date,
+                        );
+                    } else {
+                        fileLog(
+                            '%s / published date is established: %s',
+                            filename,
+                            dateState.published.date,
+                        );
+                    }
                 }
 
                 dateState.published.established = true;
@@ -655,14 +661,20 @@ export default async function({
         });
 
         if (!dateState.modified.established) {
-            fileLog(
-                !dateState.published.established
-                    ? '%s / published date and modified date is established: %s / %s'
-                    : '%s / published date is established: %s',
-                filename,
-                dateState.published.date,
-                dateState.modified.date,
-            );
+            if (!dateState.published.established) {
+                fileLog(
+                    '%s / published date and modified date is established: %s / %s',
+                    filename,
+                    dateState.published.date,
+                    dateState.modified.date,
+                );
+            } else {
+                fileLog(
+                    '%s / published date is established: %s',
+                    filename,
+                    dateState.published.date,
+                );
+            }
         }
 
         return map;
