@@ -164,6 +164,7 @@ test('should read url path from metadata', t => {
             message: appendValueReportPattern(
                 /"prop4" (?:property|field) does not exist/,
                 metadata.fileData,
+                { depth: 0 },
             ),
         },
         'reading of properties not present in metadata should fail',
@@ -182,6 +183,7 @@ test('should read url path from metadata', t => {
             message: appendValueReportPattern(
                 /"prop1" (?:property|field) .* is not a string/,
                 metadata.fileData.prop1,
+                { depth: 0 },
             ),
         },
         'reading of non-string value in metadata should fail',
@@ -324,6 +326,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /option "filename2urlPath" must contain .* (?:properties|property)/,
                     options.filename2urlPath,
+                    { depth: 0 },
                 ),
             },
             'The value of "filename2urlPath" should be a non-empty object',
@@ -345,6 +348,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /option "filename2urlPath" must contain .* (?:properties|property)/,
                     options.filename2urlPath,
+                    { depth: 0 },
                 ),
             },
             'The value of "filename2urlPath" should be an object that also has valid property',
@@ -370,6 +374,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /option "filename2urlPath" .* not contain both .* "replace" .* and "metadata"/,
                     options.filename2urlPath,
+                    { depth: 0 },
                 ),
             },
             'The object value of "filename2urlPath" should not contain more than one valid property',
@@ -472,6 +477,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The "replace" property should not accept empty objects',
@@ -493,6 +499,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr" .* and(?: .+)? "to"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The object value of the "replace" property should contain the "fromRegExp" or "fromStr" property and the "to" property',
@@ -514,6 +521,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The object value of the "replace" property should contain the "to" property',
@@ -535,6 +543,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* "to"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The object value of the "replace" property should contain the "to" property',
@@ -556,6 +565,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* "fromRegExp"(?: .+)? or(?: .+)? "fromStr"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The object value of the "replace" property should contain the "fromRegExp" property or the "fromStr" property',
@@ -602,6 +612,7 @@ test('should throw an error if the invalid option is specified', t => {
                 message: appendValueReportPattern(
                     /"replace" (?:property|field) .* "filename2urlPath" option .* not contain both .* "fromRegExp"(?: .+)? and(?: .+)? "fromStr"/,
                     options.filename2urlPath.replace,
+                    { depth: 0 },
                 ),
             },
             'The "replace" property should only accept objects that have either the "fromRegExp" property or the "fromStr" property',

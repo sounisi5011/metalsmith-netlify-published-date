@@ -70,15 +70,19 @@ export async function fileExists(...paths: string[]): Promise<boolean> {
     }
 }
 
-export function inspectSingleLine(value: unknown): string {
-    return util.inspect(value, { breakLength: Infinity });
+export function inspectSingleLine(
+    value: unknown,
+    inspectOptions: util.InspectOptions = {},
+): string {
+    return util.inspect(value, { ...inspectOptions, breakLength: Infinity });
 }
 
 export function appendValueReportPattern(
     pattern: RegExp,
     value: unknown,
+    inspectOptions: util.InspectOptions = {},
 ): RegExp {
     const origPattern = pattern.source.replace(/\$$/, '');
-    const escapedValue = escapeRegExp(inspectSingleLine(value));
+    const escapedValue = escapeRegExp(inspectSingleLine(value, inspectOptions));
     return new RegExp(`${origPattern}( .+)?: ${escapedValue}$`, pattern.flags);
 }

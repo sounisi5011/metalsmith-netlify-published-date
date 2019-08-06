@@ -83,6 +83,7 @@ export function convertMetadata({
                 throw new Error(
                     `"${schema}" field does not exist in metadata of file "${filename}": ${value2str(
                         fileData,
+                        { depth: 0 },
                     )}`,
                 );
             }
@@ -159,6 +160,7 @@ export function convertReplace({
         throw new TypeError(
             `An object in the "replace" field of the "${PROP}" option can not contain both the "fromRegExp" property and the "fromStr" property: ${value2str(
                 schema,
+                { depth: 0 },
             )}`,
         );
     }
@@ -167,6 +169,7 @@ export function convertReplace({
             throw new TypeError(
                 `The value of the "replace" field of the "${PROP}" option must contain the "to" property: ${value2str(
                     schema,
+                    { depth: 0 },
                 )}`,
             );
         }
@@ -175,12 +178,14 @@ export function convertReplace({
             throw new TypeError(
                 `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property: ${value2str(
                     schema,
+                    { depth: 0 },
                 )}`,
             );
         } else {
             throw new TypeError(
                 `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property and the "to" property: ${value2str(
                     schema,
+                    { depth: 0 },
                 )}`,
             );
         }
@@ -245,6 +250,7 @@ export function normalize(value: unknown): ReturnFuncType {
                 throw new TypeError(
                     `Object of option "${PROP}" must not contain both the "replace" property and "metadata" property: ${value2str(
                         value,
+                        { depth: 0 },
                     )}`,
                 );
             }
@@ -255,6 +261,7 @@ export function normalize(value: unknown): ReturnFuncType {
             throw new TypeError(
                 `Object of option "${PROP}" must contain "metadata" property or "replace" property: ${value2str(
                     value,
+                    { depth: 0 },
                 )}`,
             );
         }
@@ -262,6 +269,7 @@ export function normalize(value: unknown): ReturnFuncType {
         throw new TypeError(
             `The value of option "${PROP}" must be either a function, a string, or an object: ${value2str(
                 value,
+                { depth: 0 },
             )}`,
         );
     }
