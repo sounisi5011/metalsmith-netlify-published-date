@@ -107,10 +107,10 @@ export function convertMetadata({
                 );
             };
         } else {
-            const propListType =
-                '[' + propList.map(prop => typeof prop).join(', ') + ']';
             throw new TypeError(
-                `The value of the "metadata" field specified in option "${PROP}" is not an array of strings: ${propListType}`,
+                `The value of the "metadata" field specified in option "${PROP}" is not an array of strings: ${value2str(
+                    propList,
+                )}`,
             );
         }
     } else {
