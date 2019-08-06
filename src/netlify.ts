@@ -84,10 +84,10 @@ export async function netlifyDeploys(
             } catch (error) {
                 if (error instanceof got.HTTPError) {
                     responseLog(
-                        '%s / fetch fails with HTTP %s %s / headers %O',
-                        url,
+                        'fetch fails with HTTP %s %s / %s / headers %O',
                         error.statusCode,
                         error.statusMessage,
+                        url,
                         error.headers,
                     );
                 } else {
@@ -129,7 +129,7 @@ export async function netlifyDeploys(
         let nextURL: string | null = null;
         if (linkHeader) {
             const linkData = parseLink(linkHeader);
-            responseLog('%s / pagination %o', url, linkData);
+            responseLog('pagination of %s / %o', url, linkData);
             if (linkData) {
                 const nextLink = linkData.next;
                 nextURL = (nextLink && nextLink.url) || null;
@@ -140,7 +140,7 @@ export async function netlifyDeploys(
                 }
             }
         } else {
-            responseLog('%s / "Link" header not found in headers', url);
+            responseLog('"Link" header not found in headers / %s', url);
         }
         lastURLSet.add(lastURL);
 
@@ -166,16 +166,16 @@ export async function netlifyDeploys(
             });
             if (netlifyDeployList.length !== matchedDeployList.length) {
                 responseLog(
-                    '%s / deploy list count: %d / among them, valid count: %d',
-                    url,
+                    'deploy list count: %d / among them, valid count: %d / %s',
                     netlifyDeployList.length,
                     matchedDeployList.length,
+                    url,
                 );
             } else {
                 responseLog(
-                    '%s / deploy list count: %d',
-                    url,
+                    'deploy list count: %d / %s',
                     netlifyDeployList.length,
+                    url,
                 );
             }
 
@@ -187,14 +187,14 @@ export async function netlifyDeploys(
                     netlifyDeployList[netlifyDeployList.length - 1];
                 if (lastDeploy.commit_ref === null) {
                     responseLog(
-                        '%s / get the initial deploy from the response',
+                        'get the initial deploy from the response / %s',
                         url,
                     );
                     initialDeploy = lastDeploy;
                 }
             }
         } else {
-            responseLog('%s / response body is not an array: %o', url, body);
+            responseLog('response body is not an array: %o / %s', body, url);
         }
 
         if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {

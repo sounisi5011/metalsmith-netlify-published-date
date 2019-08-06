@@ -386,7 +386,7 @@ export async function getPreviewDataList({
                         .get(filename)
                         .set(previewPageURL, previewPageResponse.body);
                     previewLog(
-                        '%s / enqueue to queue for cache',
+                        'enqueue to queue for cache / %s',
                         previewPageURL,
                     );
                 });
@@ -612,7 +612,7 @@ export default async function({
                 pluginOptions.plugins,
             );
             log(
-                'generated a files to compare to the preview pages / %s',
+                'generated a files to compare to the preview pages of %s',
                 deploy.deployAbsoluteURL,
             );
 
@@ -648,7 +648,7 @@ export default async function({
                     body,
                     published,
                 });
-                previewLog('%s / stored in cache', previewPageURL);
+                previewLog('stored in cache / %s', previewPageURL);
             });
         }
     });

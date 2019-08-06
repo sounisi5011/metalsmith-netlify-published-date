@@ -126,7 +126,7 @@ export async function getTargetFileList({
         matchedFiles.map(async filename => {
             const fileData = files[filename];
 
-            fileLog('%s / checking file', filename);
+            fileLog('checking file: %s', filename);
             if (!isFile(fileData)) {
                 return;
             }
@@ -138,7 +138,7 @@ export async function getTargetFileList({
                     metalsmith,
                 }),
             );
-            fileLog('%s / get URL Path: %s', filename, urlpath);
+            fileLog('get URL Path: %o -> %o', filename, urlpath);
 
             return { filename, urlpath };
         }),
