@@ -1,5 +1,6 @@
 import { OptionsInterface } from '../plugin';
 import { isObject } from '../utils';
+import normalizeContentsConverter from './contentsConverter';
 import { normalize as normalizeFilename2urlPath } from './filename2urlPath';
 import { normalize as normalizePlugins } from './plugins';
 
@@ -20,5 +21,6 @@ export function normalizeOptions(
         ...opts,
         plugins: normalizePlugins(opts.plugins),
         filename2urlPath: normalizeFilename2urlPath(opts.filename2urlPath),
+        contentsConverter: normalizeContentsConverter(opts.contentsConverter),
     };
 }
