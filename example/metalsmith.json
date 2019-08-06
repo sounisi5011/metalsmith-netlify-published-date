@@ -5,10 +5,12 @@
       "cacheDir": "./node_modules/.cache/",
       "filename2urlPath": {
         "metadata": "canonicalPath"
+      },
+      "plugins": {
+        "metalsmith-in-place": {
+          "setFilename": true
+        }
       }
-    },
-    "metalsmith-in-place": {
-      "setFilename": true
     }
   }
 }
