@@ -1,6 +1,7 @@
 import importCwd from 'import-cwd';
 
 import { OptionsInterface } from '../plugin';
+import { value2str } from '../utils';
 import { typesafeFunc } from './utils';
 
 const PROP = 'contentsConverter';
@@ -25,7 +26,9 @@ export function importModule(filepath: string): ReturnFuncType {
 
     if (typeof func !== 'function') {
         throw new TypeError(
-            `Module "${filepath}" specified in option "${PROP}" did not export the function: ${typeof func}`,
+            `Module "${filepath}" specified in option "${PROP}" did not export the function: ${value2str(
+                func,
+            )}`,
         );
     }
 
@@ -47,7 +50,9 @@ export default function(value: unknown): ReturnFuncType {
         return importModule(value);
     } else {
         throw new TypeError(
-            `The value of option "${PROP}" must be either a function, or a string`,
+            `The value of option "${PROP}" must be either a function, or a string: ${value2str(
+                value,
+            )}`,
         );
     }
 }

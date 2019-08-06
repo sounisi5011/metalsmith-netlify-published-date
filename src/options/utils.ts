@@ -1,3 +1,5 @@
+import { value2str } from '../utils';
+
 export function strReturnFunc(
     func: Function,
     errmsg: string,
@@ -5,7 +7,7 @@ export function strReturnFunc(
     return async (...args) => {
         const retval: unknown = await func(...args);
         if (typeof retval !== 'string') {
-            throw new TypeError(`${errmsg}: ${typeof retval}`);
+            throw new TypeError(`${errmsg}: ${value2str(retval)}`);
         }
         return retval;
     };
@@ -19,7 +21,7 @@ export function typesafeFunc<T>(
     return async (...args) => {
         const retval: unknown = await func(...args);
         if (!returnTypeGuard(retval)) {
-            throw new TypeError(`${errmsg}: ${typeof retval}`);
+            throw new TypeError(`${errmsg}: ${value2str(retval)}`);
         }
         return retval;
     };

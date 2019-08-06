@@ -2,7 +2,7 @@ import importCwd from 'import-cwd';
 import Metalsmith from 'metalsmith';
 
 import { OptionsInterface } from '../plugin';
-import { isObject } from '../utils';
+import { isObject, value2str } from '../utils';
 
 const PROP = 'plugins';
 type ReturnValueType = OptionsInterface[typeof PROP];
@@ -24,7 +24,9 @@ export function getPluginList(
         return Object.entries(obj).map(([key, value]) => ({ [key]: value }));
     }
     throw new TypeError(
-        `"${PROP}" option value must be an object or an array: ${typeof obj}`,
+        `"${PROP}" option value must be an object or an array: ${value2str(
+            obj,
+        )}`,
     );
 }
 
@@ -53,7 +55,9 @@ export function importFunc(filepath: string): Function {
 
     if (typeof func !== 'function') {
         throw new TypeError(
-            `Plugin "${filepath}" specified in option "${PROP}" did not export the function: ${typeof func}`,
+            `Plugin "${filepath}" specified in option "${PROP}" did not export the function: ${value2str(
+                func,
+            )}`,
         );
     }
 
@@ -71,7 +75,9 @@ export function normalize(value: unknown): ReturnValueType {
                     const plugin: unknown = pluginGenerator(opts);
                     if (!isPlugin(plugin)) {
                         throw new TypeError(
-                            `Plugin "${name}" specified in option "${PROP}" did not return the function: ${typeof plugin}`,
+                            `Plugin "${name}" specified in option "${PROP}" did not return the function: ${value2str(
+                                plugin,
+                            )}`,
                         );
                     }
                     return plugin;
