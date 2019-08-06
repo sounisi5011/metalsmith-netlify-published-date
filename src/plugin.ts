@@ -3,22 +3,23 @@ import got from 'got';
 import Metalsmith from 'metalsmith';
 import path from 'path';
 
-import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
-import { getFirstParentCommits } from './git';
-import { NetlifyDeployData, netlifyDeploys } from './netlify';
+import { CachedPreviewResponseInterface } from './cache/preview';
+import lookup from './lookup';
+import { NetlifyDeployData } from './netlify';
 import { normalizeOptions } from './options';
-import { joinURL, path2url } from './utils';
+import { isNotVoid, path2url } from './utils';
 import { debug as log } from './utils/log';
 import {
+    createPlugin,
     createPluginGenerator,
     FileInterface,
     getMatchedFiles,
     isFile,
+    processFiles,
 } from './utils/metalsmith';
 import { DeepReadonly } from './utils/types';
 
 const fileLog = log.extend('file');
-const previewLog = log.extend('netlify-preview');
 
 /*
  * Interfaces
@@ -31,6 +32,7 @@ export interface WritableOptionsInterface {
     siteID: string;
     accessToken: string | null;
     cacheDir: string | null;
+    plugins: Metalsmith.Plugin[];
     defaultDate:
         | ((metadata: GeneratingPageMetadataInterface) => unknown)
         | Date
@@ -106,304 +108,63 @@ export function defaultDate2value<
     return new Date(nowDate);
 }
 
-export async function getDeployList(
-    siteID: string,
-    accessToken: string | null,
-): ReturnType<typeof netlifyDeploys> {
-    const commitList = await getFirstParentCommits();
-    log("got Git's commits hash");
-
-    const deployList = await netlifyDeploys(siteID, {
-        accessToken,
-        commitHashList: commitList.map(commit => commit.hash),
-    });
-    log('fetched Netlify deploys');
-
-    return deployList;
-}
-
-export async function fetchPage(
-    url: string,
-): Promise<got.Response<Buffer> | null> {
-    try {
-        return await got(url, { encoding: null });
-    } catch (error) {
-        if (error instanceof got.HTTPError) {
-            if (error.statusCode === 404) {
-                return null;
-            }
-        }
-        throw error;
-    }
-}
-
 export function publishedDate(deploy: NetlifyDeployData): string {
     return deploy.published_at || deploy.created_at;
 }
 
-export async function eachFile({
+export async function getTargetFileList({
     options,
-    nowDate,
-    cache,
-    deployList,
-    metalsmith,
     files,
-    filename,
+    metalsmith,
 }: {
     options: OptionsInterface;
-    nowDate: number;
-    cache: PreviewCache;
-    deployList: ReturnType<typeof getDeployList>;
+    files: Metalsmith.Files;
     metalsmith: Metalsmith;
+}): Promise<{ filename: string; urlpath: string }[]> {
+    const matchedFiles = getMatchedFiles(files, options.pattern);
+    const targetFileList = (await Promise.all(
+        matchedFiles.map(async filename => {
+            const fileData = files[filename];
+
+            fileLog('%s / checking file', filename);
+            if (!isFile(fileData)) {
+                return;
+            }
+
+            const urlpath = path2url(
+                await options.filename2urlPath(filename, {
+                    files,
+                    fileData,
+                    metalsmith,
+                }),
+            );
+            fileLog('%s / get URL Path: %s', filename, urlpath);
+
+            return { filename, urlpath };
+        }),
+    )).filter(isNotVoid);
+    return targetFileList;
+}
+
+export function setMetadata({
+    fileData,
+    files,
+    filename,
+    metalsmith,
+    metadata,
+    options,
+    nowDate,
+}: {
+    fileData: FileInterface;
     files: Metalsmith.Files;
     filename: string;
-}): Promise<void> {
-    const fileData = files[filename];
-
-    fileLog('%s / checking file', filename);
-    if (!isFile(fileData)) {
-        return;
-    }
-
-    const urlPath = path2url(
-        await options.filename2urlPath(filename, {
-            files,
-            fileData,
-            metalsmith,
-        }),
-    );
-    fileLog('%s / get URL Path: %s', filename, urlPath);
-
-    const fileContents = await options.contentsConverter(fileData.contents, {
-        files,
-        filename,
-        fileData,
-        metalsmith,
-    });
-
-    let published: string | null = null;
-    let modified: string | null = null;
-    let modifiedDateEstablished = false;
-    const previewPageResponseMap = new Map<string, Buffer>();
-
-    for (const deploy of await deployList) {
-        const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlPath);
-
-        const cachedResponse = cache.get(previewPageURL);
-        if (cachedResponse) {
-            previewLog('%s / fetchd from cache', previewPageURL);
-
-            /*
-             * Set the published date value from cached data.
-             * Note: This value is the date the web page was published on the Internet.
-             *       Therefore, the search for the published date is complete here.
-             */
-            published = cachedResponse.published;
-
-            /*
-             * If the modified date is not established, verifying that the file and preview content are equals.
-             * If the content does not equals, the current deploy published date will be the modified date.
-             */
-            if (!modifiedDateEstablished) {
-                /*
-                 * Verify the file contents and preview page contents are equals.
-                 */
-                const previewPageContents = await options.contentsConverter(
-                    cachedResponse.body,
-                    { deploy, previewPageResponse: null, cachedResponse },
-                );
-                if (
-                    await options.contentsEquals({
-                        file: fileContents,
-                        previewPage: previewPageContents,
-                        metadata: {
-                            deploy,
-                            previewPageResponse: null,
-                            cachedResponse,
-                            files,
-                            filename,
-                            fileData,
-                            metalsmith,
-                        },
-                    })
-                ) {
-                    /*
-                     * If the contents are equals, set the published date of the current deploy as the modified date.
-                     */
-                    fileLog(
-                        '%s / matched the content of preview %s',
-                        filename,
-                        previewPageURL,
-                    );
-                    previewLog(
-                        '%s / matched the content of file %s',
-                        previewPageURL,
-                        filename,
-                    );
-
-                    modified = publishedDate(deploy);
-                } else {
-                    /*
-                     * If the contents are different, modified date is established.
-                     */
-                    fileLog(
-                        '%s / did not match the content of preview %s',
-                        filename,
-                        previewPageURL,
-                    );
-                    previewLog(
-                        '%s / did not match the content of file %s',
-                        previewPageURL,
-                        filename,
-                    );
-
-                    modifiedDateEstablished = true;
-                    fileLog(
-                        '%s / published date and modified date is established: %s / %s',
-                        filename,
-                        published,
-                        modified,
-                    );
-                }
-            }
-
-            /*
-             * If published date and modified date are established, end the search.
-             */
-            if (modifiedDateEstablished) {
-                break;
-            }
-        } else {
-            const previewPageResponse = await fetchPage(previewPageURL);
-
-            /*
-             * If the preview page does not found (404 Not Found), end the search.
-             */
-            if (!previewPageResponse) {
-                previewLog('%s / 404 Not Found', previewPageURL);
-
-                if (modifiedDateEstablished) {
-                    fileLog(
-                        '%s / published date is established: %s',
-                        filename,
-                        published,
-                    );
-                } else {
-                    fileLog(
-                        '%s / published date and modified date is established: %s / %s',
-                        filename,
-                        published,
-                        modified,
-                    );
-                }
-                break;
-            }
-            previewLog('%s / fetchd', previewPageURL);
-
-            new Set([
-                previewPageURL,
-                previewPageResponse.requestUrl,
-                ...(previewPageResponse.redirectUrls || []),
-                previewPageResponse.url,
-            ]).forEach(previewPageURL => {
-                previewPageResponseMap.set(
-                    previewPageURL,
-                    previewPageResponse.body,
-                );
-            });
-            previewLog('%s / enqueue to queue for cache', previewPageURL);
-
-            /*
-             * Set the published date value from published date of current deploy.
-             * Note: This value is the release date of the snapshot built with Netlify.
-             *       It is not the date when the page was published on the Internet.
-             *       Therefore, in order to determine when a page was published, it is necessary to detect a snapshot in which the page does not exist.
-             */
-            published = publishedDate(deploy);
-
-            /*
-             * If the modified date is not established, verifying that the file and preview content are equals.
-             * If the content does not equals, the current deploy published date will be the modified date.
-             */
-            if (!modifiedDateEstablished) {
-                /*
-                 * Verify the file contents and preview page contents are equals.
-                 */
-                const previewPageContents = await options.contentsConverter(
-                    previewPageResponse.body,
-                    { deploy, previewPageResponse, cachedResponse: null },
-                );
-                if (
-                    await options.contentsEquals({
-                        file: fileContents,
-                        previewPage: previewPageContents,
-                        metadata: {
-                            deploy,
-                            previewPageResponse,
-                            cachedResponse: null,
-                            files,
-                            filename,
-                            fileData,
-                            metalsmith,
-                        },
-                    })
-                ) {
-                    /*
-                     * If the contents are equals, set the published date of the current deploy as the modified date.
-                     */
-                    fileLog(
-                        '%s / matched the content of preview %s',
-                        filename,
-                        previewPageURL,
-                    );
-                    previewLog(
-                        '%s / matched the content of file %s',
-                        previewPageURL,
-                        filename,
-                    );
-
-                    modified = published;
-                } else {
-                    /*
-                     * If the contents are different, modified date is established.
-                     * From this point on, only the published date of this page is searched.
-                     */
-                    fileLog(
-                        '%s / did not match the content of preview %s',
-                        filename,
-                        previewPageURL,
-                    );
-                    previewLog(
-                        '%s / did not match the content of file %s',
-                        previewPageURL,
-                        filename,
-                    );
-
-                    modifiedDateEstablished = true;
-                    fileLog(
-                        '%s / modified date is established: %s',
-                        filename,
-                        modified,
-                    );
-                }
-            }
-        }
-    }
-
-    if (published) {
-        const publishedStr = published;
-        previewPageResponseMap.forEach((body, previewPageURL) => {
-            const data: CachedPreviewResponseInterface = {
-                body,
-                published: publishedStr,
-            };
-            cache.set(previewPageURL, data);
-            previewLog('%s / stored in cache', previewPageURL);
-        });
-    }
-
+    metalsmith: Metalsmith;
+    metadata: { published: string | null; modified: string | null };
+    options: OptionsInterface;
+    nowDate: number;
+}): { fileData: FileInterface } {
     fileData.published = defaultDate2value({
-        dateStr: published,
+        dateStr: metadata.published,
         defaultDate: options.defaultDate,
         nowDate,
         metadata: {
@@ -414,7 +175,7 @@ export async function eachFile({
         },
     });
     fileData.modified = defaultDate2value({
-        dateStr: modified,
+        dateStr: metadata.modified,
         defaultDate: options.defaultDate,
         nowDate,
         metadata: {
@@ -424,10 +185,7 @@ export async function eachFile({
             metalsmith,
         },
     });
-    fileLog('%s / stored metadata: %o', filename, {
-        published: fileData.published,
-        modified: fileData.modified,
-    });
+    return { fileData };
 }
 
 /*
@@ -443,6 +201,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     siteID: defaultSiteID,
     accessToken: null,
     cacheDir: path.resolve(__dirname, '../.cache/'),
+    plugins: [],
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
@@ -458,34 +217,44 @@ export default createPluginGenerator((opts = {}) => {
 
     const options = normalizeOptions(opts, defaultOptions);
 
-    return (files, metalsmith, done) => {
+    return createPlugin(async (files, metalsmith) => {
         log('start plugin processing');
 
         const nowDate = Date.now();
-        const cache = new PreviewCache(options.cacheDir);
-        const matchedFiles = getMatchedFiles(files, options.pattern);
-        const deployList =
-            matchedFiles.length >= 1
-                ? getDeployList(options.siteID, options.accessToken)
-                : Promise.resolve([]);
-        Promise.all(
-            matchedFiles.map(async filename =>
-                eachFile({
-                    options,
-                    nowDate,
-                    cache,
-                    deployList,
-                    metalsmith,
+        const targetFileList = await getTargetFileList({
+            options,
+            files,
+            metalsmith,
+        });
+        if (targetFileList.length >= 1) {
+            fileLog(
+                'start lookup of published date and modified date in this files: %o',
+                targetFileList,
+            );
+
+            const metaMap = await lookup({
+                targetFileList,
+                options,
+                metalsmith,
+                files,
+                nowDate,
+            });
+
+            metaMap.forEach((metadata, filename) => {
+                setMetadata({
+                    fileData: files[filename],
                     files,
                     filename,
-                }),
-            ),
-        )
-            .then(() => {
-                cache.save();
-                log('complete plugin processing');
-                done(null, files, metalsmith);
-            })
-            .catch(error => done(error, files, metalsmith));
-    };
+                    metalsmith,
+                    metadata,
+                    options,
+                    nowDate,
+                });
+            });
+
+            await processFiles(metalsmith, files, options.plugins);
+        }
+
+        log('complete plugin processing');
+    });
 }, defaultOptions);

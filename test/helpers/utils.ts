@@ -23,6 +23,15 @@ export function deleteProps<T extends Record<U, unknown>, U extends string>(
     return obj;
 }
 
+export function entries2obj<T>(
+    entries: readonly (readonly [string, T])[],
+): { [s: string]: T } {
+    return entries.reduce<{ [s: string]: T }>((obj, [prop, value]) => {
+        obj[prop] = value;
+        return obj;
+    }, {});
+}
+
 /**
  * @see https://qiita.com/muddydixon/items/2edf6dcb84295eccf4f3
  */
