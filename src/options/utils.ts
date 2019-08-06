@@ -10,3 +10,17 @@ export function strReturnFunc(
         return retval;
     };
 }
+
+export function typesafeFunc<T>(
+    func: Function,
+    returnTypeGuard: (value: unknown) => value is T,
+    errmsg: string,
+): (...args: readonly unknown[]) => Promise<T> {
+    return async (...args) => {
+        const retval: unknown = await func(...args);
+        if (!returnTypeGuard(retval)) {
+            throw new TypeError(`${errmsg}: ${typeof retval}`);
+        }
+        return retval;
+    };
+}

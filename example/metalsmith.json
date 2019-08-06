@@ -10,7 +10,8 @@
         "metalsmith-in-place": {
           "setFilename": true
         }
-      }
+      },
+      "contentsConverter": "./remove-time-elem"
     }
   }
 }
