@@ -20,6 +20,8 @@ import {
 import { DeepReadonly } from './utils/types';
 
 const fileLog = log.extend('file');
+const fileValidationLog = fileLog.extend('validation');
+const filePreviewURLLog = fileLog.extend('preview-url');
 
 /*
  * Interfaces
@@ -126,7 +128,7 @@ export async function getTargetFileList({
         matchedFiles.map(async filename => {
             const fileData = files[filename];
 
-            fileLog('checking file: %s', filename);
+            fileValidationLog('checking file: %s', filename);
             if (!isFile(fileData)) {
                 return;
             }
@@ -138,7 +140,7 @@ export async function getTargetFileList({
                     metalsmith,
                 }),
             );
-            fileLog('get URL Path: %o -> %o', filename, urlpath);
+            filePreviewURLLog('get URL Path: %o -> %o', filename, urlpath);
 
             return { filename, urlpath };
         }),

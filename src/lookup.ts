@@ -19,8 +19,16 @@ import { isFile, processFiles } from './utils/metalsmith';
 import createState from './utils/obj-restore';
 
 const log = debug.extend('lookup');
+const processLog = log.extend('process');
 const fileLog = log.extend('file');
+const fileMetadataLog = fileLog.extend('metadata');
+const fileCompareLog = fileLog.extend('compare');
 const previewLog = log.extend('netlify-preview');
+const previewCacheLog = previewLog.extend('cache');
+const previewRequestLog = previewLog.extend('request');
+const previewResponseLog = previewLog.extend('response');
+const previewResponseHeadersLog = previewResponseLog.extend('headers');
+const previewResponseErrorLog = previewResponseLog.extend('error');
 
 export interface FileMetadataInterface {
     published: string | null;
@@ -181,7 +189,7 @@ export async function fetchPageData({
 }): Promise<PreviewDataType> {
     const cachedResponse = cache.get(previewPageURL);
     if (cachedResponse) {
-        previewLog('fetch from cache / %s', previewPageURL);
+        previewCacheLog('fetch from cache / %s', previewPageURL);
 
         const contents = await pluginOptions.contentsConverter(
             cachedResponse.body,
@@ -204,20 +212,21 @@ export async function fetchPageData({
 
     let previewPageResponse: got.Response<Buffer>;
     try {
+        previewRequestLog('GET %s', previewPageURL);
         previewPageResponse = await got(previewPageURL, {
             encoding: null,
         });
-        previewLog('fetch is successful / %s', previewPageURL);
+        previewResponseLog('fetch is successful / %s', previewPageURL);
     } catch (error) {
         if (error instanceof got.HTTPError) {
-            if (error.statusCode === 404) {
-                previewLog(
-                    'fetch fails with HTTP %s %s / %s',
-                    error.statusCode,
-                    error.statusMessage,
-                    previewPageURL,
-                );
+            previewResponseLog(
+                'fetch fails with HTTP %s %s / %s',
+                error.statusCode,
+                error.statusMessage,
+                previewPageURL,
+            );
 
+            if (error.statusCode === 404) {
                 const ret: PreviewNotFoundDataInterface = {
                     filename,
                     urlpath,
@@ -230,16 +239,14 @@ export async function fetchPageData({
                 };
                 return ret;
             } else {
-                previewLog(
-                    'fetch fails with HTTP %s %s / %s / headers %O',
-                    error.statusCode,
-                    error.statusMessage,
+                previewResponseHeadersLog(
+                    'headers of %s / %O',
                     previewPageURL,
                     error.headers,
                 );
             }
         } else {
-            previewLog(
+            previewResponseErrorLog(
                 'fetch failed by "got" package error / %s / %o',
                 previewPageURL,
                 error,
@@ -347,7 +354,7 @@ export async function getPreviewDataList({
                     dateState.published.date = metadata.published;
                     dateState.published.established = true;
 
-                    fileLog(
+                    fileMetadataLog(
                         '%s / published date is established: %s',
                         filename,
                         dateState.published.date,
@@ -356,14 +363,14 @@ export async function getPreviewDataList({
             } else if (previewData.previewPageNotFound) {
                 if (!dateState.published.established) {
                     if (!dateState.modified.established) {
-                        fileLog(
+                        fileMetadataLog(
                             '%s / published date and modified date is established: %s / %s',
                             filename,
                             dateState.published.date,
                             dateState.modified.date,
                         );
                     } else {
-                        fileLog(
+                        fileMetadataLog(
                             '%s / published date is established: %s',
                             filename,
                             dateState.published.date,
@@ -385,10 +392,7 @@ export async function getPreviewDataList({
                     cacheQueue
                         .get(filename)
                         .set(previewPageURL, previewPageResponse.body);
-                    previewLog(
-                        'enqueue to queue for cache / %s',
-                        previewPageURL,
-                    );
+                    previewCacheLog('enqueue to queue / %s', previewPageURL);
                 });
 
                 setMetadata({
@@ -516,7 +520,7 @@ export async function comparePages({
                     },
                 })
             ) {
-                fileLog(
+                fileCompareLog(
                     '%s / matched the content of preview %s',
                     beforeFilename,
                     previewPageURL,
@@ -524,14 +528,14 @@ export async function comparePages({
 
                 dateState.modified.date = publishedDate(deploy);
             } else {
-                fileLog(
+                fileCompareLog(
                     '%s / did not match the content of preview %s',
                     beforeFilename,
                     previewPageURL,
                 );
 
                 dateState.modified.established = true;
-                fileLog(
+                fileMetadataLog(
                     '%s / modified date is established: %s',
                     beforeFilename,
                     dateState.modified.date,
@@ -593,7 +597,7 @@ export default async function({
         if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
             updatedDateStateMap = previewUpdatedDateStateMap;
         } else {
-            log(
+            processLog(
                 'convert with the following metadata by files: %o',
                 [...previewUpdatedDateStateMap].reduce<Metalsmith.Files>(
                     (dataMap, [filename, metadata]) => {
@@ -611,7 +615,7 @@ export default async function({
                 updatedFiles,
                 pluginOptions.plugins,
             );
-            log(
+            processLog(
                 'generated a files to compare to the preview pages of %s',
                 deploy.deployAbsoluteURL,
             );
@@ -648,11 +652,13 @@ export default async function({
                     body,
                     published,
                 });
-                previewLog('stored in cache / %s', previewPageURL);
+                previewCacheLog('stored in cache / %s', previewPageURL);
             });
         }
     });
+
     cache.save();
+    previewCacheLog('saved cache');
 
     return [...dateStateMap.entries()].reduce((map, [filename, dateState]) => {
         map.set(filename, {
@@ -662,14 +668,14 @@ export default async function({
 
         if (!dateState.modified.established) {
             if (!dateState.published.established) {
-                fileLog(
+                fileMetadataLog(
                     '%s / published date and modified date is established: %s / %s',
                     filename,
                     dateState.published.date,
                     dateState.modified.date,
                 );
             } else {
-                fileLog(
+                fileMetadataLog(
                     '%s / published date is established: %s',
                     filename,
                     dateState.published.date,

@@ -7,6 +7,8 @@ import { debug } from './utils/log';
 const log = debug.extend('netlify-api');
 const requestLog = log.extend('request');
 const responseLog = log.extend('response');
+const responseHeadersLog = responseLog.extend('headers');
+const responseErrorLog = responseLog.extend('error');
 
 /**
  * @see https://github.com/netlify/open-api/blob/v0.11.4/swagger.yml#L1723-L1793
@@ -69,11 +71,8 @@ export async function netlifyDeploys(
                     headers,
                     json: true,
                 });
-                responseLog(
-                    'fetch is successful / %s / headers %o',
-                    url,
-                    response.headers,
-                );
+                responseLog('fetch is successful / %s', url);
+                responseHeadersLog('headers of %s / %o', url, response.headers);
                 const linkHeaderValue = response.headers.link;
                 return {
                     body: response.body,
@@ -84,14 +83,18 @@ export async function netlifyDeploys(
             } catch (error) {
                 if (error instanceof got.HTTPError) {
                     responseLog(
-                        'fetch fails with HTTP %s %s / %s / headers %O',
+                        'fetch fails with HTTP %s %s / %s',
                         error.statusCode,
                         error.statusMessage,
+                        url,
+                    );
+                    responseHeadersLog(
+                        'headers of %s / %O',
                         url,
                         error.headers,
                     );
                 } else {
-                    responseLog(
+                    responseErrorLog(
                         'fetch failed by "got" package error / %s / %o',
                         url,
                         error,
@@ -129,7 +132,7 @@ export async function netlifyDeploys(
         let nextURL: string | null = null;
         if (linkHeader) {
             const linkData = parseLink(linkHeader);
-            responseLog('pagination of %s / %o', url, linkData);
+            responseHeadersLog('pagination of %s / %o', url, linkData);
             if (linkData) {
                 const nextLink = linkData.next;
                 nextURL = (nextLink && nextLink.url) || null;
@@ -140,7 +143,7 @@ export async function netlifyDeploys(
                 }
             }
         } else {
-            responseLog('"Link" header not found in headers / %s', url);
+            responseHeadersLog('"Link" header not found in headers / %s', url);
         }
         lastURLSet.add(lastURL);
 
@@ -194,7 +197,11 @@ export async function netlifyDeploys(
                 }
             }
         } else {
-            responseLog('response body is not an array: %o / %s', body, url);
+            responseErrorLog(
+                'response body is not an array: %o / %s',
+                body,
+                url,
+            );
         }
 
         if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {
