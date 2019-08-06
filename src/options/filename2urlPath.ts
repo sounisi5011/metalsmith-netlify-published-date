@@ -1,7 +1,7 @@
 import importCwd from 'import-cwd';
 
 import { OptionsInterface } from '../plugin';
-import { hasProp, isObject, isStringArray } from '../utils';
+import { hasProp, isObject, isStringArray, value2str } from '../utils';
 import { strReturnFunc } from './utils';
 
 const PROP = 'filename2urlPath';
@@ -32,7 +32,9 @@ export function convertStr(filepath: string): ReturnFuncType {
 
     if (typeof func !== 'function') {
         throw new TypeError(
-            `Module "${filepath}" specified in option "${PROP}" did not export the function: ${typeof func}`,
+            `Module "${filepath}" specified in option "${PROP}" did not export the function: ${value2str(
+                func,
+            )}`,
         );
     }
 
@@ -72,12 +74,17 @@ export function convertMetadata({
                     return value;
                 } else {
                     throw new Error(
-                        `The value of "${schema}" field of metadata of file "${filename}" is not a string`,
+                        `The value of "${schema}" field of metadata of file "${filename}" is not a string: ${value2str(
+                            value,
+                        )}`,
                     );
                 }
             } else {
                 throw new Error(
-                    `"${schema}" field does not exist in metadata of file "${filename}"`,
+                    `"${schema}" field does not exist in metadata of file "${filename}": ${value2str(
+                        fileData,
+                        { depth: 0 },
+                    )}`,
                 );
             }
         };
@@ -101,15 +108,17 @@ export function convertMetadata({
                 );
             };
         } else {
-            const propListType =
-                '[' + propList.map(prop => typeof prop).join(', ') + ']';
             throw new TypeError(
-                `The value of the "metadata" field specified in option "${PROP}" is not an array of strings: ${propListType}`,
+                `The value of the "metadata" field specified in option "${PROP}" is not an array of strings: ${value2str(
+                    propList,
+                )}`,
             );
         }
     } else {
         throw new TypeError(
-            `The value of the "metadata" field specified in option "${PROP}" is neither a string nor an array: ${typeof schema}`,
+            `The value of the "metadata" field specified in option "${PROP}" is neither a string nor an array: ${value2str(
+                schema,
+            )}`,
         );
     }
 }
@@ -141,29 +150,43 @@ export function convertReplace({
 }): ReturnFuncType {
     if (!isObject(schema)) {
         throw new TypeError(
-            `The value of the "replace" field specified in option "${PROP}" is not a object: ${typeof schema}`,
+            `The value of the "replace" field specified in option "${PROP}" is not a object: ${value2str(
+                schema,
+            )}`,
         );
     }
 
     if (hasProp(schema, 'fromRegExp') && hasProp(schema, 'fromStr')) {
         throw new TypeError(
-            `An object in the "replace" field of the "${PROP}" option can not contain both the "fromRegExp" property and the "fromStr" property`,
+            `An object in the "replace" field of the "${PROP}" option can not contain both the "fromRegExp" property and the "fromStr" property: ${value2str(
+                schema,
+                { depth: 0 },
+            )}`,
         );
     }
     if (hasProp(schema, 'fromRegExp') || hasProp(schema, 'fromStr')) {
         if (!hasProp(schema, 'to')) {
             throw new TypeError(
-                `The value of the "replace" field of the "${PROP}" option must contain the "to" property`,
+                `The value of the "replace" field of the "${PROP}" option must contain the "to" property: ${value2str(
+                    schema,
+                    { depth: 0 },
+                )}`,
             );
         }
     } else {
         if (hasProp(schema, 'to')) {
             throw new TypeError(
-                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property`,
+                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property: ${value2str(
+                    schema,
+                    { depth: 0 },
+                )}`,
             );
         } else {
             throw new TypeError(
-                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property and the "to" property`,
+                `The value of the "replace" field of the "${PROP}" option must contain the "fromRegExp" or "fromStr" property and the "to" property: ${value2str(
+                    schema,
+                    { depth: 0 },
+                )}`,
             );
         }
     }
@@ -171,7 +194,9 @@ export function convertReplace({
     const to = schema.to;
     if (typeof to !== 'string') {
         throw new TypeError(
-            `The "to" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof to}`,
+            `The "to" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${value2str(
+                to,
+            )}`,
         );
     }
 
@@ -192,7 +217,9 @@ export function convertReplace({
             }
         } else {
             throw new TypeError(
-                `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof from}`,
+                `The "fromRegExp" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${value2str(
+                    from,
+                )}`,
             );
         }
     } else {
@@ -201,7 +228,9 @@ export function convertReplace({
             return filename => filename.replace(from, to);
         } else {
             throw new TypeError(
-                `The "fromStr" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${typeof from}`,
+                `The "fromStr" property of the object in the "replace" field specified in the option "${PROP}" is not a string value: ${value2str(
+                    from,
+                )}`,
             );
         }
     }
@@ -219,7 +248,10 @@ export function normalize(value: unknown): ReturnFuncType {
         if (hasProp(value, 'metadata')) {
             if (hasProp(value, 'replace')) {
                 throw new TypeError(
-                    `Object of option "${PROP}" must not contain both the "replace" property and "metadata" property`,
+                    `Object of option "${PROP}" must not contain both the "replace" property and "metadata" property: ${value2str(
+                        value,
+                        { depth: 0 },
+                    )}`,
                 );
             }
             return convertMetadata(value);
@@ -227,12 +259,18 @@ export function normalize(value: unknown): ReturnFuncType {
             return convertReplace(value);
         } else {
             throw new TypeError(
-                `Object of option "${PROP}" must contain "metadata" property or "replace" property`,
+                `Object of option "${PROP}" must contain "metadata" property or "replace" property: ${value2str(
+                    value,
+                    { depth: 0 },
+                )}`,
             );
         }
     } else {
         throw new TypeError(
-            `The value of option "${PROP}" must be either a function, a string, or an object`,
+            `The value of option "${PROP}" must be either a function, a string, or an object: ${value2str(
+                value,
+                { depth: 0 },
+            )}`,
         );
     }
 }

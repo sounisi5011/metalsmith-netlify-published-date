@@ -5,6 +5,7 @@ import path from 'path';
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
+import { appendValueReportPattern } from '../helpers/utils';
 
 const metadata = {
     files: {},
@@ -91,7 +92,10 @@ test('import of script files exporting functions that do not return Buffer shoul
         },
         {
             instanceOf: TypeError,
-            message: /[Mm]odule "\.\/invalid-func" .* option "contentsConverter" .* not return a Buffer/,
+            message: appendValueReportPattern(
+                /[Mm]odule "\.\/invalid-func" .* option "contentsConverter" .* not return a Buffer/,
+                require('./fixtures/invalid-func')(),
+            ),
         },
     );
 });
@@ -110,7 +114,10 @@ test('import of script files exporting functions that do not return Promise<Buff
         },
         {
             instanceOf: TypeError,
-            message: /[Mm]odule "\.\/async-mod.ret-number" .* option "contentsConverter" .* not return a Buffer/,
+            message: appendValueReportPattern(
+                /[Mm]odule "\.\/async-mod.ret-number" .* option "contentsConverter" .* not return a Buffer/,
+                await require('./fixtures/async-mod.ret-number')(),
+            ),
         },
     );
 });
@@ -127,7 +134,10 @@ test('import of script files that do not export functions should fail', t => {
         },
         {
             instanceOf: TypeError,
-            message: /[Mm]odule "\.\/no-func" .* option "contentsConverter" .* not export the function/,
+            message: appendValueReportPattern(
+                /[Mm]odule "\.\/no-func" .* option "contentsConverter" .* not export the function/,
+                require('./fixtures/no-func'),
+            ),
         },
     );
 });

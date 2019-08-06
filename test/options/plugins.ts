@@ -4,6 +4,7 @@ import path from 'path';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
+import { appendValueReportPattern } from '../helpers/utils';
 
 test.before(() => {
     process.chdir(path.join(__dirname, 'fixtures'));
@@ -146,7 +147,10 @@ test('import of script files that do not export functions should fail', t => {
         },
         {
             instanceOf: TypeError,
-            message: /[Pp]lugin "\.\/no-func" .* option "plugins" .* not export the function/,
+            message: appendValueReportPattern(
+                /[Pp]lugin "\.\/no-func" .* option "plugins" .* not export the function/,
+                require('./fixtures/no-func'),
+            ),
         },
     );
 });
@@ -165,7 +169,10 @@ test('import of script files exporting functions that do not return function sho
         },
         {
             instanceOf: TypeError,
-            message: /[Pp]lugin "\.\/invalid-func" .* option "plugins" .* not return the function/,
+            message: appendValueReportPattern(
+                /[Pp]lugin "\.\/invalid-func" .* option "plugins" .* not return the function/,
+                require('./fixtures/invalid-func')(),
+            ),
         },
     );
 });

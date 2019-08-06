@@ -1,4 +1,5 @@
 import path from 'path';
+import util from 'util';
 
 export function isNotVoid<T>(value: T | undefined | void): value is T {
     return value !== undefined;
@@ -46,6 +47,13 @@ export function pickProps<T extends object, U extends keyof T>(
 
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
+}
+
+export function value2str(
+    value: unknown,
+    options: Pick<util.InspectOptions, 'depth' | 'maxArrayLength'> = {},
+): string {
+    return util.inspect(value, { depth: 1, ...options, breakLength: Infinity });
 }
 
 export function rfc3986EncodeURIComponent(uriComponent: string): string {
