@@ -78,11 +78,7 @@ export function appendValueReportPattern(
     pattern: RegExp,
     value: unknown,
 ): RegExp {
-    return new RegExp(
-        pattern.source.replace(
-            /\$?$/,
-            `( .+)?: ${escapeRegExp(inspectSingleLine(value))}$`,
-        ),
-        pattern.flags,
-    );
+    const origPattern = pattern.source.replace(/\$$/, '');
+    const escapedValue = escapeRegExp(inspectSingleLine(value));
+    return new RegExp(`${origPattern}( .+)?: ${escapedValue}$`, pattern.flags);
 }

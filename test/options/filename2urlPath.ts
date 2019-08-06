@@ -181,7 +181,7 @@ test('should read url path from metadata', t => {
             instanceOf: Error,
             message: appendValueReportPattern(
                 /"prop1" (?:property|field) .* is not a string/,
-                metadata.fileData,
+                metadata.fileData.prop1,
             ),
         },
         'reading of non-string value in metadata should fail',
