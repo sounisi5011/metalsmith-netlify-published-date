@@ -249,6 +249,12 @@ export async function fetchPageData({
                 };
                 return ret;
             }
+        } else {
+            previewLog(
+                'fetch failed by "got" package error / %s / %o',
+                previewPageURL,
+                error,
+            );
         }
         throw error;
     }
@@ -327,6 +333,14 @@ export async function getPreviewDataList({
                     options: pluginOptions,
                     nowDate,
                 });
+
+                if (!dateState.published.established) {
+                    fileLog(
+                        '%s / published date is established: %s',
+                        filename,
+                        metadata.published,
+                    );
+                }
 
                 dateState.published.date = metadata.published;
                 dateState.published.established = true;
@@ -561,6 +575,19 @@ export default async function({
         if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
             updatedDateStateMap = previewUpdatedDateStateMap;
         } else {
+            log(
+                'convert with the following metadata by files: %o',
+                [...previewUpdatedDateStateMap].reduce<Metalsmith.Files>(
+                    (dataMap, [filename, metadata]) => {
+                        dataMap[filename] = {};
+                        Object.keys(metadata).forEach(prop => {
+                            dataMap[filename][prop] = files[filename][prop];
+                        });
+                        return dataMap;
+                    },
+                    {},
+                ),
+            );
             const processedFiles = await processFiles(
                 metalsmith,
                 updatedFiles,
@@ -603,18 +630,29 @@ export default async function({
                     body,
                     published,
                 });
+                previewLog('%s / stored in cache', previewPageURL);
             });
         }
     });
     cache.save();
 
-    return new Map(
-        [...dateStateMap.entries()].map(([filename, dateState]) => [
-            filename,
-            {
-                published: dateState.published.date,
-                modified: dateState.modified.date,
-            },
-        ]),
-    );
+    return [...dateStateMap.entries()].reduce((map, [filename, dateState]) => {
+        map.set(filename, {
+            published: dateState.published.date,
+            modified: dateState.modified.date,
+        });
+
+        if (!dateState.modified.established) {
+            fileLog(
+                !dateState.published.established
+                    ? '%s / published date and modified date is established: %s / %s'
+                    : '%s / published date is established: %s',
+                filename,
+                dateState.published.date,
+                dateState.modified.date,
+            );
+        }
+
+        return map;
+    }, new Map<string, FileMetadataInterface>());
 }

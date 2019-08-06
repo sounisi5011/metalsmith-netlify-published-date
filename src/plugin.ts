@@ -252,6 +252,20 @@ export default createPluginGenerator((opts = {}) => {
                 });
             });
 
+            log(
+                'convert with the following metadata by files: %o',
+                [...metaMap].reduce<Metalsmith.Files>(
+                    (dataMap, [filename, metadata]) => {
+                        dataMap[filename] = {};
+                        Object.keys(metadata).forEach(prop => {
+                            dataMap[filename][prop] = files[filename][prop];
+                        });
+                        return dataMap;
+                    },
+                    {},
+                ),
+            );
+
             await processFiles(metalsmith, files, options.plugins);
         }
 

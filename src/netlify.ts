@@ -63,17 +63,35 @@ export async function netlifyDeploys(
     const fetch =
         options.fetchCallback ||
         (async (url, headers) => {
-            const response = await got(url, {
-                headers,
-                json: true,
-            });
-            const linkHeaderValue = response.headers.link;
-            return {
-                body: response.body,
-                linkHeader: Array.isArray(linkHeaderValue)
-                    ? linkHeaderValue.join(', ')
-                    : linkHeaderValue,
-            };
+            try {
+                const response = await got(url, {
+                    headers,
+                    json: true,
+                });
+                const linkHeaderValue = response.headers.link;
+                return {
+                    body: response.body,
+                    linkHeader: Array.isArray(linkHeaderValue)
+                        ? linkHeaderValue.join(', ')
+                        : linkHeaderValue,
+                };
+            } catch (error) {
+                if (error instanceof got.HTTPError) {
+                    responseLog(
+                        '%s / fetch fails with HTTP %s %s',
+                        url,
+                        error.statusCode,
+                        error.statusMessage,
+                    );
+                } else {
+                    responseLog(
+                        'fetch failed by "got" package error / %s / %o',
+                        url,
+                        error,
+                    );
+                }
+                throw error;
+            }
         });
     const commitHashSet = options.commitHashList
         ? new Set(options.commitHashList)
@@ -87,6 +105,8 @@ export async function netlifyDeploys(
      * @see https://www.netlify.com/docs/api/#deploys
      */
     let url = `${API_PREFIX}sites/${siteID}/deploys`;
+    log('start fetching first page: %s', url);
+
     while (!fetchedURL.has(url)) {
         const lastURLSet = new Set<typeof lastURL>(lastURL);
 
@@ -113,6 +133,8 @@ export async function netlifyDeploys(
                     lastURL = lastLink.url;
                 }
             }
+        } else {
+            responseLog('%s / "Link" header not found in headers', url);
         }
         lastURLSet.add(lastURL);
 
@@ -168,8 +190,10 @@ export async function netlifyDeploys(
         }
 
         if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {
+            log('start fetching next page: %s', nextURL);
             url = nextURL;
         } else if (lastURL && !initialDeploy) {
+            log('start fetching last page: %s', lastURL);
             url = lastURL;
         }
     }
