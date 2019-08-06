@@ -34,7 +34,7 @@ test('should pass the function to the options value', t => {
 test('should import external script file', async t => {
     const options = normalizeOptions(
         {
-            contentsConverter: 'mod.ret-buffer.js',
+            contentsConverter: './mod.ret-buffer.js',
         },
         netlifyPublishedDate.defaultOptions,
     );
@@ -48,7 +48,7 @@ test('should import external script file', async t => {
 test('should import external script file without .js extension', async t => {
     const options = normalizeOptions(
         {
-            contentsConverter: 'mod.ret-buffer',
+            contentsConverter: './mod.ret-buffer',
         },
         netlifyPublishedDate.defaultOptions,
     );
@@ -62,7 +62,7 @@ test('should import external script file without .js extension', async t => {
 test('should import external script file that returns a promise', async t => {
     const options = normalizeOptions(
         {
-            contentsConverter: 'async-mod.ret-buffer',
+            contentsConverter: './async-mod.ret-buffer',
         },
         netlifyPublishedDate.defaultOptions,
     );
@@ -73,8 +73,8 @@ test('should import external script file that returns a promise', async t => {
     );
 });
 
-test('import of script files exporting functions that do not return Buffer should fail', t => {
-    t.throwsAsync(
+test('import of script files exporting functions that do not return Buffer should fail', async t => {
+    await t.throwsAsync(
         async () => {
             const options = normalizeOptions(
                 {
@@ -92,8 +92,8 @@ test('import of script files exporting functions that do not return Buffer shoul
     );
 });
 
-test('import of script files exporting functions that do not return Promise<Buffer> should fail', t => {
-    t.throwsAsync(
+test('import of script files exporting functions that do not return Promise<Buffer> should fail', async t => {
+    await t.throwsAsync(
         async () => {
             const options = normalizeOptions(
                 {
