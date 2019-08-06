@@ -202,31 +202,12 @@ export async function fetchPageData({
         return ret;
     }
 
+    let previewPageResponse: got.Response<Buffer>;
     try {
-        const previewPageResponse = await got(previewPageURL, {
+        previewPageResponse = await got(previewPageURL, {
             encoding: null,
         });
         previewLog('fetch is successful / %s', previewPageURL);
-
-        const published = publishedDate(deploy);
-        const modified = publishedDate(deploy);
-        const contents = await pluginOptions.contentsConverter(
-            previewPageResponse.body,
-            { deploy, previewPageResponse, cachedResponse: null },
-        );
-
-        const ret: PreviewDataInterface = {
-            filename,
-            urlpath,
-            previewPageURL,
-            previewPageResponse,
-            cachedResponse: null,
-            contents,
-            metadata: { published, modified },
-            previewPageNotFound: false,
-            fromCache: false,
-        };
-        return ret;
     } catch (error) {
         if (error instanceof got.HTTPError) {
             previewLog(
@@ -258,6 +239,26 @@ export async function fetchPageData({
         }
         throw error;
     }
+
+    const published = publishedDate(deploy);
+    const modified = publishedDate(deploy);
+    const contents = await pluginOptions.contentsConverter(
+        previewPageResponse.body,
+        { deploy, previewPageResponse, cachedResponse: null },
+    );
+
+    const ret: PreviewDataInterface = {
+        filename,
+        urlpath,
+        previewPageURL,
+        previewPageResponse,
+        cachedResponse: null,
+        contents,
+        metadata: { published, modified },
+        previewPageNotFound: false,
+        fromCache: false,
+    };
+    return ret;
 }
 
 export async function getPreviewDataList({
@@ -335,15 +336,15 @@ export async function getPreviewDataList({
                 });
 
                 if (!dateState.published.established) {
+                    dateState.published.date = metadata.published;
+                    dateState.published.established = true;
+
                     fileLog(
                         '%s / published date is established: %s',
                         filename,
-                        metadata.published,
+                        dateState.published.date,
                     );
                 }
-
-                dateState.published.date = metadata.published;
-                dateState.published.established = true;
             } else if (previewData.previewPageNotFound) {
                 if (!dateState.published.established) {
                     fileLog(
@@ -370,8 +371,11 @@ export async function getPreviewDataList({
                     cacheQueue
                         .get(filename)
                         .set(previewPageURL, previewPageResponse.body);
+                    previewLog(
+                        '%s / enqueue to queue for cache',
+                        previewPageURL,
+                    );
                 });
-                previewLog('%s / enqueue to queue for cache', previewPageURL);
 
                 setMetadata({
                     fileData,

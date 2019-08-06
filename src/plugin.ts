@@ -227,9 +227,15 @@ export default createPluginGenerator((opts = {}) => {
             metalsmith,
         });
         if (targetFileList.length >= 1) {
-            fileLog(
+            log(
                 'start lookup of published date and modified date in this files: %o',
-                targetFileList,
+                targetFileList.reduce<Record<string, { urlpath: string }>>(
+                    (obj, { filename, urlpath }) => {
+                        obj[filename] = { urlpath };
+                        return obj;
+                    },
+                    {},
+                ),
             );
 
             const metaMap = await lookup({

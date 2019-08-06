@@ -64,10 +64,16 @@ export async function netlifyDeploys(
         options.fetchCallback ||
         (async (url, headers) => {
             try {
+                requestLog('GET %s / headers %o', url, headers);
                 const response = await got(url, {
                     headers,
                     json: true,
                 });
+                responseLog(
+                    'fetch is successful / %s / headers %o',
+                    url,
+                    response.headers,
+                );
                 const linkHeaderValue = response.headers.link;
                 return {
                     body: response.body,
@@ -114,7 +120,6 @@ export async function netlifyDeploys(
             ? { authorization: `Bearer ${options.accessToken}` }
             : {};
         const { body, linkHeader } = await fetch(url, headers);
-        requestLog('GET %s / headers %o', url, headers);
         fetchedURL.add(url);
 
         /**
@@ -140,11 +145,6 @@ export async function netlifyDeploys(
 
         if (Array.isArray(body)) {
             const netlifyDeployList = body.filter(isNetlifyDeploy);
-            responseLog(
-                '%s / deploy list count: %d',
-                url,
-                netlifyDeployList.length,
-            );
 
             const matchedDeployList = netlifyDeployList.filter(deploy => {
                 if (deploy.state !== 'ready') {
@@ -165,9 +165,16 @@ export async function netlifyDeploys(
             });
             if (netlifyDeployList.length !== matchedDeployList.length) {
                 responseLog(
-                    '%s / deploy list count that valid: %d',
+                    '%s / deploy list count: %d / among them, valid count: %d',
                     url,
+                    netlifyDeployList.length,
                     matchedDeployList.length,
+                );
+            } else {
+                responseLog(
+                    '%s / deploy list count: %d',
+                    url,
+                    netlifyDeployList.length,
                 );
             }
 
