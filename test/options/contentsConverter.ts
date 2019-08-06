@@ -17,7 +17,7 @@ test.before(() => {
     process.chdir(path.join(__dirname, 'fixtures'));
 });
 
-test('should pass the function to the options value', t => {
+test('should pass the function to the options value', async t => {
     const func: OptionsInterface['contentsConverter'] = (
         contents: Buffer,
     ): Buffer => contents;
@@ -28,7 +28,11 @@ test('should pass the function to the options value', t => {
         netlifyPublishedDate.defaultOptions,
     );
 
-    t.is(options.contentsConverter, func);
+    const args: Parameters<OptionsInterface['contentsConverter']> = [
+        Buffer.from(Math.random().toString(36)),
+        metadata,
+    ];
+    t.deepEqual(await options.contentsConverter(...args), await func(...args));
 });
 
 test('should import external script file', async t => {
