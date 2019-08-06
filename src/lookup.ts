@@ -134,7 +134,7 @@ export function previewPageURL2filename(
 
     for (const filepath of [
         url2path(urlpath.replace(/^\/+/, '')),
-        url2path(urlpath.replace(/^\/+/, '').replace(/\/*$/, '/index.html')),
+        url2path(urlpath.replace(/\/*$/, '/index.html').replace(/^\/+/, '')),
     ]) {
         const filename = findEqualsPath(baseDirpath, filepath, pathList);
         if (filename !== undefined) {
