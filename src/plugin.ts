@@ -20,6 +20,8 @@ import {
 import { DeepReadonly } from './utils/types';
 
 const fileLog = log.extend('file');
+const fileValidationLog = fileLog.extend('validation');
+const filePreviewURLLog = fileLog.extend('preview-url');
 
 /*
  * Interfaces
@@ -126,7 +128,7 @@ export async function getTargetFileList({
         matchedFiles.map(async filename => {
             const fileData = files[filename];
 
-            fileLog('%s / checking file', filename);
+            fileValidationLog('checking file: %s', filename);
             if (!isFile(fileData)) {
                 return;
             }
@@ -138,7 +140,7 @@ export async function getTargetFileList({
                     metalsmith,
                 }),
             );
-            fileLog('%s / get URL Path: %s', filename, urlpath);
+            filePreviewURLLog('get URL Path: %o -> %o', filename, urlpath);
 
             return { filename, urlpath };
         }),
@@ -227,9 +229,15 @@ export default createPluginGenerator((opts = {}) => {
             metalsmith,
         });
         if (targetFileList.length >= 1) {
-            fileLog(
+            log(
                 'start lookup of published date and modified date in this files: %o',
-                targetFileList,
+                targetFileList.reduce<Record<string, { urlpath: string }>>(
+                    (obj, { filename, urlpath }) => {
+                        obj[filename] = { urlpath };
+                        return obj;
+                    },
+                    {},
+                ),
             );
 
             const metaMap = await lookup({
@@ -251,6 +259,20 @@ export default createPluginGenerator((opts = {}) => {
                     nowDate,
                 });
             });
+
+            log(
+                'convert with the following metadata by files: %o',
+                [...metaMap].reduce<Metalsmith.Files>(
+                    (dataMap, [filename, metadata]) => {
+                        dataMap[filename] = {};
+                        Object.keys(metadata).forEach(prop => {
+                            dataMap[filename][prop] = files[filename][prop];
+                        });
+                        return dataMap;
+                    },
+                    {},
+                ),
+            );
 
             await processFiles(metalsmith, files, options.plugins);
         }

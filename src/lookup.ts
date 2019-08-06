@@ -19,8 +19,16 @@ import { isFile, processFiles } from './utils/metalsmith';
 import createState from './utils/obj-restore';
 
 const log = debug.extend('lookup');
+const processLog = log.extend('process');
 const fileLog = log.extend('file');
+const fileMetadataLog = fileLog.extend('metadata');
+const fileCompareLog = fileLog.extend('compare');
 const previewLog = log.extend('netlify-preview');
+const previewCacheLog = previewLog.extend('cache');
+const previewRequestLog = previewLog.extend('request');
+const previewResponseLog = previewLog.extend('response');
+const previewResponseHeadersLog = previewResponseLog.extend('headers');
+const previewResponseErrorLog = previewResponseLog.extend('error');
 
 export interface FileMetadataInterface {
     published: string | null;
@@ -181,7 +189,7 @@ export async function fetchPageData({
 }): Promise<PreviewDataType> {
     const cachedResponse = cache.get(previewPageURL);
     if (cachedResponse) {
-        previewLog('fetch from cache / %s', previewPageURL);
+        previewCacheLog('fetch from cache / %s', previewPageURL);
 
         const contents = await pluginOptions.contentsConverter(
             cachedResponse.body,
@@ -202,34 +210,16 @@ export async function fetchPageData({
         return ret;
     }
 
+    let previewPageResponse: got.Response<Buffer>;
     try {
-        const previewPageResponse = await got(previewPageURL, {
+        previewRequestLog('GET %s', previewPageURL);
+        previewPageResponse = await got(previewPageURL, {
             encoding: null,
         });
-        previewLog('fetch is successful / %s', previewPageURL);
-
-        const published = publishedDate(deploy);
-        const modified = publishedDate(deploy);
-        const contents = await pluginOptions.contentsConverter(
-            previewPageResponse.body,
-            { deploy, previewPageResponse, cachedResponse: null },
-        );
-
-        const ret: PreviewDataInterface = {
-            filename,
-            urlpath,
-            previewPageURL,
-            previewPageResponse,
-            cachedResponse: null,
-            contents,
-            metadata: { published, modified },
-            previewPageNotFound: false,
-            fromCache: false,
-        };
-        return ret;
+        previewResponseLog('fetch is successful / %s', previewPageURL);
     } catch (error) {
         if (error instanceof got.HTTPError) {
-            previewLog(
+            previewResponseLog(
                 'fetch fails with HTTP %s %s / %s',
                 error.statusCode,
                 error.statusMessage,
@@ -248,10 +238,42 @@ export async function fetchPageData({
                     fromCache: false,
                 };
                 return ret;
+            } else {
+                previewResponseHeadersLog(
+                    'headers of %s / %O',
+                    previewPageURL,
+                    error.headers,
+                );
             }
+        } else {
+            previewResponseErrorLog(
+                'fetch failed by "got" package error / %s / %o',
+                previewPageURL,
+                error,
+            );
         }
         throw error;
     }
+
+    const published = publishedDate(deploy);
+    const modified = publishedDate(deploy);
+    const contents = await pluginOptions.contentsConverter(
+        previewPageResponse.body,
+        { deploy, previewPageResponse, cachedResponse: null },
+    );
+
+    const ret: PreviewDataInterface = {
+        filename,
+        urlpath,
+        previewPageURL,
+        previewPageResponse,
+        cachedResponse: null,
+        contents,
+        metadata: { published, modified },
+        previewPageNotFound: false,
+        fromCache: false,
+    };
+    return ret;
 }
 
 export async function getPreviewDataList({
@@ -328,18 +350,32 @@ export async function getPreviewDataList({
                     nowDate,
                 });
 
-                dateState.published.date = metadata.published;
-                dateState.published.established = true;
-            } else if (previewData.previewPageNotFound) {
                 if (!dateState.published.established) {
-                    fileLog(
-                        !dateState.modified.established
-                            ? '%s / published date and modified date is established: %s / %s'
-                            : '%s / published date is established: %s',
+                    dateState.published.date = metadata.published;
+                    dateState.published.established = true;
+
+                    fileMetadataLog(
+                        '%s / published date is established: %s',
                         filename,
                         dateState.published.date,
-                        dateState.modified.date,
                     );
+                }
+            } else if (previewData.previewPageNotFound) {
+                if (!dateState.published.established) {
+                    if (!dateState.modified.established) {
+                        fileMetadataLog(
+                            '%s / published date and modified date is established: %s / %s',
+                            filename,
+                            dateState.published.date,
+                            dateState.modified.date,
+                        );
+                    } else {
+                        fileMetadataLog(
+                            '%s / published date is established: %s',
+                            filename,
+                            dateState.published.date,
+                        );
+                    }
                 }
 
                 dateState.published.established = true;
@@ -356,8 +392,8 @@ export async function getPreviewDataList({
                     cacheQueue
                         .get(filename)
                         .set(previewPageURL, previewPageResponse.body);
+                    previewCacheLog('enqueue to queue / %s', previewPageURL);
                 });
-                previewLog('%s / enqueue to queue for cache', previewPageURL);
 
                 setMetadata({
                     fileData,
@@ -484,7 +520,7 @@ export async function comparePages({
                     },
                 })
             ) {
-                fileLog(
+                fileCompareLog(
                     '%s / matched the content of preview %s',
                     beforeFilename,
                     previewPageURL,
@@ -492,14 +528,14 @@ export async function comparePages({
 
                 dateState.modified.date = publishedDate(deploy);
             } else {
-                fileLog(
+                fileCompareLog(
                     '%s / did not match the content of preview %s',
                     beforeFilename,
                     previewPageURL,
                 );
 
                 dateState.modified.established = true;
-                fileLog(
+                fileMetadataLog(
                     '%s / modified date is established: %s',
                     beforeFilename,
                     dateState.modified.date,
@@ -561,13 +597,26 @@ export default async function({
         if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
             updatedDateStateMap = previewUpdatedDateStateMap;
         } else {
+            processLog(
+                'convert with the following metadata by files: %o',
+                [...previewUpdatedDateStateMap].reduce<Metalsmith.Files>(
+                    (dataMap, [filename, metadata]) => {
+                        dataMap[filename] = {};
+                        Object.keys(metadata).forEach(prop => {
+                            dataMap[filename][prop] = files[filename][prop];
+                        });
+                        return dataMap;
+                    },
+                    {},
+                ),
+            );
             const processedFiles = await processFiles(
                 metalsmith,
                 updatedFiles,
                 pluginOptions.plugins,
             );
-            log(
-                'generated a files to compare to the preview pages / %s',
+            processLog(
+                'generated a files to compare to the preview pages of %s',
                 deploy.deployAbsoluteURL,
             );
 
@@ -603,18 +652,37 @@ export default async function({
                     body,
                     published,
                 });
+                previewCacheLog('stored in cache / %s', previewPageURL);
             });
         }
     });
-    cache.save();
 
-    return new Map(
-        [...dateStateMap.entries()].map(([filename, dateState]) => [
-            filename,
-            {
-                published: dateState.published.date,
-                modified: dateState.modified.date,
-            },
-        ]),
-    );
+    cache.save();
+    previewCacheLog('saved cache');
+
+    return [...dateStateMap.entries()].reduce((map, [filename, dateState]) => {
+        map.set(filename, {
+            published: dateState.published.date,
+            modified: dateState.modified.date,
+        });
+
+        if (!dateState.modified.established) {
+            if (!dateState.published.established) {
+                fileMetadataLog(
+                    '%s / published date and modified date is established: %s / %s',
+                    filename,
+                    dateState.published.date,
+                    dateState.modified.date,
+                );
+            } else {
+                fileMetadataLog(
+                    '%s / published date is established: %s',
+                    filename,
+                    dateState.published.date,
+                );
+            }
+        }
+
+        return map;
+    }, new Map<string, FileMetadataInterface>());
 }

@@ -7,6 +7,8 @@ import { debug } from './utils/log';
 const log = debug.extend('netlify-api');
 const requestLog = log.extend('request');
 const responseLog = log.extend('response');
+const responseHeadersLog = responseLog.extend('headers');
+const responseErrorLog = responseLog.extend('error');
 
 /**
  * @see https://github.com/netlify/open-api/blob/v0.11.4/swagger.yml#L1723-L1793
@@ -63,17 +65,43 @@ export async function netlifyDeploys(
     const fetch =
         options.fetchCallback ||
         (async (url, headers) => {
-            const response = await got(url, {
-                headers,
-                json: true,
-            });
-            const linkHeaderValue = response.headers.link;
-            return {
-                body: response.body,
-                linkHeader: Array.isArray(linkHeaderValue)
-                    ? linkHeaderValue.join(', ')
-                    : linkHeaderValue,
-            };
+            try {
+                requestLog('GET %s / headers %o', url, headers);
+                const response = await got(url, {
+                    headers,
+                    json: true,
+                });
+                responseLog('fetch is successful / %s', url);
+                responseHeadersLog('headers of %s / %o', url, response.headers);
+                const linkHeaderValue = response.headers.link;
+                return {
+                    body: response.body,
+                    linkHeader: Array.isArray(linkHeaderValue)
+                        ? linkHeaderValue.join(', ')
+                        : linkHeaderValue,
+                };
+            } catch (error) {
+                if (error instanceof got.HTTPError) {
+                    responseLog(
+                        'fetch fails with HTTP %s %s / %s',
+                        error.statusCode,
+                        error.statusMessage,
+                        url,
+                    );
+                    responseHeadersLog(
+                        'headers of %s / %O',
+                        url,
+                        error.headers,
+                    );
+                } else {
+                    responseErrorLog(
+                        'fetch failed by "got" package error / %s / %o',
+                        url,
+                        error,
+                    );
+                }
+                throw error;
+            }
         });
     const commitHashSet = options.commitHashList
         ? new Set(options.commitHashList)
@@ -87,6 +115,8 @@ export async function netlifyDeploys(
      * @see https://www.netlify.com/docs/api/#deploys
      */
     let url = `${API_PREFIX}sites/${siteID}/deploys`;
+    log('start fetching first page: %s', url);
+
     while (!fetchedURL.has(url)) {
         const lastURLSet = new Set<typeof lastURL>(lastURL);
 
@@ -94,7 +124,6 @@ export async function netlifyDeploys(
             ? { authorization: `Bearer ${options.accessToken}` }
             : {};
         const { body, linkHeader } = await fetch(url, headers);
-        requestLog('GET %s / headers %o', url, headers);
         fetchedURL.add(url);
 
         /**
@@ -103,7 +132,7 @@ export async function netlifyDeploys(
         let nextURL: string | null = null;
         if (linkHeader) {
             const linkData = parseLink(linkHeader);
-            responseLog('%s / pagination %o', url, linkData);
+            responseHeadersLog('pagination of %s / %o', url, linkData);
             if (linkData) {
                 const nextLink = linkData.next;
                 nextURL = (nextLink && nextLink.url) || null;
@@ -113,16 +142,13 @@ export async function netlifyDeploys(
                     lastURL = lastLink.url;
                 }
             }
+        } else {
+            responseHeadersLog('"Link" header not found in headers / %s', url);
         }
         lastURLSet.add(lastURL);
 
         if (Array.isArray(body)) {
             const netlifyDeployList = body.filter(isNetlifyDeploy);
-            responseLog(
-                '%s / deploy list count: %d',
-                url,
-                netlifyDeployList.length,
-            );
 
             const matchedDeployList = netlifyDeployList.filter(deploy => {
                 if (deploy.state !== 'ready') {
@@ -143,9 +169,16 @@ export async function netlifyDeploys(
             });
             if (netlifyDeployList.length !== matchedDeployList.length) {
                 responseLog(
-                    '%s / deploy list count that valid: %d',
-                    url,
+                    'deploy list count: %d / among them, valid count: %d / %s',
+                    netlifyDeployList.length,
                     matchedDeployList.length,
+                    url,
+                );
+            } else {
+                responseLog(
+                    'deploy list count: %d / %s',
+                    netlifyDeployList.length,
+                    url,
                 );
             }
 
@@ -157,19 +190,25 @@ export async function netlifyDeploys(
                     netlifyDeployList[netlifyDeployList.length - 1];
                 if (lastDeploy.commit_ref === null) {
                     responseLog(
-                        '%s / get the initial deploy from the response',
+                        'get the initial deploy from the response / %s',
                         url,
                     );
                     initialDeploy = lastDeploy;
                 }
             }
         } else {
-            responseLog('%s / response body is not an array: %o', url, body);
+            responseErrorLog(
+                'response body is not an array: %o / %s',
+                body,
+                url,
+            );
         }
 
         if (nextURL && (!commitHashSet || commitHashSet.size >= 1)) {
+            log('start fetching next page: %s', nextURL);
             url = nextURL;
         } else if (lastURL && !initialDeploy) {
+            log('start fetching last page: %s', lastURL);
             url = lastURL;
         }
     }
