@@ -84,10 +84,11 @@ export async function netlifyDeploys(
             } catch (error) {
                 if (error instanceof got.HTTPError) {
                     responseLog(
-                        '%s / fetch fails with HTTP %s %s',
+                        '%s / fetch fails with HTTP %s %s / headers %O',
                         url,
                         error.statusCode,
                         error.statusMessage,
+                        error.headers,
                     );
                 } else {
                     responseLog(

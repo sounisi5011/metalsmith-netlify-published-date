@@ -210,14 +210,14 @@ export async function fetchPageData({
         previewLog('fetch is successful / %s', previewPageURL);
     } catch (error) {
         if (error instanceof got.HTTPError) {
-            previewLog(
-                'fetch fails with HTTP %s %s / %s',
-                error.statusCode,
-                error.statusMessage,
-                previewPageURL,
-            );
-
             if (error.statusCode === 404) {
+                previewLog(
+                    'fetch fails with HTTP %s %s / %s',
+                    error.statusCode,
+                    error.statusMessage,
+                    previewPageURL,
+                );
+
                 const ret: PreviewNotFoundDataInterface = {
                     filename,
                     urlpath,
@@ -229,6 +229,14 @@ export async function fetchPageData({
                     fromCache: false,
                 };
                 return ret;
+            } else {
+                previewLog(
+                    'fetch fails with HTTP %s %s / %s / headers %O',
+                    error.statusCode,
+                    error.statusMessage,
+                    previewPageURL,
+                    error.headers,
+                );
             }
         } else {
             previewLog(
