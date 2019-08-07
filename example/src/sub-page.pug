@@ -1,0 +1,59 @@
+---
+title: Example Sub Page
+canonicalPath: sub-page.html
+pkgName: "@sounisi5011/metalsmith-netlify-published-date"
+---
+
+- const now = new Date()
+doctype html
+html(lang="en")
+    head
+        meta(charset="utf-8")
+        meta(name="viewport" content="width=device-width,initial-scale=1")
+        meta(name="format-detection" content="telephone=no,email=no,address=no")
+        title= `${pkgName} ${title}`
+    body
+        h1
+            a(href="https://github.com/sounisi5011/metalsmith-netlify-published-date")
+                = pkgName
+            |
+            |
+            = title
+        p
+            | Page generation time:
+            |
+            time(datetime=now.toISOString())
+                = now.getFullYear()
+                | /
+                = String(now.getMonth() + 1).padStart(2, 0)
+                | /
+                = String(now.getDate()).padStart(2, 0)
+                |
+                |
+                = String(now.getHours()).padStart(2, 0)
+                | :
+                = String(now.getMinutes()).padStart(2, 0)
+                | :
+                = String(now.getSeconds()).padStart(2, 0)
+                |
+                | UTC
+                if 0 < now.getTimezoneOffset()
+                    | +
+                else if now.getTimezoneOffset() < 0
+                    | -
+                else
+                    != '&plusmn;'
+                = String(Math.trunc(Math.abs(now.getTimezoneOffset()) / 60)).padStart(2, 0)
+                | :
+                = String(Math.abs(now.getTimezoneOffset()) % 60).padStart(2, 0)
+
+        if published instanceof Date
+            p
+                | Published at
+                |
+                time.published= published.toISOString()
+        if modified instanceof Date
+            p
+                | Last updated at
+                |
+                time.modified= modified.toISOString()
