@@ -47,8 +47,9 @@
     "release:validation:git-branch": "git-branch-is master",
     "release:validation:git-work-dir": "is-git-status-clean",
     "release:validation:publishable": "can-npm-publish --verbose",
-    "test": "run-s test:peer-deps lint test:ava",
+    "test": "run-s test:peer-deps lint test:ava test:check-type-defs-pkgs",
     "test:ava": "ava",
+    "test:check-type-defs-pkgs": "node script/check-type-defs-pkgs.js ./dist/ build",
     "test:peer-deps": "check-peer-deps"
   },
   "husky": {
