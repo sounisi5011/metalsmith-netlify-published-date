@@ -2,7 +2,7 @@ import anyTest, { TestInterface } from 'ava';
 
 import { netlifyDeploys } from '../src/netlify';
 import createNetlify from './helpers/netlify-mock-server';
-import { deleteProps } from './helpers/utils';
+import { deleteProps, iterable2array } from './helpers/utils';
 
 const test = anyTest as TestInterface<{
     server: ReturnType<typeof createNetlify>;
@@ -24,9 +24,11 @@ test.serial(
         const server = await t.context.server;
 
         const logLen = server.requestLogs.api.length;
-        const deployList = await netlifyDeploys('example.com', {
-            commitHashList: undefined,
-        });
+        const deployList = await iterable2array(
+            netlifyDeploys('example.com', {
+                commitHashList: undefined,
+            }),
+        );
         const newLogs = server.requestLogs.api.slice(logLen);
 
         t.deepEqual(
@@ -45,9 +47,11 @@ test.serial(
         const server = await t.context.server;
 
         const logLen = server.requestLogs.api.length;
-        const deployList = await netlifyDeploys('example.com', {
-            commitHashList: [],
-        });
+        const deployList = await iterable2array(
+            netlifyDeploys('example.com', {
+                commitHashList: [],
+            }),
+        );
         const newLogs = server.requestLogs.api.slice(logLen);
 
         t.deepEqual(
@@ -72,9 +76,11 @@ test('netlifyDeploys(): If commit hash is specified in commitHashList option, it
     const server = await t.context.server;
     const deploy = server.deploys.getByKey('target');
 
-    const deployList = await netlifyDeploys('example.com', {
-        commitHashList: [deploy.commit_ref || ''],
-    });
+    const deployList = await iterable2array(
+        netlifyDeploys('example.com', {
+            commitHashList: [deploy.commit_ref || ''],
+        }),
+    );
 
     t.deepEqual(
         deployList.map(deploy => deleteProps(deploy, ['deployAbsoluteURL'])),
