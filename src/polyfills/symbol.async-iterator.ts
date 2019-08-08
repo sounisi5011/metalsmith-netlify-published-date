@@ -1,5 +1,3 @@
-// declare var Symbol.asyncIterator: symbol;
-
 interface SymbolConstructor {
     readonly asyncIterator: symbol;
 }
