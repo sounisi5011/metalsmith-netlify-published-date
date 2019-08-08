@@ -233,6 +233,9 @@ test('filesystem: unread cache entries should also be kept', async t => {
     const server = await createNetlify(siteID, serverScheme, {
         root: metalsmith.source(),
     });
+    const modifiedDeployIndex = server.deploys.indexOf(
+        server.deploys.getByKey('modified'),
+    );
 
     let firstFiles: Metalsmith.Files = {};
     let firstApiLogs: typeof server.requestLogs.api = [];
@@ -297,6 +300,10 @@ test('filesystem: unread cache entries should also be kept', async t => {
         secondPreviewsLogLen,
     );
 
+    const modifiedOnlyFirstApiLogs = firstApiLogs.slice(
+        0,
+        modifiedDeployIndex + 1,
+    );
     const modifiedOnlyFirstPreviewsLogs = firstPreviewsLogs.filter(
         requestLog => requestLog.path === '/modified.html',
     );
@@ -309,7 +316,7 @@ test('filesystem: unread cache entries should also be kept', async t => {
     t.notDeepEqual(secondApiLogs, [], 'API requests should not be cached');
     t.deepEqual(
         secondApiLogs,
-        firstApiLogs,
+        modifiedOnlyFirstApiLogs,
         'API requests should not be cached',
     );
     t.notDeepEqual(
