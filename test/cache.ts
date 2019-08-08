@@ -79,7 +79,7 @@ test('filesystem', async t => {
     const firstPreviewsLogs = [...server.requestLogs.previews];
     const firstPreviewsLogLen = server.requestLogs.previews.length;
 
-    t.notThrowsAsync(async () => {
+    await t.notThrowsAsync(async () => {
         t.true(
             (await fsStat(cacheDir)).isDirectory(),
             'cache directory should exist',

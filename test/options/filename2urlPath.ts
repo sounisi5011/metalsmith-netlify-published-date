@@ -80,7 +80,7 @@ test('should import external script file', async t => {
             'import of script files that do not export functions should fail',
         );
 
-        t.throwsAsync(
+        await t.throwsAsync(
             async () => {
                 const options = normalizeOptions(
                     { filename2urlPath: './invalid-func' },
