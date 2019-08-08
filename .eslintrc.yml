@@ -21,6 +21,7 @@ rules:
     - error
     - ignores:
         - modules
+        - asyncIteration
   "@typescript-eslint/explicit-function-return-type":
     - warn
     - allowExpressions: true
