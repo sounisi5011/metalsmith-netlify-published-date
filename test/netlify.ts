@@ -72,6 +72,32 @@ test.serial(
     },
 );
 
+test.serial(
+    'netlifyDeploys(): should fetch an API response each time try to get a result',
+    async t => {
+        const server = await t.context.server;
+
+        const logLen = server.requestLogs.api.length;
+        let requestCount = 0;
+
+        const deploys = netlifyDeploys('example.com');
+        while (true) {
+            const newLogs = server.requestLogs.api.slice(logLen);
+
+            t.is(newLogs.length, requestCount);
+            if (newLogs.length !== requestCount) {
+                t.log({ newLogs, requestCount });
+            }
+
+            const result = await deploys.next();
+            if (result.done) {
+                break;
+            }
+            requestCount++;
+        }
+    },
+);
+
 test('netlifyDeploys(): If commit hash is specified in commitHashList option, it is necessary to return two of target deploy and initial deploy', async t => {
     const server = await t.context.server;
     const deploy = server.deploys.getByKey('target');
