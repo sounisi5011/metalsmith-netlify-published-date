@@ -125,7 +125,6 @@ export async function* netlifyDeploys(
         : null;
     const fetchedURL = new Set<string>();
     let lastURL: string | null = null;
-    const deployList: NetlifyDeployInterface[] = [];
     let initialDeploy: NetlifyDeployInterface | null = null;
 
     /**
@@ -199,18 +198,23 @@ export async function* netlifyDeploys(
                 );
             }
 
-            deployList.push(...matchedDeployList);
+            for (const deploy of matchedDeployList) {
+                yield addAbsoluteURL(deploy);
+            }
 
             const isLastDeployList = !nextURL || lastURLSet.has(url);
             if (isLastDeployList && netlifyDeployList.length >= 1) {
                 const lastDeploy =
                     netlifyDeployList[netlifyDeployList.length - 1];
                 if (lastDeploy.commit_ref === null) {
-                    responseLog(
-                        'get the initial deploy from the response / %s',
-                        url,
-                    );
                     initialDeploy = lastDeploy;
+                    if (!matchedDeployList.includes(initialDeploy)) {
+                        responseLog(
+                            'get the initial deploy from the response / %s',
+                            url,
+                        );
+                        yield addAbsoluteURL(initialDeploy);
+                    }
                 }
             }
         } else {
@@ -228,18 +232,5 @@ export async function* netlifyDeploys(
             log('start fetching last page: %s', lastURL);
             url = lastURL;
         }
-    }
-
-    const deploys = deployList
-        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-        .concat(
-            initialDeploy && !deployList.includes(initialDeploy)
-                ? [initialDeploy]
-                : [],
-        )
-        .map(addAbsoluteURL);
-
-    for (const deploy of deploys) {
-        yield deploy;
     }
 }
