@@ -2,12 +2,21 @@
 
 ## [Unreleased]
 
+### Moved Dependencies
+
+#### dependencies -> devDependencies
+
+* [#51] - `@types/deep-freeze-strict@1.1.0`
+* [#51] - `@types/flat-cache@2.0.0`
+* [#51] - `@types/parse-link-header@1.0.0`
+
 ### Internal API
 
 * [#48] - Fetch Netlify API only when needed
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
 [#48]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/48
+[#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
 
 ## [0.1.0] (2019-08-07)
 
