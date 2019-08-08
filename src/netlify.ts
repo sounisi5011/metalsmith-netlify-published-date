@@ -51,6 +51,21 @@ export function isNetlifyDeploy(
     return false;
 }
 
+export function addAbsoluteURL(
+    deploy: NetlifyDeployInterface,
+): NetlifyDeployData {
+    return {
+        ...deploy,
+        deployAbsoluteURL: deploy.deploy_ssl_url.replace(
+            /^(https?:\/\/)(?:(?!--)[^.])+(--)([^.]+)(\.netlify\.com)\/?$/,
+            (match, scheme, hyphen, name, domain) =>
+                name === deploy.name
+                    ? scheme + deploy.id + hyphen + name + domain
+                    : match,
+        ),
+    };
+}
+
 export const API_PREFIX = 'https://api.netlify.com/api/v1/';
 
 export async function* netlifyDeploys(
@@ -222,16 +237,7 @@ export async function* netlifyDeploys(
                 ? [initialDeploy]
                 : [],
         )
-        .map(deploy => ({
-            ...deploy,
-            deployAbsoluteURL: deploy.deploy_ssl_url.replace(
-                /^(https?:\/\/)(?:(?!--)[^.])+(--)([^.]+)(\.netlify\.com)\/?$/,
-                (match, scheme, hyphen, name, domain) =>
-                    name === deploy.name
-                        ? scheme + deploy.id + hyphen + name + domain
-                        : match,
-            ),
-        }));
+        .map(addAbsoluteURL);
 
     for (const deploy of deploys) {
         yield deploy;
