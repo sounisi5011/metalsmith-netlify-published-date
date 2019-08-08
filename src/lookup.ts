@@ -163,13 +163,11 @@ export async function* getDeployList({
     const commitList = await getFirstParentCommits();
     log("got Git's commits hash");
 
-    const deployList = await netlifyDeploys(siteID, {
+    yield* netlifyDeploys(siteID, {
         accessToken,
         commitHashList: commitList.map(commit => commit.hash),
     });
-    log('fetched Netlify deploys');
-
-    yield* deployList;
+    log('fetched all Netlify deploys');
 }
 
 export async function fetchPageData({
