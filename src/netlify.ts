@@ -1,3 +1,5 @@
+import './polyfills/symbol.async-iterator';
+
 import got from 'got';
 import parseLink from 'parse-link-header';
 
