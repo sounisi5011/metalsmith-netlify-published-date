@@ -45,6 +45,16 @@ export function addSlash(path: string): string {
     return path.startsWith('/') ? path : `/${path}`;
 }
 
+export async function iterable2array<T>(
+    iterable: Iterable<T> | AsyncIterable<T>,
+): Promise<T[]> {
+    const array: T[] = [];
+    for await (const value of iterable) {
+        array.push(value);
+    }
+    return array;
+}
+
 export async function chdir(
     dirpath: string | string[],
     callback: () => void | Promise<void>,

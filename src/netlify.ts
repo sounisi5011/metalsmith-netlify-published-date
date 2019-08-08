@@ -1,3 +1,5 @@
+import './polyfills/symbol.async-iterator';
+
 import got from 'got';
 import parseLink from 'parse-link-header';
 
@@ -49,9 +51,24 @@ export function isNetlifyDeploy(
     return false;
 }
 
+export function addAbsoluteURL(
+    deploy: NetlifyDeployInterface,
+): NetlifyDeployData {
+    return {
+        ...deploy,
+        deployAbsoluteURL: deploy.deploy_ssl_url.replace(
+            /^(https?:\/\/)(?:(?!--)[^.])+(--)([^.]+)(\.netlify\.com)\/?$/,
+            (match, scheme, hyphen, name, domain) =>
+                name === deploy.name
+                    ? scheme + deploy.id + hyphen + name + domain
+                    : match,
+        ),
+    };
+}
+
 export const API_PREFIX = 'https://api.netlify.com/api/v1/';
 
-export async function netlifyDeploys(
+export async function* netlifyDeploys(
     siteID: string,
     options: {
         accessToken?: string | null;
@@ -61,7 +78,7 @@ export async function netlifyDeploys(
             headers: Partial<Record<string, string>>,
         ) => Promise<{ body: unknown; linkHeader?: string }>;
     } = {},
-): Promise<readonly NetlifyDeployData[]> {
+): AsyncIterableIterator<NetlifyDeployData> {
     const fetch =
         options.fetchCallback ||
         (async (url, headers) => {
@@ -108,7 +125,6 @@ export async function netlifyDeploys(
         : null;
     const fetchedURL = new Set<string>();
     let lastURL: string | null = null;
-    const deployList: NetlifyDeployInterface[] = [];
     let initialDeploy: NetlifyDeployInterface | null = null;
 
     /**
@@ -182,18 +198,23 @@ export async function netlifyDeploys(
                 );
             }
 
-            deployList.push(...matchedDeployList);
+            for (const deploy of matchedDeployList) {
+                yield addAbsoluteURL(deploy);
+            }
 
             const isLastDeployList = !nextURL || lastURLSet.has(url);
             if (isLastDeployList && netlifyDeployList.length >= 1) {
                 const lastDeploy =
                     netlifyDeployList[netlifyDeployList.length - 1];
                 if (lastDeploy.commit_ref === null) {
-                    responseLog(
-                        'get the initial deploy from the response / %s',
-                        url,
-                    );
                     initialDeploy = lastDeploy;
+                    if (!matchedDeployList.includes(initialDeploy)) {
+                        responseLog(
+                            'get the initial deploy from the response / %s',
+                            url,
+                        );
+                        yield addAbsoluteURL(initialDeploy);
+                    }
                 }
             }
         } else {
@@ -212,22 +233,4 @@ export async function netlifyDeploys(
             url = lastURL;
         }
     }
-
-    return deployList
-        .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
-        .concat(
-            initialDeploy && !deployList.includes(initialDeploy)
-                ? [initialDeploy]
-                : [],
-        )
-        .map(deploy => ({
-            ...deploy,
-            deployAbsoluteURL: deploy.deploy_ssl_url.replace(
-                /^(https?:\/\/)(?:(?!--)[^.])+(--)([^.]+)(\.netlify\.com)\/?$/,
-                (match, scheme, hyphen, name, domain) =>
-                    name === deploy.name
-                        ? scheme + deploy.id + hyphen + name + domain
-                        : match,
-            ),
-        }));
 }

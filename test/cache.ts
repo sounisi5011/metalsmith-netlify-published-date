@@ -79,7 +79,7 @@ test('filesystem', async t => {
     const firstPreviewsLogs = [...server.requestLogs.previews];
     const firstPreviewsLogLen = server.requestLogs.previews.length;
 
-    t.notThrowsAsync(async () => {
+    await t.notThrowsAsync(async () => {
         t.true(
             (await fsStat(cacheDir)).isDirectory(),
             'cache directory should exist',
@@ -233,6 +233,9 @@ test('filesystem: unread cache entries should also be kept', async t => {
     const server = await createNetlify(siteID, serverScheme, {
         root: metalsmith.source(),
     });
+    const modifiedDeployIndex = server.deploys.indexOf(
+        server.deploys.getByKey('modified'),
+    );
 
     let firstFiles: Metalsmith.Files = {};
     let firstApiLogs: typeof server.requestLogs.api = [];
@@ -297,6 +300,10 @@ test('filesystem: unread cache entries should also be kept', async t => {
         secondPreviewsLogLen,
     );
 
+    const modifiedOnlyFirstApiLogs = firstApiLogs.slice(
+        0,
+        modifiedDeployIndex + 1,
+    );
     const modifiedOnlyFirstPreviewsLogs = firstPreviewsLogs.filter(
         requestLog => requestLog.path === '/modified.html',
     );
@@ -307,9 +314,14 @@ test('filesystem: unread cache entries should also be kept', async t => {
         'generated files metadata should be the same',
     );
     t.notDeepEqual(secondApiLogs, [], 'API requests should not be cached');
+    /*
+     * Fetches the range from the latest deploy to the deploy where the modified.html file is modified.
+     * In addition, the previous deploy of the modified deploy is also fetched.
+     * This is because you cannot know that the modified.html file has changed unless you check the modified.html file before it is changed.
+     */
     t.deepEqual(
         secondApiLogs,
-        firstApiLogs,
+        [...modifiedOnlyFirstApiLogs, firstApiLogs[modifiedDeployIndex + 1]],
         'API requests should not be cached',
     );
     t.notDeepEqual(

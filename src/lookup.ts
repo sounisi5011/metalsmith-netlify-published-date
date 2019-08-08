@@ -153,7 +153,7 @@ export function previewPageURL2filename(
     return null;
 }
 
-export async function getDeployList({
+export async function* getDeployList({
     siteID,
     accessToken,
 }: {
@@ -163,13 +163,11 @@ export async function getDeployList({
     const commitList = await getFirstParentCommits();
     log("got Git's commits hash");
 
-    const deployList = await netlifyDeploys(siteID, {
+    yield* netlifyDeploys(siteID, {
         accessToken,
         commitHashList: commitList.map(commit => commit.hash),
     });
-    log('fetched Netlify deploys');
-
-    return deployList;
+    log('fetched all Netlify deploys');
 }
 
 export async function fetchPageData({
@@ -575,7 +573,7 @@ export default async function({
         }),
     );
 
-    for (const deploy of await getDeployList(pluginOptions)) {
+    for await (const deploy of getDeployList(pluginOptions)) {
         const {
             previewDataList,
             files: updatedFiles,
