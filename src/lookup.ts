@@ -153,7 +153,7 @@ export function previewPageURL2filename(
     return null;
 }
 
-export async function getDeployList({
+export async function* getDeployList({
     siteID,
     accessToken,
 }: {
@@ -169,7 +169,7 @@ export async function getDeployList({
     });
     log('fetched Netlify deploys');
 
-    return deployList;
+    yield* deployList;
 }
 
 export async function fetchPageData({
@@ -575,7 +575,7 @@ export default async function({
         }),
     );
 
-    for (const deploy of await getDeployList(pluginOptions)) {
+    for await (const deploy of getDeployList(pluginOptions)) {
         const {
             previewDataList,
             files: updatedFiles,

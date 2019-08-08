@@ -51,7 +51,7 @@ export function isNetlifyDeploy(
 
 export const API_PREFIX = 'https://api.netlify.com/api/v1/';
 
-export async function netlifyDeploys(
+export async function* netlifyDeploys(
     siteID: string,
     options: {
         accessToken?: string | null;
@@ -61,7 +61,7 @@ export async function netlifyDeploys(
             headers: Partial<Record<string, string>>,
         ) => Promise<{ body: unknown; linkHeader?: string }>;
     } = {},
-): Promise<readonly NetlifyDeployData[]> {
+): AsyncIterableIterator<NetlifyDeployData> {
     const fetch =
         options.fetchCallback ||
         (async (url, headers) => {
@@ -213,7 +213,7 @@ export async function netlifyDeploys(
         }
     }
 
-    return deployList
+    const deploys = deployList
         .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
         .concat(
             initialDeploy && !deployList.includes(initialDeploy)
@@ -230,4 +230,8 @@ export async function netlifyDeploys(
                         : match,
             ),
         }));
+
+    for (const deploy of deploys) {
+        yield deploy;
+    }
 }
