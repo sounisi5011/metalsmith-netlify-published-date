@@ -28,6 +28,7 @@ export function getAllProps<T extends object>(value: T): (keyof T)[] {
     const symbolProps = Object.getOwnPropertySymbols(value).filter(symbol =>
         Object.prototype.propertyIsEnumerable.call(value, symbol),
     );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore: TS2322 -- Type '(string | symbol)[]' is not assignable to type '(keyof T)[]'.
     return [...Object.keys(value), ...symbolProps];
 }

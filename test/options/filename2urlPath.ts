@@ -74,6 +74,8 @@ test('should import external script file', async t => {
                 instanceOf: TypeError,
                 message: appendValueReportPattern(
                     /[Mm]odule "\.\/no-func" .* option "filename2urlPath" .* not export the function/,
+                    // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
                     require('./fixtures/no-func'),
                 ),
             },
@@ -92,6 +94,8 @@ test('should import external script file', async t => {
                 instanceOf: TypeError,
                 message: appendValueReportPattern(
                     /[Mm]odule "\.\/invalid-func" .* option "filename2urlPath" .* not return a string/,
+                    // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
                     require('./fixtures/invalid-func')(),
                 ),
             },

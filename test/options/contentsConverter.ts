@@ -94,6 +94,8 @@ test('import of script files exporting functions that do not return Buffer shoul
             instanceOf: TypeError,
             message: appendValueReportPattern(
                 /[Mm]odule "\.\/invalid-func" .* option "contentsConverter" .* not return a Buffer/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 require('./fixtures/invalid-func')(),
             ),
         },
@@ -116,6 +118,8 @@ test('import of script files exporting functions that do not return Promise<Buff
             instanceOf: TypeError,
             message: appendValueReportPattern(
                 /[Mm]odule "\.\/async-mod.ret-number" .* option "contentsConverter" .* not return a Buffer/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 await require('./fixtures/async-mod.ret-number')(),
             ),
         },
@@ -136,6 +140,8 @@ test('import of script files that do not export functions should fail', t => {
             instanceOf: TypeError,
             message: appendValueReportPattern(
                 /[Mm]odule "\.\/no-func" .* option "contentsConverter" .* not export the function/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 require('./fixtures/no-func'),
             ),
         },
