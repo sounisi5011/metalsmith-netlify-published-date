@@ -94,6 +94,7 @@ export class DateState {
     public get date(): string | null {
         return this._date;
     }
+
     public set date(datestr: string | null) {
         if (!this.established) {
             this._date = datestr;
@@ -103,6 +104,7 @@ export class DateState {
     public get established(): boolean {
         return this._isEstablished;
     }
+
     public set established(isEstablished: boolean) {
         if (isEstablished) {
             this._isEstablished = true;
