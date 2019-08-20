@@ -1,7 +1,7 @@
 import Metalsmith from 'metalsmith';
 import multimatch from 'multimatch';
 
-import { freezeProperty, isObject } from './';
+import { freezeProperty, hasProp, isObject } from './';
 import { isReadonlyOrWritableArray } from './types';
 
 export interface FileInterface extends Metalsmith.Files {
@@ -11,9 +11,7 @@ export interface FileInterface extends Metalsmith.Files {
 
 export function isFile(value: unknown): value is FileInterface {
     if (isObject(value)) {
-        return (
-            value.hasOwnProperty('contents') && Buffer.isBuffer(value.contents)
-        );
+        return hasProp(value, 'contents') && Buffer.isBuffer(value.contents);
     }
     return false;
 }
