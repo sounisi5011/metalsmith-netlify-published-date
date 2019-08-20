@@ -23,6 +23,8 @@
     * [#53] - `2.1.0` -> `3.0.0`
 * `husky`
     * [#50] - `3.0.2` -> `3.0.4`
+* `lint-staged`
+    * [#56] - `9.2.1` -> `9.2.3`
 
 ### Moved Dependencies
 
@@ -43,6 +45,7 @@
 [#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
 [#53]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/53
 [#54]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/54
+[#56]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/56
 [#58]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/58
 
 ## [0.1.0] (2019-08-07)
