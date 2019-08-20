@@ -32,6 +32,12 @@
 * [#51] - `@types/flat-cache@2.0.0`
 * [#51] - `@types/parse-link-header@1.0.0`
 
+### Removed Dependencies
+
+#### devDependencies
+
+* [#8] - `@types/nock`
+
 ### Internal API
 
 * [#48] - Fetch Netlify API only when needed

@@ -91,7 +91,6 @@
     "@types/flat-cache": "2.0.0",
     "@types/lodash.clonedeep": "4.5.6",
     "@types/mustache": "0.8.32",
-    "@types/nock": "10.0.3",
     "@types/parse-link-header": "1.0.0",
     "@typescript-eslint/eslint-plugin": "2.0.0",
     "@typescript-eslint/parser": "2.0.0",
