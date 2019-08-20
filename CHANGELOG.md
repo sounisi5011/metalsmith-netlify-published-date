@@ -54,6 +54,10 @@
 
 * [#48] - Fetch Netlify API only when needed
 
+### Others
+
+* [#52] - Fix example / Add `const` keyword to variable definition statement
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
 [#1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/1
 [#8]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/8
@@ -61,8 +65,10 @@
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
 [#50]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/50
 [#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
+[#52]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/52
 [#53]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/53
 [#54]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/54
+[#55]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/55
 [#56]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/56
 [#57]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/57
 [#58]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/58
