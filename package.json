@@ -73,7 +73,7 @@
     ]
   },
   "dependencies": {
-    "@types/debug": "4.1.4",
+    "@types/debug": "4.1.5",
     "@types/got": "9.6.5",
     "@types/metalsmith": "2.3.0",
     "debug": "4.1.1",
