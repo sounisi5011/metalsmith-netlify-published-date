@@ -25,6 +25,8 @@
     * [#50] - `3.0.2` -> `3.0.4`
 * `lint-staged`
     * [#56] - `9.2.1` -> `9.2.3`
+* `nock`
+    * [#8] - `11.0.0-beta.13` -> `11.3.0`
 
 ### Moved Dependencies
 
@@ -34,11 +36,18 @@
 * [#51] - `@types/flat-cache@2.0.0`
 * [#51] - `@types/parse-link-header@1.0.0`
 
+### Removed Dependencies
+
+#### devDependencies
+
+* [#8] - `@types/nock`
+
 ### Internal API
 
 * [#48] - Fetch Netlify API only when needed
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
+[#8]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/8
 [#48]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/48
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
 [#50]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/50
