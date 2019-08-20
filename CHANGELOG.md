@@ -19,6 +19,8 @@
     * [#55] - `1.13.0` -> `2.0.0`
 * `eslint-config-prettier`
     * [#58] - `6.0.0` -> `6.1.0`
+* `lint-staged`
+    * [#56] - `9.2.1` -> `9.2.3`
 
 ### Moved Dependencies
 
@@ -37,6 +39,7 @@
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
 [#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
 [#54]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/54
+[#56]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/56
 [#58]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/58
 
 ## [0.1.0] (2019-08-07)
