@@ -99,7 +99,7 @@
     "del": "5.0.0",
     "del-cli": "2.0.0",
     "escape-string-regexp": "2.0.0",
-    "eslint": "5.16.0",
+    "eslint": "6.2.1",
     "eslint-config-prettier": "6.1.0",
     "eslint-config-standard": "12.0.0",
     "eslint-plugin-import": "2.18.2",
