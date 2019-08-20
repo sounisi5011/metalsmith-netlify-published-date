@@ -19,6 +19,8 @@
     * [#55] - `1.13.0` -> `2.0.0`
 * `ava`
     * [#57] - `2.2.0` -> `2.3.0`
+* `eslint`
+    * [#1] - `5.16.0` -> `6.2.1`
 * `eslint-config-prettier`
     * [#58] - `6.0.0` -> `6.1.0`
 * `eslint-plugin-standard`
@@ -51,6 +53,7 @@
 * [#48] - Fetch Netlify API only when needed
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
+[#1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/1
 [#8]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/8
 [#48]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/48
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
