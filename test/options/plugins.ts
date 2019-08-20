@@ -38,7 +38,10 @@ test('should to import plugin files by plain object', t => {
     t.deepEqual(
         options.plugins,
         ['./plugin-01', './plugin-02']
-            .map(pluginPath => require(path.join(cwd, pluginPath)))
+            .map(pluginPath =>
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                require(path.join(cwd, pluginPath)),
+            )
             .map(pluginGenerator => pluginGenerator(true)),
     );
 });
@@ -85,7 +88,10 @@ test('should to import plugin files by array', t => {
     t.deepEqual(
         options.plugins,
         ['./plugin-01', './plugin-02', './plugin-01', './plugin-01']
-            .map(pluginPath => require(path.join(cwd, pluginPath)))
+            .map(pluginPath =>
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                require(path.join(cwd, pluginPath)),
+            )
             .map(pluginGenerator => pluginGenerator(true)),
     );
 });
@@ -149,6 +155,8 @@ test('import of script files that do not export functions should fail', t => {
             instanceOf: TypeError,
             message: appendValueReportPattern(
                 /[Pp]lugin "\.\/no-func" .* option "plugins" .* not export the function/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 require('./fixtures/no-func'),
             ),
         },
@@ -171,6 +179,8 @@ test('import of script files exporting functions that do not return function sho
             instanceOf: TypeError,
             message: appendValueReportPattern(
                 /[Pp]lugin "\.\/invalid-func" .* option "plugins" .* not return the function/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 require('./fixtures/invalid-func')(),
             ),
         },
