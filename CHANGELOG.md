@@ -11,6 +11,13 @@
 * `@types/got`
     * [#54] - `9.6.5` -> `9.6.7`
 
+#### devDependencies
+
+* `@typescript-eslint/eslint-plugin`
+    * [#55] - `1.13.0` -> `2.0.0`
+* `@typescript-eslint/parser`
+    * [#55] - `1.13.0` -> `2.0.0`
+
 ### Moved Dependencies
 
 #### dependencies -> devDependencies
