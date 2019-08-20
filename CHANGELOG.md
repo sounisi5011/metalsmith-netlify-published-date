@@ -19,8 +19,12 @@
     * [#55] - `1.13.0` -> `2.0.0`
 * `eslint-config-prettier`
     * [#58] - `6.0.0` -> `6.1.0`
+* `git-branch-is`
+    * [#53] - `2.1.0` -> `3.0.0`
 * `husky`
     * [#50] - `3.0.2` -> `3.0.4`
+* `lint-staged`
+    * [#56] - `9.2.1` -> `9.2.3`
 * `nock`
     * [#8] - `11.0.0-beta.13` -> `11.3.0`
 
@@ -48,7 +52,9 @@
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
 [#50]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/50
 [#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
+[#53]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/53
 [#54]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/54
+[#56]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/56
 [#58]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/58
 
 ## [0.1.0] (2019-08-07)
