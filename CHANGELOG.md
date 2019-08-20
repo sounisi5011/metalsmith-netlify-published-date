@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
+
+## [0.1.1] (2019-08-20 UTC / 2019-08-21 UTC+09)
+
 ### Updated Dependencies
 
 #### dependencies
@@ -58,7 +62,7 @@
 
 * [#52] - Fix example / Add `const` keyword to variable definition statement
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
+[0.1.1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...v0.1.1
 [#1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/1
 [#8]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/8
 [#48]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/48
