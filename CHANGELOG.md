@@ -19,6 +19,8 @@
     * [#55] - `1.13.0` -> `2.0.0`
 * `eslint-config-prettier`
     * [#58] - `6.0.0` -> `6.1.0`
+* `husky`
+    * [#50] - `3.0.2` -> `3.0.4`
 
 ### Moved Dependencies
 
@@ -35,6 +37,7 @@
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.0...HEAD
 [#48]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/48
 [#49]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/49
+[#50]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/50
 [#51]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/51
 [#54]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/54
 [#58]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/58
