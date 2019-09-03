@@ -10,12 +10,15 @@
     * [#69] - `5.0.0` -> `5.1.0`
 * `eslint`
     * [#70] - `6.2.1` -> `6.3.0`
+* `eslint-config-standard`
+    * [#68] - `14.0.0` -> `14.1.0`
 * `eslint-plugin-node`
     * [#74] - `9.1.0` -> `9.2.0`
 * `husky`
     * [#75] - `3.0.4` -> `3.0.5`
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
+[#68]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/68
 [#69]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/69
 [#70]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/70
 [#74]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/74
