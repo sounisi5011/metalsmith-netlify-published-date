@@ -24,6 +24,8 @@
     * [#71] - `9.2.3` -> `9.2.5`
 * `nock`
     * [#67] - `11.3.0` -> `11.3.2`
+* `package-version-git-tag`
+    * [#77] - `1.1.0` -> `1.1.1`
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
 [#67]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/67
@@ -34,6 +36,7 @@
 [#74]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/74
 [#75]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/75
 [#76]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/76
+[#77]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/77
 
 ## [0.1.1] (2019-08-20 UTC / 2019-08-21 UTC+09)
 
