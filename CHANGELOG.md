@@ -22,10 +22,13 @@
     * [#75] - `3.0.4` -> `3.0.5`
 * `lint-staged`
     * [#71] - `9.2.3` -> `9.2.5`
+* `mustache`
+    * [#66] - `3.0.1` -> `3.0.3`
 * `nock`
     * [#67] - `11.3.0` -> `11.3.2`
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
+[#66]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/66
 [#67]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/67
 [#68]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/68
 [#69]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/69
