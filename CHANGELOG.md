@@ -2,7 +2,15 @@
 
 ## [Unreleased]
 
+### Updated Dependencies
+
+#### devDependencies
+
+* `eslint`
+    * [#70] - `6.2.1` -> `6.3.0`
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
+[#70]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/70
 
 ## [0.1.1] (2019-08-20 UTC / 2019-08-21 UTC+09)
 
