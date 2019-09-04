@@ -103,7 +103,13 @@ test('should restore object', t => {
     state.restore();
     t.deepEqual(obj, obj2);
 
-    Object.defineProperty(obj, 'getter', () => true);
+    Object.defineProperty(obj, 'getter', {
+        get() {
+            return true;
+        },
+        enumerable: true,
+        configurable: true,
+    });
     t.notDeepEqual(obj, obj2);
     state.restore();
     t.deepEqual(obj, obj2);
