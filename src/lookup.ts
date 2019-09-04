@@ -349,6 +349,13 @@ export async function getPreviewDataList({
                     options: pluginOptions,
                     nowDate,
                 });
+                pluginOptions.metadataUpdater(previewData.contents, fileData, {
+                    deploy,
+                    files,
+                    fileData,
+                    metalsmith,
+                    ...previewData,
+                });
 
                 if (!dateState.published.established) {
                     dateState.published.date = metadata.published;
@@ -403,6 +410,13 @@ export async function getPreviewDataList({
                     metadata,
                     options: pluginOptions,
                     nowDate,
+                });
+                pluginOptions.metadataUpdater(previewData.contents, fileData, {
+                    deploy,
+                    files,
+                    fileData,
+                    metalsmith,
+                    ...previewData,
                 });
 
                 if (!dateState.published.established) {
