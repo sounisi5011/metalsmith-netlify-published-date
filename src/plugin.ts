@@ -4,7 +4,7 @@ import Metalsmith from 'metalsmith';
 import path from 'path';
 
 import { CachedPreviewResponseInterface } from './cache/preview';
-import lookup from './lookup';
+import lookup, { PreviewDataType } from './lookup';
 import { NetlifyDeployData } from './netlify';
 import { normalizeOptions } from './options';
 import { isNotVoid, path2url } from './utils';
@@ -49,6 +49,13 @@ export interface WritableOptionsInterface {
             | GeneratingPageMetadataInterface
             | DeployedPageMetadataInterface,
     ): Buffer | Promise<Buffer>;
+    metadataUpdater(
+        previewContents: Buffer,
+        filedata: Metalsmith.Files[keyof Metalsmith.Files],
+        metadata: DeployedPageMetadataInterface &
+            GeneratingPageMetadataInterface &
+            PreviewDataType,
+    ): void;
     contentsEquals(arg: {
         file: Buffer;
         previewPage: Buffer;
@@ -207,6 +214,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
+    metadataUpdater: () => {},
     contentsEquals: ({ file, previewPage }) => file.equals(previewPage),
 });
 
