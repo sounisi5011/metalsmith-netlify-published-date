@@ -177,24 +177,19 @@ export async function fetchPageData({
     urlpath,
     previewPageURL,
     deploy,
-    pluginOptions,
     cache,
 }: {
     filename: string;
     urlpath: string;
     previewPageURL: string;
     deploy: NetlifyDeployData;
-    pluginOptions: OptionsInterface;
     cache: PreviewCache;
 }): Promise<PreviewDataType> {
     const cachedResponse = cache.get(previewPageURL);
     if (cachedResponse) {
         previewCacheLog('fetch from cache / %s', previewPageURL);
 
-        const contents = await pluginOptions.contentsConverter(
-            cachedResponse.body,
-            { deploy, previewPageResponse: null, cachedResponse },
-        );
+        const contents = cachedResponse.body;
 
         const ret: PreviewCacheDataInterface = {
             filename,
@@ -257,10 +252,7 @@ export async function fetchPageData({
 
     const published = publishedDate(deploy);
     const modified = publishedDate(deploy);
-    const contents = await pluginOptions.contentsConverter(
-        previewPageResponse.body,
-        { deploy, previewPageResponse, cachedResponse: null },
-    );
+    const contents = previewPageResponse.body;
 
     const ret: PreviewDataInterface = {
         filename,
@@ -330,7 +322,6 @@ export async function getPreviewDataList({
                 urlpath,
                 previewPageURL,
                 deploy,
-                pluginOptions,
                 cache,
             });
 
@@ -458,11 +449,7 @@ export async function comparePages({
                 return;
             }
 
-            const {
-                filename: beforeFilename,
-                previewPageURL,
-                contents: previewPageContents,
-            } = previewData;
+            const { filename: beforeFilename, previewPageURL } = previewData;
             const dateState = dateStateMap.get(beforeFilename);
 
             if (dateState.modified.established) {
@@ -502,6 +489,21 @@ export async function comparePages({
                 );
             }
 
+            const previewPageContents = await pluginOptions.contentsConverter(
+                previewData.contents,
+                {
+                    deploy,
+                    ...(previewData.fromCache
+                        ? pickProps(previewData, [
+                              'previewPageResponse',
+                              'cachedResponse',
+                          ])
+                        : pickProps(previewData, [
+                              'previewPageResponse',
+                              'cachedResponse',
+                          ])),
+                },
+            );
             const fileContents = await pluginOptions.contentsConverter(
                 fileData.contents,
                 {
