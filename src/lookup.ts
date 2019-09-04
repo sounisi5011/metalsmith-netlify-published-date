@@ -340,13 +340,6 @@ export async function getPreviewDataList({
                     options: pluginOptions,
                     nowDate,
                 });
-                pluginOptions.metadataUpdater(previewData.contents, fileData, {
-                    deploy,
-                    files,
-                    fileData,
-                    metalsmith,
-                    ...previewData,
-                });
 
                 if (!dateState.published.established) {
                     dateState.published.date = metadata.published;
@@ -402,13 +395,6 @@ export async function getPreviewDataList({
                     options: pluginOptions,
                     nowDate,
                 });
-                pluginOptions.metadataUpdater(previewData.contents, fileData, {
-                    deploy,
-                    files,
-                    fileData,
-                    metalsmith,
-                    ...previewData,
-                });
 
                 if (!dateState.published.established) {
                     dateState.published.date = publishedDate(deploy);
@@ -424,6 +410,61 @@ export async function getPreviewDataList({
         files,
         dateStateMap,
     };
+}
+
+export async function getProcessedFiles({
+    previewDataList,
+    files,
+    dateStateMap,
+    deploy,
+    pluginOptions,
+    metalsmith,
+}: {
+    previewDataList: PreviewDataType[];
+    files: Metalsmith.Files;
+    dateStateMap: MapWithDefault<string, FileDateStateInterface>;
+    deploy: NetlifyDeployData;
+    pluginOptions: OptionsInterface;
+    metalsmith: Metalsmith;
+}): Promise<Metalsmith.Files> {
+    previewDataList.map(previewData => {
+        if (previewData.contents) {
+            const fileData = files[previewData.filename];
+            pluginOptions.metadataUpdater(previewData.contents, fileData, {
+                deploy,
+                files,
+                fileData,
+                metalsmith,
+                ...previewData,
+            });
+        }
+    });
+
+    processLog(
+        'convert with the following metadata by files: %o',
+        [...dateStateMap].reduce<Metalsmith.Files>(
+            (dataMap, [filename, metadata]) => {
+                dataMap[filename] = {};
+                Object.keys(metadata).forEach(prop => {
+                    dataMap[filename][prop] = files[filename][prop];
+                });
+                return dataMap;
+            },
+            {},
+        ),
+    );
+
+    const processedFiles = await processFiles(
+        metalsmith,
+        files,
+        pluginOptions.plugins,
+    );
+    processLog(
+        'generated a files to compare to the preview pages of %s',
+        deploy.deployAbsoluteURL,
+    );
+
+    return processedFiles;
 }
 
 export async function comparePages({
@@ -613,28 +654,14 @@ export default async function({
         if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
             updatedDateStateMap = previewUpdatedDateStateMap;
         } else {
-            processLog(
-                'convert with the following metadata by files: %o',
-                [...previewUpdatedDateStateMap].reduce<Metalsmith.Files>(
-                    (dataMap, [filename, metadata]) => {
-                        dataMap[filename] = {};
-                        Object.keys(metadata).forEach(prop => {
-                            dataMap[filename][prop] = files[filename][prop];
-                        });
-                        return dataMap;
-                    },
-                    {},
-                ),
-            );
-            const processedFiles = await processFiles(
+            const processedFiles = await getProcessedFiles({
+                previewDataList,
+                files: updatedFiles,
+                dateStateMap: previewUpdatedDateStateMap,
+                deploy,
+                pluginOptions,
                 metalsmith,
-                updatedFiles,
-                pluginOptions.plugins,
-            );
-            processLog(
-                'generated a files to compare to the preview pages of %s',
-                deploy.deployAbsoluteURL,
-            );
+            });
 
             const {
                 dateStateMap: compareUpdatedDateStateMap,

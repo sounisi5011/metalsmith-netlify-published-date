@@ -43,12 +43,6 @@ export interface WritableOptionsInterface {
         filename: string,
         metadata: Omit<GeneratingPageMetadataInterface, 'filename'>,
     ): string | Promise<string>;
-    contentsConverter(
-        contents: Buffer,
-        metadata:
-            | GeneratingPageMetadataInterface
-            | DeployedPageMetadataInterface,
-    ): Buffer | Promise<Buffer>;
     metadataUpdater(
         previewContents: Buffer,
         filedata: Metalsmith.Files[keyof Metalsmith.Files],
@@ -56,6 +50,12 @@ export interface WritableOptionsInterface {
             GeneratingPageMetadataInterface &
             PreviewDataType,
     ): void;
+    contentsConverter(
+        contents: Buffer,
+        metadata:
+            | GeneratingPageMetadataInterface
+            | DeployedPageMetadataInterface,
+    ): Buffer | Promise<Buffer>;
     contentsEquals(arg: {
         file: Buffer;
         previewPage: Buffer;
