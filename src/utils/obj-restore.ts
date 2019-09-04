@@ -18,6 +18,9 @@ class UnknownState<T> implements StateInterface<T> {
     }
 }
 
+const createProcessingWeakMap = new WeakMap();
+const restoreProcessingWeakSet = new WeakSet();
+
 class PlainObjectState<T extends object> extends UnknownState<T> {
     private _propMap: Map<
         keyof T,
@@ -28,7 +31,18 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
 
     public constructor(origObj: T, props: readonly (keyof T)[] = []) {
         super(origObj);
+        const createProcessingMap: WeakMap<
+            T,
+            StateInterface<T>
+        > = createProcessingWeakMap;
 
+        const state = createProcessingMap.get(origObj);
+        if (state instanceof PlainObjectState) {
+            this._propMap = new Map();
+            return state;
+        }
+
+        createProcessingMap.set(origObj, this);
         this._propMap = new Map(
             getPropertyDescriptorEntries(origObj)
                 .filter(
@@ -45,10 +59,18 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
                         : (desc as Omit<typeof desc, 'value'>),
                 ]),
         );
+        createProcessingMap.delete(origObj);
     }
 
     public restore(): T {
+        const restoreProcessingSet: WeakSet<T> = restoreProcessingWeakSet;
         const origObj = super.restore();
+
+        if (restoreProcessingSet.has(origObj)) {
+            return origObj;
+        }
+
+        restoreProcessingSet.add(origObj);
 
         getAllProps(origObj).forEach(propName => {
             if (!this._propMap.has(propName)) {
@@ -62,6 +84,8 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
                 : desc;
             Object.defineProperty(origObj, propName, origDesc);
         });
+
+        restoreProcessingSet.delete(origObj);
 
         return origObj;
     }
