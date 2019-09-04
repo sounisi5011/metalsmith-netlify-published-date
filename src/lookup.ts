@@ -8,6 +8,7 @@ import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
 import {
     findEqualsPath,
+    hasProp,
     isNotVoid,
     joinURL,
     MapWithDefault,
@@ -80,6 +81,7 @@ export interface PreviewCacheDataInterface extends PreviewBaseDataInterface {
 export interface FileDateStateInterface {
     published: DateState;
     modified: DateState;
+    notFoundDetected: boolean;
 }
 
 export class DateState {
@@ -311,7 +313,10 @@ export async function getPreviewDataList({
                 nowDate,
             });
 
-            if (isEstablished(dateState)) {
+            if (
+                isAllfileModifiedEstablished(dateStateMap) ||
+                dateState.notFoundDetected
+            ) {
                 return;
             }
 
@@ -371,6 +376,7 @@ export async function getPreviewDataList({
 
                 dateState.published.established = true;
                 dateState.modified.established = true;
+                dateState.notFoundDetected = true;
             } else {
                 const { metadata, previewPageResponse } = previewData;
 
@@ -444,10 +450,15 @@ export async function getProcessedFiles({
         'convert with the following metadata by files: %o',
         [...dateStateMap].reduce<Metalsmith.Files>(
             (dataMap, [filename, metadata]) => {
-                dataMap[filename] = {};
-                Object.keys(metadata).forEach(prop => {
-                    dataMap[filename][prop] = files[filename][prop];
-                });
+                const filedata = files[filename];
+                if (filedata) {
+                    dataMap[filename] = {};
+                    Object.keys(metadata).forEach(prop => {
+                        if (hasProp(filedata, prop)) {
+                            dataMap[filename][prop] = filedata[prop];
+                        }
+                    });
+                }
                 return dataMap;
             },
             {},
@@ -629,6 +640,7 @@ export default async function({
         () => ({
             published: new DateState(),
             modified: new DateState(),
+            notFoundDetected: false,
         }),
     );
 
