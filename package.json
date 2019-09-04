@@ -1,6 +1,6 @@
 {
   "name": "@sounisi5011/metalsmith-netlify-published-date",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Get published date and modified date of the each page published by Netlify",
   "keywords": [
     "date",
@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "clean": "del ./dist/*",
+    "clean": "del './dist/' './test/fixtures/*/{build,cache}/' './example/{node_modules,build}/'",
     "fmt-pkg": "run-s fmt-pkg:prettier fmt-pkg:sort",
     "fmt-pkg:prettier": "prettier-package-json --write ./package.json",
     "fmt-pkg:sort": "sort-package-json ./package.json",

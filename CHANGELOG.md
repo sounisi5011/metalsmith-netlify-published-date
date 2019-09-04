@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+
+## [0.1.2] (2019-09-04 UTC)
+
 ### Fixed
 
 * [#80] - Recursive object cannot be restored
@@ -36,7 +40,11 @@
 * `package-version-git-tag`
     * [#77] - `1.1.0` -> `1.1.1`
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...HEAD
+### Others
+
+* [#78] - Exclude branches that update packages that cannot be tested with CI
+
+[0.1.2]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.1...v0.1.2
 [#66]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/66
 [#67]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/67
 [#68]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/68
@@ -47,6 +55,7 @@
 [#75]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/75
 [#76]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/76
 [#77]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/77
+[#78]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/78
 [#79]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/79
 [#80]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/80
 
