@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+* [#80] - Recursive object cannot be restored
+* [#80] - Getter and setter properties cannot be restored
+
 ### Updated Dependencies
 
 #### devDependencies
@@ -40,6 +45,7 @@
 [#75]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/75
 [#76]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/76
 [#77]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/77
+[#80]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/80
 
 ## [0.1.1] (2019-08-20 UTC / 2019-08-21 UTC+09)
 

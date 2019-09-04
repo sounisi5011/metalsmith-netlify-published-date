@@ -1,6 +1,6 @@
 import isPlainObject from 'is-plain-obj';
 
-import { getAllProps } from './';
+import { getAllProps, getPropertyDescriptorEntries, hasProp } from './';
 
 export interface StateInterface<T> {
     restore(): T;
@@ -18,23 +18,59 @@ class UnknownState<T> implements StateInterface<T> {
     }
 }
 
+const createProcessingWeakMap = new WeakMap();
+const restoreProcessingWeakSet = new WeakSet();
+
 class PlainObjectState<T extends object> extends UnknownState<T> {
-    private _propMap: Map<keyof T, StateInterface<T[keyof T]>>;
+    private _propMap: Map<
+        keyof T,
+        Omit<TypedPropertyDescriptor<T[keyof T]>, 'value'> & {
+            value?: StateInterface<T[keyof T]>;
+        }
+    >;
 
     public constructor(origObj: T, props: readonly (keyof T)[] = []) {
         super(origObj);
+        const createProcessingMap: WeakMap<
+            T,
+            StateInterface<T>
+        > = createProcessingWeakMap;
 
-        this._propMap = new Map();
-        [...getAllProps(origObj), ...props].forEach(prop => {
-            if (Object.prototype.hasOwnProperty.call(origObj, prop)) {
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                this._propMap.set(prop, createState(origObj[prop]));
-            }
-        });
+        const state = createProcessingMap.get(origObj);
+        if (state instanceof PlainObjectState) {
+            this._propMap = new Map();
+            return state;
+        }
+
+        createProcessingMap.set(origObj, this);
+        this._propMap = new Map(
+            getPropertyDescriptorEntries(origObj)
+                .filter(
+                    ([prop, desc]) => desc.enumerable || props.includes(prop),
+                )
+                .map(([prop, desc]) => [
+                    prop,
+                    hasProp(desc, 'value')
+                        ? {
+                              ...desc,
+                              // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                              value: createState(desc.value as T[keyof T]),
+                          }
+                        : (desc as Omit<typeof desc, 'value'>),
+                ]),
+        );
+        createProcessingMap.delete(origObj);
     }
 
     public restore(): T {
+        const restoreProcessingSet: WeakSet<T> = restoreProcessingWeakSet;
         const origObj = super.restore();
+
+        if (restoreProcessingSet.has(origObj)) {
+            return origObj;
+        }
+
+        restoreProcessingSet.add(origObj);
 
         getAllProps(origObj).forEach(propName => {
             if (!this._propMap.has(propName)) {
@@ -42,9 +78,14 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
             }
         });
 
-        this._propMap.forEach((valueState, propName) => {
-            origObj[propName] = valueState.restore();
+        this._propMap.forEach((desc, propName) => {
+            const origDesc = desc.value
+                ? { ...desc, value: desc.value.restore() }
+                : desc;
+            Object.defineProperty(origObj, propName, origDesc);
         });
+
+        restoreProcessingSet.delete(origObj);
 
         return origObj;
     }
