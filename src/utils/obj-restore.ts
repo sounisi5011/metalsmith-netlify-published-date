@@ -1,6 +1,6 @@
 import isPlainObject from 'is-plain-obj';
 
-import { getAllProps } from './';
+import { getAllProps, getPropertyDescriptorEntries, hasProp } from './';
 
 export interface StateInterface<T> {
     restore(): T;
@@ -19,18 +19,32 @@ class UnknownState<T> implements StateInterface<T> {
 }
 
 class PlainObjectState<T extends object> extends UnknownState<T> {
-    private _propMap: Map<keyof T, StateInterface<T[keyof T]>>;
+    private _propMap: Map<
+        keyof T,
+        Omit<TypedPropertyDescriptor<T[keyof T]>, 'value'> & {
+            value?: StateInterface<T[keyof T]>;
+        }
+    >;
 
     public constructor(origObj: T, props: readonly (keyof T)[] = []) {
         super(origObj);
 
-        this._propMap = new Map();
-        [...getAllProps(origObj), ...props].forEach(prop => {
-            if (Object.prototype.hasOwnProperty.call(origObj, prop)) {
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                this._propMap.set(prop, createState(origObj[prop]));
-            }
-        });
+        this._propMap = new Map(
+            getPropertyDescriptorEntries(origObj)
+                .filter(
+                    ([prop, desc]) => desc.enumerable || props.includes(prop),
+                )
+                .map(([prop, desc]) => [
+                    prop,
+                    hasProp(desc, 'value')
+                        ? {
+                              ...desc,
+                              // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                              value: createState(desc.value as T[keyof T]),
+                          }
+                        : (desc as Omit<typeof desc, 'value'>),
+                ]),
+        );
     }
 
     public restore(): T {
@@ -42,8 +56,11 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
             }
         });
 
-        this._propMap.forEach((valueState, propName) => {
-            origObj[propName] = valueState.restore();
+        this._propMap.forEach((desc, propName) => {
+            const origDesc = desc.value
+                ? { ...desc, value: desc.value.restore() }
+                : desc;
+            Object.defineProperty(origObj, propName, origDesc);
         });
 
         return origObj;

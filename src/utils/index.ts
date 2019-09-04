@@ -33,6 +33,17 @@ export function getAllProps<T extends object>(value: T): (keyof T)[] {
     return [...Object.keys(value), ...symbolProps];
 }
 
+export function getPropertyDescriptorEntries<T extends object>(
+    value: T,
+): [(keyof T), TypedPropertyDescriptor<T[keyof T]>][] {
+    const descs = Object.getOwnPropertyDescriptors(value);
+    const props = [
+        ...(Object.getOwnPropertyNames(descs) as (keyof T)[]),
+        ...(Object.getOwnPropertySymbols(descs) as (keyof T)[]),
+    ];
+    return props.map(prop => [prop, descs[prop]]);
+}
+
 export function pickProps<T extends object, U extends keyof T>(
     obj: T,
     props: readonly U[],
