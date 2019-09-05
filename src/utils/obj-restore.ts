@@ -14,7 +14,9 @@ import {
 
 export interface StateInterface<T> {
     restore(): T;
-    diff(): { addedOrUpdated: Partial<T> } | null;
+    diff(): {
+        addedOrUpdated: Partial<T> | Partial<Record<PropertyKey, unknown>>;
+    } | null;
 }
 
 class UnknownState<T> implements StateInterface<T> {
@@ -28,7 +30,7 @@ class UnknownState<T> implements StateInterface<T> {
         return this._ref;
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         return null;
     }
 
@@ -109,7 +111,7 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
         return origObj;
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const diffProcessingSet: WeakSet<T> = restoreProcessingWeakSet;
         const origObj = super.getOrigValue();
         const addedOrUpdatedDescs = new Map<keyof T, PropertyDescriptor>();
@@ -188,7 +190,7 @@ class RegExpState<T extends RegExp> extends PlainObjectState<T> {
         super(origRegExp, ['lastIndex']);
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const diff = super.diff();
         if (diff) {
             const origRegExp = super.getOrigValue();
@@ -214,7 +216,7 @@ class DateState<T extends Date> extends PlainObjectState<T> {
         return origDate;
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const origDate = super.getOrigValue();
         const diff = super.diff();
 
@@ -229,7 +231,7 @@ class DateState<T extends Date> extends PlainObjectState<T> {
 }
 
 class BufferState<T extends Buffer> extends PlainObjectState<T> {
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const diff = super.diff();
         if (diff) {
             const origBuffer = super.getOrigValue();
@@ -265,7 +267,7 @@ class MapState<
         return origMap;
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const origMap = super.getOrigValue();
         const diff = super.diff();
 
@@ -299,7 +301,7 @@ class SetState<T extends Set<V>, V = unknown> extends PlainObjectState<T> {
         return origSet;
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const origSet = super.getOrigValue();
         const diff = super.diff();
 
@@ -318,7 +320,7 @@ class ErrorState<T extends Error> extends PlainObjectState<T> {
         super(origError, ['name', 'message', 'stack']);
     }
 
-    public diff(): { addedOrUpdated: Partial<T> } | null {
+    public diff(): ReturnType<StateInterface<T>['diff']> {
         const diff = super.diff();
         if (diff) {
             const origError = super.getOrigValue();
