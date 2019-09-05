@@ -114,3 +114,66 @@ test('should restore object', t => {
     state.restore();
     t.deepEqual(obj, obj2);
 });
+
+test('diff() method should return difference of value', t => {
+    const obj = {
+        'abc.html': {
+            mode: '0644',
+            contents: Buffer.from('42'),
+        },
+        '123.html': {
+            mode: '0644',
+            contents: Buffer.from('aiueo'),
+        },
+    };
+    Object.assign(obj, {
+        circular: obj,
+    });
+
+    const state = createState(obj);
+
+    t.deepEqual(
+        state.diff(),
+        null,
+        'should return null if there is no difference',
+    );
+
+    const addProps = {
+        published: new Date(0),
+        modified: new Date(),
+    };
+    Object.assign(obj['abc.html'], addProps);
+    Object.assign(obj['123.html'], addProps);
+    t.deepEqual(
+        state.diff(),
+        { addedOrUpdated: { 'abc.html': addProps, '123.html': addProps } },
+        'should return the added properties',
+    );
+    state.restore();
+    t.deepEqual(state.diff(), null);
+
+    obj['abc.html'].contents = Buffer.from(obj['abc.html'].contents);
+    obj['123.html'].mode = '999';
+    t.deepEqual(
+        state.diff(),
+        {
+            addedOrUpdated: {
+                'abc.html': { contents: obj['abc.html'].contents },
+                '123.html': { mode: '999' },
+            },
+        },
+        'should return the updated properties',
+    );
+    state.restore();
+    t.deepEqual(state.diff(), null);
+
+    delete obj['abc.html'].mode;
+    delete obj['123.html'];
+    t.deepEqual(
+        state.diff(),
+        null,
+        'properties deletions should not be included in the difference',
+    );
+    state.restore();
+    t.deepEqual(state.diff(), null);
+});
