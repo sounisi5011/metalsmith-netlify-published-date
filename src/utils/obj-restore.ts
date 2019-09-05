@@ -1,9 +1,20 @@
 import isPlainObject from 'is-plain-obj';
 
-import { getAllProps, getPropertyDescriptorEntries, hasProp } from './';
+import {
+    equalsMap,
+    equalsSet,
+    getAllProps,
+    getPropertyDescriptor,
+    getPropertyDescriptorEntries,
+    getPropertyNames,
+    hasProp,
+    initObject,
+    map2obj,
+} from './';
 
 export interface StateInterface<T> {
     restore(): T;
+    diff(): { addedOrUpdated: Partial<T> } | null;
 }
 
 class UnknownState<T> implements StateInterface<T> {
@@ -14,6 +25,14 @@ class UnknownState<T> implements StateInterface<T> {
     }
 
     public restore(): T {
+        return this._ref;
+    }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        return null;
+    }
+
+    public getOrigValue(): T {
         return this._ref;
     }
 }
@@ -89,11 +108,95 @@ class PlainObjectState<T extends object> extends UnknownState<T> {
 
         return origObj;
     }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const diffProcessingSet: WeakSet<T> = restoreProcessingWeakSet;
+        const origObj = super.getOrigValue();
+        const addedOrUpdatedDescs = new Map<keyof T, PropertyDescriptor>();
+
+        if (diffProcessingSet.has(origObj)) {
+            return null;
+        }
+
+        diffProcessingSet.add(origObj);
+
+        // Define added props
+        getPropertyDescriptorEntries(origObj).forEach(([prop, desc]) => {
+            if (!this._propMap.has(prop) && desc.enumerable) {
+                addedOrUpdatedDescs.set(prop, desc);
+            }
+        });
+
+        // Define updated or removed props
+        this._propMap.forEach((origDesc, propName) => {
+            if (origDesc) {
+                const currentDesc = getPropertyDescriptor(origObj, propName);
+
+                if (currentDesc) {
+                    const descProps = getPropertyNames(
+                        ...[origDesc, currentDesc],
+                    );
+                    const equalsDesc = descProps.every(descProp => {
+                        const currentValue = currentDesc[descProp];
+                        if (descProp === 'value') {
+                            const state = origDesc[descProp];
+                            return state instanceof UnknownState
+                                ? state.getOrigValue() === currentValue
+                                : state === currentValue;
+                        }
+                        return origDesc[descProp] === currentValue;
+                    });
+
+                    if (!equalsDesc) {
+                        addedOrUpdatedDescs.set(propName, currentDesc);
+                    } else if (origDesc.value) {
+                        const diff = origDesc.value.diff();
+                        if (diff) {
+                            addedOrUpdatedDescs.set(propName, {
+                                ...origDesc,
+                                value: diff.addedOrUpdated,
+                            });
+                        }
+                    }
+                } else {
+                    // TODO: removed prop
+                }
+            }
+        });
+
+        diffProcessingSet.delete(origObj);
+
+        if (addedOrUpdatedDescs.size > 0) {
+            let addedOrUpdated: T;
+            const descs = map2obj(addedOrUpdatedDescs);
+            try {
+                addedOrUpdated = Object.create(
+                    Object.getPrototypeOf(origObj),
+                    descs,
+                );
+            } catch (err) {
+                addedOrUpdated = Object.defineProperties({}, descs);
+            }
+            return { addedOrUpdated };
+        }
+        return null;
+    }
 }
 
 class RegExpState<T extends RegExp> extends PlainObjectState<T> {
     public constructor(origRegExp: T) {
         super(origRegExp, ['lastIndex']);
+    }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const diff = super.diff();
+        if (diff) {
+            const origRegExp = super.getOrigValue();
+            const newRegExp = new RegExp(origRegExp.source, origRegExp.flags);
+            initObject(newRegExp, origRegExp, diff.addedOrUpdated);
+            return { addedOrUpdated: newRegExp as T };
+        }
+        return null;
     }
 }
 
@@ -110,9 +213,33 @@ class DateState<T extends Date> extends PlainObjectState<T> {
         origDate.setTime(this._unixtime);
         return origDate;
     }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const origDate = super.getOrigValue();
+        const diff = super.diff();
+
+        if (this._unixtime !== origDate.getTime() || diff) {
+            const newDate = new Date(origDate.getTime());
+            initObject(newDate, origDate, diff && diff.addedOrUpdated);
+            return { addedOrUpdated: newDate as T };
+        }
+
+        return null;
+    }
 }
 
-class BufferState<T extends Buffer> extends PlainObjectState<T> {}
+class BufferState<T extends Buffer> extends PlainObjectState<T> {
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const diff = super.diff();
+        if (diff) {
+            const origBuffer = super.getOrigValue();
+            const newBuffer = Buffer.from(origBuffer);
+            initObject(newBuffer, origBuffer, diff.addedOrUpdated);
+            return { addedOrUpdated: newBuffer as T };
+        }
+        return null;
+    }
+}
 
 class MapState<
     T extends Map<K, V>,
@@ -137,6 +264,19 @@ class MapState<
 
         return origMap;
     }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const origMap = super.getOrigValue();
+        const diff = super.diff();
+
+        if (!equalsMap(this._entries, origMap) || diff) {
+            const newMap = new Map(origMap);
+            initObject(newMap, origMap, diff && diff.addedOrUpdated);
+            return { addedOrUpdated: newMap as T };
+        }
+
+        return null;
+    }
 }
 
 class SetState<T extends Set<V>, V = unknown> extends PlainObjectState<T> {
@@ -158,11 +298,35 @@ class SetState<T extends Set<V>, V = unknown> extends PlainObjectState<T> {
 
         return origSet;
     }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const origSet = super.getOrigValue();
+        const diff = super.diff();
+
+        if (!equalsSet(this._values, origSet) || diff) {
+            const newSet = new Set(origSet);
+            initObject(newSet, origSet, diff && diff.addedOrUpdated);
+            return { addedOrUpdated: newSet as T };
+        }
+
+        return null;
+    }
 }
 
 class ErrorState<T extends Error> extends PlainObjectState<T> {
     public constructor(origError: T) {
         super(origError, ['name', 'message', 'stack']);
+    }
+
+    public diff(): { addedOrUpdated: Partial<T> } | null {
+        const diff = super.diff();
+        if (diff) {
+            const origError = super.getOrigValue();
+            const newError = new Error(origError.message);
+            initObject(newError, origError, diff.addedOrUpdated);
+            return { addedOrUpdated: newError as T };
+        }
+        return null;
     }
 }
 

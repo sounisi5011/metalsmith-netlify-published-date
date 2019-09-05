@@ -17,7 +17,7 @@ import {
 } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
-import createState from './utils/obj-restore';
+import createState, { StateInterface } from './utils/obj-restore';
 
 const log = debug.extend('lookup');
 const processLog = log.extend('process');
@@ -421,6 +421,7 @@ export async function getPreviewDataList({
 export async function getProcessedFiles({
     previewDataList,
     files,
+    filesState,
     dateStateMap,
     deploy,
     pluginOptions,
@@ -428,6 +429,7 @@ export async function getProcessedFiles({
 }: {
     previewDataList: PreviewDataType[];
     files: Metalsmith.Files;
+    filesState: StateInterface<Metalsmith.Files>;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
     deploy: NetlifyDeployData;
     pluginOptions: OptionsInterface;
@@ -446,12 +448,13 @@ export async function getProcessedFiles({
         }
     });
 
+    const diff = filesState.diff();
     processLog(
         'convert with the following metadata by files: %o',
         [...dateStateMap].reduce<Metalsmith.Files>(
             (dataMap, [filename, metadata]) => {
                 const filedata = files[filename];
-                if (filedata) {
+                if (filedata && !dataMap[filename]) {
                     dataMap[filename] = {};
                     Object.keys(metadata).forEach(prop => {
                         if (hasProp(filedata, prop)) {
@@ -461,7 +464,7 @@ export async function getProcessedFiles({
                 }
                 return dataMap;
             },
-            {},
+            diff ? diff.addedOrUpdated : {},
         ),
     );
 
@@ -669,6 +672,7 @@ export default async function({
             const processedFiles = await getProcessedFiles({
                 previewDataList,
                 files: updatedFiles,
+                filesState,
                 dateStateMap: previewUpdatedDateStateMap,
                 deploy,
                 pluginOptions,
