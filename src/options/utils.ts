@@ -1,5 +1,13 @@
 import { value2str } from '../utils';
 
+export function voidReturnFunc(
+    func: Function,
+): (...args: readonly unknown[]) => Promise<void> {
+    return async (...args) => {
+        await func(...args);
+    };
+}
+
 export function strReturnFunc(
     func: Function,
     errmsg: string,
