@@ -36,13 +36,7 @@ const metadata: Parameters<OptionsInterface['metadataUpdater']>[2] = {
     filename: '',
     fileData: { contents: Buffer.from([]) },
     metalsmith: Metalsmith(__dirname),
-    // PreviewCacheDataInterface
-    urlpath: '',
-    previewPageURL: '',
-    metadata: { published: '' },
-    contents: Buffer.from([]),
-    previewPageNotFound: false,
-    fromCache: true,
+    previewURL: '',
 };
 
 test.before(() => {
@@ -240,7 +234,7 @@ test('should pass the function to the options value', async t => {
     );
 
     const filedata = {};
-    await options.metadataUpdater(metadata.contents, filedata, metadata);
+    await options.metadataUpdater(Buffer.from([]), filedata, metadata);
 
     t.deepEqual(filedata, { x: 42 });
 });
@@ -254,7 +248,7 @@ test('should import external script file', async t => {
     );
 
     const filedata = {};
-    await options.metadataUpdater(metadata.contents, filedata, metadata);
+    await options.metadataUpdater(Buffer.from([]), filedata, metadata);
 
     t.deepEqual(filedata, { x: 42 });
 });
@@ -268,7 +262,7 @@ test('should import external script file without .js extension', async t => {
     );
 
     const filedata = {};
-    await options.metadataUpdater(metadata.contents, filedata, metadata);
+    await options.metadataUpdater(Buffer.from([]), filedata, metadata);
 
     t.deepEqual(filedata, { x: 42 });
 });
@@ -282,7 +276,7 @@ test('should import external script file that returns a promise', async t => {
     );
 
     const filedata = {};
-    await options.metadataUpdater(metadata.contents, filedata, metadata);
+    await options.metadataUpdater(Buffer.from([]), filedata, metadata);
 
     t.deepEqual(filedata, { x: 42 });
 });

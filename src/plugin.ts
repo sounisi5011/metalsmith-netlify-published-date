@@ -4,7 +4,7 @@ import Metalsmith from 'metalsmith';
 import path from 'path';
 
 import { CachedPreviewResponseInterface } from './cache/preview';
-import lookup, { PreviewDataType } from './lookup';
+import lookup from './lookup';
 import { NetlifyDeployData } from './netlify';
 import { normalizeOptions } from './options';
 import { isNotVoid, path2url } from './utils';
@@ -47,8 +47,7 @@ export interface WritableOptionsInterface {
         previewContents: Buffer,
         filedata: Metalsmith.Files[keyof Metalsmith.Files],
         metadata: DeployedPageMetadataInterface &
-            GeneratingPageMetadataInterface &
-            PreviewDataType,
+            GeneratingPageMetadataInterface & { previewURL: string },
     ): void | Promise<void>;
     contentsConverter(
         contents: Buffer,

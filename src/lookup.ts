@@ -438,16 +438,34 @@ export async function getProcessedFiles({
 }): Promise<Metalsmith.Files> {
     for (const previewData of previewDataList) {
         if (previewData.contents) {
-            const fileData = files[previewData.filename];
+            const filename = previewData.filename;
+            const fileData = files[filename];
+            const deployedPageMetadata = {
+                deploy,
+                ...(previewData.fromCache
+                    ? pickProps(previewData, [
+                          'previewPageResponse',
+                          'cachedResponse',
+                      ])
+                    : pickProps(previewData, [
+                          'previewPageResponse',
+                          'cachedResponse',
+                      ])),
+            };
+            const generatingPageMetadata = {
+                files,
+                filename,
+                fileData,
+                metalsmith,
+            };
+
             await pluginOptions.metadataUpdater(
                 previewData.contents,
                 fileData,
                 {
-                    deploy,
-                    files,
-                    fileData,
-                    metalsmith,
-                    ...previewData,
+                    ...deployedPageMetadata,
+                    ...generatingPageMetadata,
+                    previewURL: previewData.previewPageURL,
                 },
             );
         }
