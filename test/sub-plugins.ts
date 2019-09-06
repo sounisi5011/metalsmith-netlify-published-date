@@ -310,6 +310,7 @@ test('If the plugin gets progressing build of self, make the published date and 
                 key: 'self-build',
                 state: 'building',
             },
+            {},
             {
                 state: 'building',
             },

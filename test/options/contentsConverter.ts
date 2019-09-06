@@ -47,10 +47,12 @@ test('The return value of the contentsConverter() option should be used for comp
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 key: 'last',
             },
@@ -179,10 +181,12 @@ test('The return value of the contentsConverter() option should be used for comp
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 key: 'last',
             },

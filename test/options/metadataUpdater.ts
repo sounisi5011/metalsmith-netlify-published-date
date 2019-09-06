@@ -193,6 +193,7 @@ test('The metadataUpdater() option should not be affected by the return value of
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },

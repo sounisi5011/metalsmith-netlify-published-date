@@ -47,6 +47,7 @@ const serverScheme = [
         key: 'added',
         '/added.html': { filepath: 'added.html' },
     },
+    {},
     {
         key: 'modified',
         '/modified.html': { filepath: 'modified.html' },

@@ -28,6 +28,7 @@ test.serial('should add correct dates to metadata', async t => {
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
@@ -183,6 +184,7 @@ test('should add correct dates to metadata in binary files', async t => {
                 key: 'added',
                 '/added.gif': { filepath: 'added.gif' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.webp': { filepath: 'modified.webp' },
@@ -303,9 +305,11 @@ test('failed deploy should be ignored', async t => {
                 '/initial.html': { filepath: 'initial.html' },
                 '/modified.html': Buffer.from(''),
             },
+            {},
             {
                 state: 'error',
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
@@ -380,13 +384,16 @@ test('enqueued and building deploy should be ignored', async t => {
                 '/initial.html': { filepath: 'initial.html' },
                 '/modified.html': Buffer.from(''),
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 state: 'building',
             },
+            {},
             {
                 state: 'enqueued',
             },
