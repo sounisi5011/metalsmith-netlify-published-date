@@ -45,6 +45,10 @@ const metadata: Parameters<OptionsInterface['metadataUpdater']>[2] = {
     fromCache: true,
 };
 
+test.before(() => {
+    process.chdir(path.join(__dirname, 'fixtures'));
+});
+
 test('The metadataUpdater() option should be able to update file metadata', async t => {
     const siteID = 'opt-metadata-updater.index.test';
     const currentBuildDate = new Date();

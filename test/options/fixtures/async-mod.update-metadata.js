@@ -6,6 +6,6 @@ const sleep = waitSeconds =>
   });
 
 module.exports = async (_, filedata) => {
-  await sleep(5);
+  await sleep(0.5);
   filedata.x = 42;
 };
