@@ -4,10 +4,46 @@ import path from 'path';
 import util from 'util';
 
 import netlifyPublishedDate from '../../src';
+import { normalizeOptions } from '../../src/options';
+import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
 import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
 import { convertMustachePlugin } from '../helpers/plugins';
-import { getPublishedDate } from '../helpers/utils';
+import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
+
+const metadata: Parameters<OptionsInterface['metadataUpdater']>[2] = {
+    // DeployedPageMetadataInterface
+    deploy: {
+        /* eslint-disable @typescript-eslint/camelcase */
+        id: '',
+        state: '',
+        name: '',
+        deploy_ssl_url: '',
+        commit_ref: null,
+        created_at: '',
+        updated_at: '',
+        published_at: null,
+        deployAbsoluteURL: '',
+        /* eslint-enable */
+    },
+    previewPageResponse: null,
+    cachedResponse: {
+        body: Buffer.from([]),
+        published: '',
+    },
+    // GeneratingPageMetadataInterface
+    files: {},
+    filename: '',
+    fileData: { contents: Buffer.from([]) },
+    metalsmith: Metalsmith(__dirname),
+    // PreviewCacheDataInterface
+    urlpath: '',
+    previewPageURL: '',
+    metadata: { published: '' },
+    contents: Buffer.from([]),
+    previewPageNotFound: false,
+    fromCache: true,
+};
 
 test('The metadataUpdater() option should be able to update file metadata', async t => {
     const siteID = 'opt-metadata-updater.index.test';
@@ -186,4 +222,119 @@ test('The metadataUpdater() option should not be affected by the return value of
     );
 
     await util.promisify(metalsmith.process.bind(metalsmith))();
+});
+
+test('should pass the function to the options value', async t => {
+    const func: OptionsInterface['metadataUpdater'] = (_, filedata) => {
+        filedata.x = 42;
+    };
+    const options = normalizeOptions(
+        {
+            metadataUpdater: func,
+        },
+        netlifyPublishedDate.defaultOptions,
+    );
+
+    const filedata = {};
+    await options.metadataUpdater(metadata.contents, filedata, metadata);
+
+    t.deepEqual(filedata, { x: 42 });
+});
+
+test('should import external script file', async t => {
+    const options = normalizeOptions(
+        {
+            metadataUpdater: './mod.update-metadata.js',
+        },
+        netlifyPublishedDate.defaultOptions,
+    );
+
+    const filedata = {};
+    await options.metadataUpdater(metadata.contents, filedata, metadata);
+
+    t.deepEqual(filedata, { x: 42 });
+});
+
+test('should import external script file without .js extension', async t => {
+    const options = normalizeOptions(
+        {
+            metadataUpdater: './mod.update-metadata',
+        },
+        netlifyPublishedDate.defaultOptions,
+    );
+
+    const filedata = {};
+    await options.metadataUpdater(metadata.contents, filedata, metadata);
+
+    t.deepEqual(filedata, { x: 42 });
+});
+
+test('should import external script file that returns a promise', async t => {
+    const options = normalizeOptions(
+        {
+            metadataUpdater: './async-mod.update-metadata',
+        },
+        netlifyPublishedDate.defaultOptions,
+    );
+
+    const filedata = {};
+    await options.metadataUpdater(metadata.contents, filedata, metadata);
+
+    t.deepEqual(filedata, { x: 42 });
+});
+
+test('import of script files that do not export functions should fail', t => {
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    metadataUpdater: './no-func',
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: appendValueReportPattern(
+                /[Mm]odule "\.\/no-func" .* option "metadataUpdater" .* not export the function/,
+                // Note: In order to avoid the side effects of esModuleInterop, require() is used.
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                require('./fixtures/no-func'),
+            ),
+        },
+    );
+});
+
+test('import of non-existent script file should fail', t => {
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    metadataUpdater: './not-found-mod',
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /[Ff]ailed to import module "\.\/not-found-mod" .* option "metadataUpdater"/,
+        },
+    );
+});
+
+test('If the module name does not start with "." and "/", should to import it like require() function', t => {
+    t.throws(
+        () => {
+            normalizeOptions(
+                {
+                    metadataUpdater: '@sounisi5011/example',
+                },
+                netlifyPublishedDate.defaultOptions,
+            );
+        },
+        {
+            instanceOf: TypeError,
+            message: /[Ff]ailed to import module "@sounisi5011\/example" .* option "metadataUpdater"/,
+        },
+    );
 });
