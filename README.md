@@ -27,7 +27,7 @@ Please check: https://github.com/sounisi5011/metalsmith-netlify-published-date/t
 
 **This release is unstable. Some options may be change or remove before version 1.x is released.**
 
-To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L32-L65
+To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L32-L64
 
 Also check the test code in the `./test/options/` directory for options available in the JSON file: https://github.com/sounisi5011/metalsmith-netlify-published-date/tree/v0.1.2/test/options
 
