@@ -314,8 +314,9 @@ export async function getPreviewDataList({
             });
 
             if (
-                isAllfileModifiedEstablished(dateStateMap) ||
-                dateState.notFoundDetected
+                isEstablished(dateState) &&
+                (isAllfileModifiedEstablished(dateStateMap) ||
+                    dateState.notFoundDetected)
             ) {
                 return;
             }
