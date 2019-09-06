@@ -1,12 +1,12 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
+import { processAsync } from '../helpers/metalsmith';
 import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
 import { convertMustachePlugin } from '../helpers/plugins';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
@@ -133,7 +133,7 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
     const newPagePreviewRequestExpectedCount =
         server.deploys.getsUntilByKey('added').length + 1;
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const newPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/new.html',
     );
@@ -202,7 +202,7 @@ test('The metadataUpdater() option should not be affected by the return value of
         { root: metalsmith.source() },
     );
 
-    await util.promisify(metalsmith.process.bind(metalsmith))();
+    await processAsync(metalsmith);
 });
 
 test('should pass the function to the options value', async t => {

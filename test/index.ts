@@ -1,10 +1,10 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
+import { buildAsync, processAsync } from './helpers/metalsmith';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
 import { getPublishedDate, hasProp } from './helpers/utils';
 
@@ -59,7 +59,7 @@ test.serial('should add correct dates to metadata', async t => {
     );
     const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.build.bind(metalsmith))();
+    const files = await buildAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -142,7 +142,7 @@ test('should not process files that do not match by pattern', async t => {
         }),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
 
     if (
         Object.values(files).some(filedata =>
@@ -214,7 +214,7 @@ test('should add correct dates to metadata in binary files', async t => {
     );
     const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.png',
     );
@@ -333,7 +333,7 @@ test('failed deploy should be ignored', async t => {
         server.deploys.getByKey('modified'),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -412,7 +412,7 @@ test('enqueued and building deploy should be ignored', async t => {
         server.deploys.getByKey('modified'),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );

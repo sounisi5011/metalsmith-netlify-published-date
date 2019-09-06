@@ -1,11 +1,11 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
+import { processAsync } from './helpers/metalsmith';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
 import { convertMustachePlugin, processCountPlugin } from './helpers/plugins';
 import { deleteProps, entries2obj } from './helpers/utils';
@@ -107,7 +107,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
@@ -340,7 +340,7 @@ test('If the plugin gets progressing build of self, make the published date and 
         requestLogs: server.requestLogs,
     });
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',

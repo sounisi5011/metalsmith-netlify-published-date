@@ -1,12 +1,12 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
+import { processAsync } from '../helpers/metalsmith';
 import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
 
@@ -80,7 +80,7 @@ test('The return value of the contentsConverter() option should be used for comp
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -212,7 +212,7 @@ test('The return value of the contentsConverter() option should be used for comp
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );

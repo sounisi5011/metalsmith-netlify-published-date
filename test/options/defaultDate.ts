@@ -1,10 +1,10 @@
 import anyTest, { TestInterface } from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../../src/index';
 import { dirpath as fixtures } from '../helpers/fixtures';
+import { processAsync } from '../helpers/metalsmith';
 import createNetlify from '../helpers/netlify-mock-server';
 
 const test = anyTest as TestInterface<{
@@ -32,7 +32,7 @@ async function buildMetalsmith(
     options: Parameters<typeof netlifyPublishedDate>[0],
 ): Promise<Metalsmith.Files> {
     const metalsmith = genMetalsmith(options);
-    const files = await util.promisify(metalsmith.build.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     return files;
 }
 
@@ -43,7 +43,7 @@ test('The default value of the defaultDate option should be generated after plug
     const beforeBuild = new Date();
     while (beforeBuild.getTime() !== Date.now());
 
-    const files = await util.promisify(metalsmith.build.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
 
     const afterBuild = new Date();
 

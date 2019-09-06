@@ -8,6 +8,7 @@ import util from 'util';
 import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
+import { processAsync } from './helpers/metalsmith';
 import createNetlify from './helpers/netlify-mock-server';
 import { ArrayType } from './helpers/types';
 
@@ -71,9 +72,7 @@ test('filesystem', async t => {
         }),
     );
 
-    const firstFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const firstFiles = await processAsync(metalsmith);
     const firstApiLogs = [...server.requestLogs.api];
     const firstApiLogLen = server.requestLogs.api.length;
     const firstPreviewsLogs = [...server.requestLogs.previews];
@@ -86,9 +85,7 @@ test('filesystem', async t => {
         );
     }, 'cache directory should exist');
 
-    const secondFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const secondFiles = await processAsync(metalsmith);
     const secondApiLogs = server.requestLogs.api.slice(firstApiLogLen);
     const secondApiLogLen = server.requestLogs.api.length;
     const secondPreviewsLogs = server.requestLogs.previews.slice(
@@ -96,9 +93,7 @@ test('filesystem', async t => {
     );
     const secondPreviewsLogLen = server.requestLogs.previews.length;
 
-    const thirdFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const thirdFiles = await processAsync(metalsmith);
     const thirdApiLogs = server.requestLogs.api.slice(secondApiLogLen);
     const thirdPreviewsLogs = server.requestLogs.previews.slice(
         secondPreviewsLogLen,
@@ -159,17 +154,13 @@ test('in-memory', async t => {
         root: metalsmith.source(),
     });
 
-    const firstFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const firstFiles = await processAsync(metalsmith);
     const firstApiLogs = [...server.requestLogs.api];
     const firstApiLogLen = server.requestLogs.api.length;
     const firstPreviewsLogs = [...server.requestLogs.previews];
     const firstPreviewsLogLen = server.requestLogs.previews.length;
 
-    const secondFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const secondFiles = await processAsync(metalsmith);
     const secondApiLogs = server.requestLogs.api.slice(firstApiLogLen);
     const secondApiLogLen = server.requestLogs.api.length;
     const secondPreviewsLogs = server.requestLogs.previews.slice(
@@ -177,9 +168,7 @@ test('in-memory', async t => {
     );
     const secondPreviewsLogLen = server.requestLogs.previews.length;
 
-    const thirdFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
+    const thirdFiles = await processAsync(metalsmith);
     const thirdApiLogs = server.requestLogs.api.slice(secondApiLogLen);
     const thirdPreviewsLogs = server.requestLogs.previews.slice(
         secondPreviewsLogLen,
