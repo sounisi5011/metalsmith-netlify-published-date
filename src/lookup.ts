@@ -436,18 +436,22 @@ export async function getProcessedFiles({
     pluginOptions: OptionsInterface;
     metalsmith: Metalsmith;
 }): Promise<Metalsmith.Files> {
-    previewDataList.map(previewData => {
+    for (const previewData of previewDataList) {
         if (previewData.contents) {
             const fileData = files[previewData.filename];
-            pluginOptions.metadataUpdater(previewData.contents, fileData, {
-                deploy,
-                files,
+            await pluginOptions.metadataUpdater(
+                previewData.contents,
                 fileData,
-                metalsmith,
-                ...previewData,
-            });
+                {
+                    deploy,
+                    files,
+                    fileData,
+                    metalsmith,
+                    ...previewData,
+                },
+            );
         }
-    });
+    }
 
     const diff = filesState.diff();
     processLog(

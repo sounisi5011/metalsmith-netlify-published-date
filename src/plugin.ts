@@ -49,7 +49,7 @@ export interface WritableOptionsInterface {
         metadata: DeployedPageMetadataInterface &
             GeneratingPageMetadataInterface &
             PreviewDataType,
-    ): void;
+    ): void | Promise<void>;
     contentsConverter(
         contents: Buffer,
         metadata:

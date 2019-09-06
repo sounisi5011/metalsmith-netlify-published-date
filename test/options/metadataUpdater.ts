@@ -21,7 +21,7 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
             cacheDir: null,
             defaultDate: currentBuildDate,
             plugins: [convertMustachePlugin()],
-            metadataUpdater(previewContents, filedata) {
+            async metadataUpdater(previewContents, filedata) {
                 const contents = previewContents.toString();
                 const match = /\[([^[\]]+)\]/.exec(contents);
                 if (match) {
@@ -29,7 +29,7 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
                     filedata.title = title;
                 }
             },
-            contentsConverter(contents) {
+            async contentsConverter(contents) {
                 const origContent = contents.toString();
                 const updatedContent = origContent.replace(
                     /^((?:Published|Last updated) at )[^\r\n]+$/gm,
@@ -154,11 +154,11 @@ test('The metadataUpdater() option should not be affected by the return value of
         netlifyPublishedDate({
             siteID,
             cacheDir: null,
-            metadataUpdater(previewContents) {
+            async metadataUpdater(previewContents) {
                 t.not(previewContents, convertedBuf);
                 t.false(previewContents.equals(convertedBuf));
             },
-            contentsConverter() {
+            async contentsConverter() {
                 return convertedBuf;
             },
         }),
