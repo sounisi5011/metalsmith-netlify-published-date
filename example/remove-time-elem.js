@@ -4,7 +4,7 @@ module.exports = contents => {
   try {
     const $ = cheerio.load(contents.toString());
 
-    const $timeElems = $('time');
+    const $timeElems = $('time').filter(':not([class]), [class=""]');
 
     // Note: If the file contents is not valid HTML, cheerio will not throw an error.
     //       However, the number of detected "time" elements will be 0.
