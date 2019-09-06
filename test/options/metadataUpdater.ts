@@ -90,27 +90,15 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
                     'Published at {{published}}\nLast updated at {{modified}}',
                 ),
             },
-            {
-                '/new.html': Buffer.from(
-                    'Published at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
-            {
-                '/new.html': Buffer.from(
-                    'Published at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
+            {},
+            {},
             {
                 key: 'modified',
                 '/new.html': Buffer.from(
                     '[title]\n\nPublished at {{published}}\nLast updated at {{modified}}',
                 ),
             },
-            {
-                '/new.html': Buffer.from(
-                    '[hoge]\n\nPublished at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
+            {},
             {
                 key: 'last',
                 '/new.html': Buffer.from(
