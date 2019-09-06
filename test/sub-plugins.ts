@@ -105,7 +105,7 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         requestLogs: server.requestLogs,
     });
 
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
     const beforeFiles = beforeFilesList[0];
@@ -200,9 +200,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     );
 
     t.true(files['new.html'].published instanceof Date);
-    t.true(files['new.html'].published > lastPublishedDate);
+    t.true(files['new.html'].published > beforeBuildDate);
     t.true(files['new.html'].modified instanceof Date);
-    t.true(files['new.html'].modified > lastPublishedDate);
+    t.true(files['new.html'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,

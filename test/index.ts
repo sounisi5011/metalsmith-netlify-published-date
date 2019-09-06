@@ -57,7 +57,7 @@ test.serial('should add correct dates to metadata', async t => {
     const addedPublishedDate = getPublishedDate(
         server.deploys.getByKey('added'),
     );
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.build.bind(metalsmith))();
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
@@ -79,7 +79,7 @@ test.serial('should add correct dates to metadata', async t => {
             initialPublishedDate,
             modifiedPublishedDate,
             addedPublishedDate,
-            lastPublishedDate,
+            beforeBuildDate,
         },
         requestLogs: {
             initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
@@ -101,9 +101,9 @@ test.serial('should add correct dates to metadata', async t => {
     t.deepEqual(files['added.html'].modified, addedPublishedDate);
 
     t.true(files['new.html'].published instanceof Date);
-    t.true(files['new.html'].published > lastPublishedDate);
+    t.true(files['new.html'].published > beforeBuildDate);
     t.true(files['new.html'].modified instanceof Date);
-    t.true(files['new.html'].modified > lastPublishedDate);
+    t.true(files['new.html'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,
@@ -207,7 +207,7 @@ test('should add correct dates to metadata in binary files', async t => {
     const addedPublishedDate = getPublishedDate(
         server.deploys.getByKey('added'),
     );
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
@@ -229,7 +229,7 @@ test('should add correct dates to metadata in binary files', async t => {
             initialPublishedDate,
             modifiedPublishedDate,
             addedPublishedDate,
-            lastPublishedDate,
+            beforeBuildDate,
         },
         requestLogs: {
             initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
@@ -251,9 +251,9 @@ test('should add correct dates to metadata in binary files', async t => {
     t.deepEqual(files['added.gif'].modified, addedPublishedDate);
 
     t.true(files['new.jp2'].published instanceof Date);
-    t.true(files['new.jp2'].published > lastPublishedDate);
+    t.true(files['new.jp2'].published > beforeBuildDate);
     t.true(files['new.jp2'].modified instanceof Date);
-    t.true(files['new.jp2'].modified > lastPublishedDate);
+    t.true(files['new.jp2'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,
