@@ -103,14 +103,19 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(
+            server.requestLogs.previews.map(requestLog2str),
+            {
+                initialPagePreviewLogs: initialPagePreviewLogs.map(
+                    requestLog2str,
+                ),
+                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
+                    requestLog2str,
+                ),
+                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
+                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
+            },
+        ),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -230,14 +235,19 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(
+            server.requestLogs.previews.map(requestLog2str),
+            {
+                initialPagePreviewLogs: initialPagePreviewLogs.map(
+                    requestLog2str,
+                ),
+                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
+                    requestLog2str,
+                ),
+                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
+                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
+            },
+        ),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);

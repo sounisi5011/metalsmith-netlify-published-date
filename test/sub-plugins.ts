@@ -138,14 +138,16 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     t.log({
         files,
-        requestLogs: {
-            previews: server.requestLogs.previews.map(requestLog2str),
-            initialPage: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPage: modifiedPagePreviewLogs.map(requestLog2str),
-            addedPage: addedPagePreviewLogs.map(requestLog2str),
-            addModifiedPage: addModifiedPagePreviewLogs.map(requestLog2str),
-            newPage: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(
+            server.requestLogs.previews.map(requestLog2str),
+            {
+                initialPage: initialPagePreviewLogs.map(requestLog2str),
+                modifiedPage: modifiedPagePreviewLogs.map(requestLog2str),
+                addedPage: addedPagePreviewLogs.map(requestLog2str),
+                addModifiedPage: addModifiedPagePreviewLogs.map(requestLog2str),
+                newPage: newPagePreviewLogs.map(requestLog2str),
+            },
+        ),
         requestCountPerPage,
         beforeFiles,
         pluginsRunLogs,
@@ -357,10 +359,12 @@ test('If the plugin gets progressing build of self, make the published date and 
 
     t.log({
         files,
-        requestLogs: {
-            previews: server.requestLogs.previews.map(requestLog2str),
-            initialPage: initialPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(
+            server.requestLogs.previews.map(requestLog2str),
+            {
+                initialPage: initialPagePreviewLogs.map(requestLog2str),
+            },
+        ),
         requestCountPerPage,
         pluginsRunLogs,
     });
