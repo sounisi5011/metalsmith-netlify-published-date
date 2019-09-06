@@ -115,8 +115,9 @@ test.serial('should add correct dates to metadata', async t => {
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -264,8 +265,9 @@ test('should add correct dates to metadata in binary files', async t => {
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(

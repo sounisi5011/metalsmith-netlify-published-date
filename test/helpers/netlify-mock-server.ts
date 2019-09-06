@@ -41,6 +41,7 @@ export type NetlifyDeploy = NetlifyDeployInterface & Record<string, unknown>;
 export interface MockServer {
     readonly deploys: readonly NetlifyDeploy[] & {
         getByKey(key: string): NetlifyDeploy;
+        getsUntilByKey(key: string): NetlifyDeploy[];
     };
     readonly nockScope: {
         readonly api: nock.Scope;
@@ -341,6 +342,21 @@ export default async function create(
                     throw new Error(`Deploy key is not defined: ${key}`);
                 }
                 return deploy;
+            },
+            getsUntilByKey(key: string) {
+                const deployByKey = key2deployMap.get(key);
+                if (!deployByKey) {
+                    throw new Error(`Deploy key is not defined: ${key}`);
+                }
+
+                const list: NetlifyDeploy[] = [];
+                for (const deploy of commitDeployList) {
+                    list.push(deploy);
+                    if (deploy === deployByKey) {
+                        break;
+                    }
+                }
+                return list;
             },
         }),
         nockScope: {

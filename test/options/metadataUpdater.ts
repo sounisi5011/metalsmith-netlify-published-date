@@ -131,12 +131,7 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
     const newPagePreviewRequestExpectedCount =
-        server.deploys.reduce((count, deploy) => {
-            if (addedPublishedDate <= getPublishedDate(deploy)) {
-                count++;
-            }
-            return count;
-        }, 0) + 1;
+        server.deploys.getsUntilByKey('added').length + 1;
 
     const files = await util.promisify(metalsmith.process.bind(metalsmith))();
     const newPagePreviewLogs = server.requestLogs.previews.filter(

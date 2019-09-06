@@ -135,8 +135,9 @@ test('The return value of the contentsConverter() option should be used for comp
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -261,8 +262,9 @@ test('The return value of the contentsConverter() option should be used for comp
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
