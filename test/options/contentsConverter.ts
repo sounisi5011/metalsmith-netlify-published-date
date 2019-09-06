@@ -239,13 +239,13 @@ test('The return value of the contentsConverter() option should be used for comp
         },
     });
 
-    t.deepEqual(files['initial.html'].published, lastPublishedDate);
+    t.deepEqual(files['initial.html'].published, initialPublishedDate);
     t.deepEqual(files['initial.html'].modified, currentBuildDate);
 
-    t.deepEqual(files['modified.html'].published, lastPublishedDate);
+    t.deepEqual(files['modified.html'].published, initialPublishedDate);
     t.deepEqual(files['modified.html'].modified, currentBuildDate);
 
-    t.deepEqual(files['added.html'].published, lastPublishedDate);
+    t.deepEqual(files['added.html'].published, addedPublishedDate);
     t.deepEqual(files['added.html'].modified, currentBuildDate);
 
     t.deepEqual(files['new.html'].published, currentBuildDate);
@@ -253,18 +253,17 @@ test('The return value of the contentsConverter() option should be used for comp
 
     t.is(
         initialPagePreviewLogs.length,
-        1,
-        'Only the first preview should be requested because the page content is always determined to be different',
+        server.deploys.length,
+        'If the page was deployed initial, should have requested all the previews',
     );
     t.is(
         modifiedPagePreviewLogs.length,
-        1,
-        'Only the first preview should be requested because the page content is always determined to be different',
+        server.deploys.length,
+        'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.is(
-        addedPagePreviewLogs.length,
-        1,
-        'Only the first preview should be requested because the page content is always determined to be different',
+    t.true(
+        addedPagePreviewLogs.length < server.deploys.length,
+        'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
         newPagePreviewLogs.length,
