@@ -27,7 +27,7 @@ Please check: https://github.com/sounisi5011/metalsmith-netlify-published-date/t
 
 **This release is unstable. Some options may be change or remove before version 1.x is released.**
 
-To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.1.2/src/plugin.ts#L32-L58
+To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L32-L65
 
 Also check the test code in the `./test/options/` directory for options available in the JSON file: https://github.com/sounisi5011/metalsmith-netlify-published-date/tree/v0.1.2/test/options
 
@@ -75,6 +75,14 @@ netlifyPublishedDate({
 ```
 
 Note: The return value of the function is [delimited by the path delimiter and then URL escaped](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.1.2/src/plugin.ts#L136-L142). That is, the value that this function must return is not a URL, but a file path before it is converted to a URL.
+
+### `metadataUpdater`
+
+Use `metadataUpdater` option if you want to update [Metalsmith metadata](https://metalsmith.io/#how-does-it-work-in-more-detail-) just before executing the build process to determine the modified date.
+
+The page data obtained from the Netlify preview is passed to the first argument. Parse this data and update the Metalsmith metadata passed in the second argument.
+
+See the `set-datetime.js` file in the `./example/` directory for verbose usage: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/example/set-datetime.js
 
 ### `contentsConverter`
 
