@@ -146,3 +146,44 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
 
     t.is(newPagePreviewLogs.length, newPagePreviewRequestExpectedCount);
 });
+
+test('The metadataUpdater() option should not be affected by the return value of the contentsConverter() option', async t => {
+    const convertedBuf = Buffer.from([0xff, 0x00, 0xcf]);
+    const siteID = 'execution-order.opt-metadata-updater.index.test';
+    const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(
+        netlifyPublishedDate({
+            siteID,
+            cacheDir: null,
+            metadataUpdater(previewContents) {
+                t.not(previewContents, convertedBuf);
+                t.false(previewContents.equals(convertedBuf));
+            },
+            contentsConverter() {
+                return convertedBuf;
+            },
+        }),
+    );
+    await createNetlify(
+        siteID,
+        [
+            {
+                key: 'initial',
+                '/initial.html': { filepath: 'initial.html' },
+                '/modified.html': Buffer.from(''),
+            },
+            {},
+            {
+                key: 'added',
+                '/added.html': { filepath: 'added.html' },
+            },
+            {
+                key: 'modified',
+                '/modified.html': { filepath: 'modified.html' },
+            },
+            {},
+        ],
+        { root: metalsmith.source() },
+    );
+
+    await util.promisify(metalsmith.process.bind(metalsmith))();
+});
