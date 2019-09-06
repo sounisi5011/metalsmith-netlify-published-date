@@ -19,8 +19,6 @@ module.exports = (previewContents, filedata) => {
   try {
     const $ = cheerio.load(previewContents.toString());
 
-    const b = { ...filedata };
-
     const publishedDate = getTime($('time.published'));
     if (publishedDate) {
       filedata.published = publishedDate;
