@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
+### Features
+
+* [#84] - Add `metadataUpdater` option: Update metadata before build for comparison
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+[#84]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/84
 
 ## [0.1.2] (2019-09-04 UTC)
 

@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
+import { NetlifyDeploy } from './netlify-mock-server';
+
 const fsStat = util.promisify(fs.stat);
 
 export function hasProp(
@@ -95,4 +97,8 @@ export function appendValueReportPattern(
     const origPattern = pattern.source.replace(/\$$/, '');
     const escapedValue = escapeRegExp(inspectSingleLine(value, inspectOptions));
     return new RegExp(`${origPattern}( .+)?: ${escapedValue}$`, pattern.flags);
+}
+
+export function getPublishedDate(deploy: NetlifyDeploy): Date {
+    return new Date(deploy.published_at || deploy.created_at);
 }

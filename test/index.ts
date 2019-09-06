@@ -5,15 +5,8 @@ import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
-import createNetlify, {
-    NetlifyDeploy,
-    requestLog2str,
-} from './helpers/netlify-mock-server';
-import { hasProp } from './helpers/utils';
-
-function getPublishedDate(deploy: NetlifyDeploy): Date {
-    return new Date(deploy.published_at || deploy.created_at);
-}
+import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import { getPublishedDate, hasProp } from './helpers/utils';
 
 test.serial('should add correct dates to metadata', async t => {
     const metalsmith = Metalsmith(path.join(fixtures, 'basic')).use(

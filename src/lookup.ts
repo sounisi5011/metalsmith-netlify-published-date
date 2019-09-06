@@ -8,6 +8,7 @@ import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
 import {
     findEqualsPath,
+    hasProp,
     isNotVoid,
     joinURL,
     MapWithDefault,
@@ -16,7 +17,7 @@ import {
 } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
-import createState from './utils/obj-restore';
+import createState, { StateInterface } from './utils/obj-restore';
 
 const log = debug.extend('lookup');
 const processLog = log.extend('process');
@@ -80,6 +81,7 @@ export interface PreviewCacheDataInterface extends PreviewBaseDataInterface {
 export interface FileDateStateInterface {
     published: DateState;
     modified: DateState;
+    notFoundDetected: boolean;
 }
 
 export class DateState {
@@ -177,24 +179,19 @@ export async function fetchPageData({
     urlpath,
     previewPageURL,
     deploy,
-    pluginOptions,
     cache,
 }: {
     filename: string;
     urlpath: string;
     previewPageURL: string;
     deploy: NetlifyDeployData;
-    pluginOptions: OptionsInterface;
     cache: PreviewCache;
 }): Promise<PreviewDataType> {
     const cachedResponse = cache.get(previewPageURL);
     if (cachedResponse) {
         previewCacheLog('fetch from cache / %s', previewPageURL);
 
-        const contents = await pluginOptions.contentsConverter(
-            cachedResponse.body,
-            { deploy, previewPageResponse: null, cachedResponse },
-        );
+        const contents = cachedResponse.body;
 
         const ret: PreviewCacheDataInterface = {
             filename,
@@ -257,10 +254,7 @@ export async function fetchPageData({
 
     const published = publishedDate(deploy);
     const modified = publishedDate(deploy);
-    const contents = await pluginOptions.contentsConverter(
-        previewPageResponse.body,
-        { deploy, previewPageResponse, cachedResponse: null },
-    );
+    const contents = previewPageResponse.body;
 
     const ret: PreviewDataInterface = {
         filename,
@@ -319,7 +313,11 @@ export async function getPreviewDataList({
                 nowDate,
             });
 
-            if (isEstablished(dateState)) {
+            if (
+                isEstablished(dateState) &&
+                (isAllfileModifiedEstablished(dateStateMap) ||
+                    dateState.notFoundDetected)
+            ) {
                 return;
             }
 
@@ -330,7 +328,6 @@ export async function getPreviewDataList({
                 urlpath,
                 previewPageURL,
                 deploy,
-                pluginOptions,
                 cache,
             });
 
@@ -380,6 +377,7 @@ export async function getPreviewDataList({
 
                 dateState.published.established = true;
                 dateState.modified.established = true;
+                dateState.notFoundDetected = true;
             } else {
                 const { metadata, previewPageResponse } = previewData;
 
@@ -421,6 +419,91 @@ export async function getPreviewDataList({
     };
 }
 
+export async function getProcessedFiles({
+    previewDataList,
+    files,
+    filesState,
+    dateStateMap,
+    deploy,
+    pluginOptions,
+    metalsmith,
+}: {
+    previewDataList: PreviewDataType[];
+    files: Metalsmith.Files;
+    filesState: StateInterface<Metalsmith.Files>;
+    dateStateMap: MapWithDefault<string, FileDateStateInterface>;
+    deploy: NetlifyDeployData;
+    pluginOptions: OptionsInterface;
+    metalsmith: Metalsmith;
+}): Promise<Metalsmith.Files> {
+    for (const previewData of previewDataList) {
+        if (previewData.contents) {
+            const filename = previewData.filename;
+            const fileData = files[filename];
+            const deployedPageMetadata = {
+                deploy,
+                ...(previewData.fromCache
+                    ? pickProps(previewData, [
+                          'previewPageResponse',
+                          'cachedResponse',
+                      ])
+                    : pickProps(previewData, [
+                          'previewPageResponse',
+                          'cachedResponse',
+                      ])),
+            };
+            const generatingPageMetadata = {
+                files,
+                filename,
+                fileData,
+                metalsmith,
+            };
+
+            await pluginOptions.metadataUpdater(
+                previewData.contents,
+                fileData,
+                {
+                    ...deployedPageMetadata,
+                    ...generatingPageMetadata,
+                    previewURL: previewData.previewPageURL,
+                },
+            );
+        }
+    }
+
+    const diff = filesState.diff();
+    processLog(
+        'convert with the following metadata by files: %o',
+        [...dateStateMap].reduce<Metalsmith.Files>(
+            (dataMap, [filename, metadata]) => {
+                const filedata = files[filename];
+                if (filedata && !dataMap[filename]) {
+                    dataMap[filename] = {};
+                    Object.keys(metadata).forEach(prop => {
+                        if (hasProp(filedata, prop)) {
+                            dataMap[filename][prop] = filedata[prop];
+                        }
+                    });
+                }
+                return dataMap;
+            },
+            diff ? diff.addedOrUpdated : {},
+        ),
+    );
+
+    const processedFiles = await processFiles(
+        metalsmith,
+        files,
+        pluginOptions.plugins,
+    );
+    processLog(
+        'generated a files to compare to the preview pages of %s',
+        deploy.deployAbsoluteURL,
+    );
+
+    return processedFiles;
+}
+
 export async function comparePages({
     previewDataList,
     processedFiles,
@@ -444,11 +527,7 @@ export async function comparePages({
                 return;
             }
 
-            const {
-                filename: beforeFilename,
-                previewPageURL,
-                contents: previewPageContents,
-            } = previewData;
+            const { filename: beforeFilename, previewPageURL } = previewData;
             const dateState = dateStateMap.get(beforeFilename);
 
             if (dateState.modified.established) {
@@ -488,6 +567,21 @@ export async function comparePages({
                 );
             }
 
+            const previewPageContents = await pluginOptions.contentsConverter(
+                previewData.contents,
+                {
+                    deploy,
+                    ...(previewData.fromCache
+                        ? pickProps(previewData, [
+                              'previewPageResponse',
+                              'cachedResponse',
+                          ])
+                        : pickProps(previewData, [
+                              'previewPageResponse',
+                              'cachedResponse',
+                          ])),
+                },
+            );
             const fileContents = await pluginOptions.contentsConverter(
                 fileData.contents,
                 {
@@ -572,6 +666,7 @@ export default async function({
         () => ({
             published: new DateState(),
             modified: new DateState(),
+            notFoundDetected: false,
         }),
     );
 
@@ -597,28 +692,15 @@ export default async function({
         if (isAllfileModifiedEstablished(previewUpdatedDateStateMap)) {
             updatedDateStateMap = previewUpdatedDateStateMap;
         } else {
-            processLog(
-                'convert with the following metadata by files: %o',
-                [...previewUpdatedDateStateMap].reduce<Metalsmith.Files>(
-                    (dataMap, [filename, metadata]) => {
-                        dataMap[filename] = {};
-                        Object.keys(metadata).forEach(prop => {
-                            dataMap[filename][prop] = files[filename][prop];
-                        });
-                        return dataMap;
-                    },
-                    {},
-                ),
-            );
-            const processedFiles = await processFiles(
+            const processedFiles = await getProcessedFiles({
+                previewDataList,
+                files: updatedFiles,
+                filesState,
+                dateStateMap: previewUpdatedDateStateMap,
+                deploy,
+                pluginOptions,
                 metalsmith,
-                updatedFiles,
-                pluginOptions.plugins,
-            );
-            processLog(
-                'generated a files to compare to the preview pages of %s',
-                deploy.deployAbsoluteURL,
-            );
+            });
 
             const {
                 dateStateMap: compareUpdatedDateStateMap,

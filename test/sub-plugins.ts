@@ -1,15 +1,13 @@
 import test from 'ava';
-import cloneDeep from 'lodash.clonedeep';
 import Metalsmith from 'metalsmith';
-import Mustache from 'mustache';
 import path from 'path';
 import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
-import { isFile } from '../src/utils/metalsmith';
 import { dirpath as fixtures } from './helpers/fixtures';
 import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import { convertMustachePlugin, processCountPlugin } from './helpers/plugins';
 import { deleteProps, entries2obj } from './helpers/utils';
 
 function replaceMetadataPropsValue(
@@ -41,44 +39,6 @@ function deleteMetadataProps(
             isObject(value) ? deleteProps(value, props) : value,
         ]),
     );
-}
-
-function processCountPlugin(
-    list: ({ clone: Metalsmith.Files; ref: Metalsmith.Files })[],
-): Metalsmith.Plugin {
-    return (files, metalsmith, done) => {
-        list.push({
-            clone: cloneDeep(files),
-            ref: files,
-        });
-        done(null, files, metalsmith);
-    };
-}
-
-function convertMustachePlugin(): Metalsmith.Plugin {
-    return (files, metalsmith, done) => {
-        Object.entries(files).forEach(([filename, filedata]) => {
-            const newFilename = filename.replace(/\.mustache$/, '.html');
-            if (newFilename !== filename && isFile(filedata)) {
-                try {
-                    const output = Mustache.render(
-                        filedata.contents.toString(),
-                        filedata,
-                    );
-                    const newFiledata: typeof filedata = {
-                        ...filedata,
-                        contents: Buffer.from(output),
-                    };
-
-                    delete files[filename];
-                    files[newFilename] = newFiledata;
-                } catch (err) {
-                    //
-                }
-            }
-        });
-        done(null, files, metalsmith);
-    };
 }
 
 test('Plugins specified in the "plugins" option should be execute', async t => {

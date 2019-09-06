@@ -43,6 +43,12 @@ export interface WritableOptionsInterface {
         filename: string,
         metadata: Omit<GeneratingPageMetadataInterface, 'filename'>,
     ): string | Promise<string>;
+    metadataUpdater(
+        previewContents: Buffer,
+        filedata: Metalsmith.Files[keyof Metalsmith.Files],
+        metadata: DeployedPageMetadataInterface &
+            GeneratingPageMetadataInterface & { previewURL: string },
+    ): void | Promise<void>;
     contentsConverter(
         contents: Buffer,
         metadata:
@@ -207,6 +213,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
+    metadataUpdater: () => {},
     contentsEquals: ({ file, previewPage }) => file.equals(previewPage),
 });
 

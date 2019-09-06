@@ -21,6 +21,18 @@ export function hasProp<
     return Object.prototype.hasOwnProperty.call(value, prop);
 }
 
+export function getPropertyNames<T>(...values: T[]): (keyof T)[] {
+    return [
+        ...new Set(
+            ([] as (keyof T)[]).concat(
+                ...values.map(
+                    value => Object.getOwnPropertyNames(value) as (keyof T)[],
+                ),
+            ),
+        ),
+    ];
+}
+
 /**
  * @see https://github.com/lodash/lodash/blob/f8c7064d450cc068144c4dad1d63535cba25ae6d/.internal/getAllKeys.js
  */
@@ -31,6 +43,13 @@ export function getAllProps<T extends object>(value: T): (keyof T)[] {
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore: TS2322 -- Type '(string | symbol)[]' is not assignable to type '(keyof T)[]'.
     return [...Object.keys(value), ...symbolProps];
+}
+
+export function getPropertyDescriptor<O, P extends keyof O>(
+    value: O,
+    prop: P,
+): TypedPropertyDescriptor<O[P]> | undefined {
+    return Object.getOwnPropertyDescriptor(value, prop);
 }
 
 export function getPropertyDescriptorEntries<T extends object>(
@@ -59,6 +78,53 @@ export function pickProps<T extends object, U extends keyof T>(
 
 export function freezeProperty(obj: object, prop: string): void {
     Object.defineProperty(obj, prop, { configurable: false, writable: false });
+}
+
+export function initObject<O = unknown>(
+    obj: O,
+    origObj: object,
+    propertiesObj: object | null = origObj,
+): O {
+    Object.setPrototypeOf(obj, Object.getPrototypeOf(origObj));
+    if (propertiesObj) {
+        Object.defineProperties(
+            obj,
+            Object.getOwnPropertyDescriptors(propertiesObj),
+        );
+    }
+    return obj;
+}
+
+export function equalsMap<K = unknown, V = unknown>(
+    map1: Map<K, V> | (readonly (readonly [K, V])[]),
+    map2: Map<K, V>,
+): boolean {
+    const map1arr = [...map1];
+    return (
+        map1arr.length === map2.size &&
+        map1arr.every(
+            ([key, value]) => map2.has(key) && map2.get(key) === value,
+        )
+    );
+}
+
+export function equalsSet<V = unknown>(
+    set1: Set<V> | (readonly V[]),
+    set2: Set<V>,
+): boolean {
+    const set1arr = [...set1];
+    return (
+        set1arr.length === set2.size && set1arr.every(value => set2.has(value))
+    );
+}
+
+export function map2obj<K extends PropertyKey, V = unknown>(
+    map: Map<K, V>,
+): Record<K, V> {
+    return [...map].reduce(
+        (obj, [key, value]) => Object.assign(obj, { [key]: value }),
+        {} as Record<K, V>,
+    );
 }
 
 export function value2str(
