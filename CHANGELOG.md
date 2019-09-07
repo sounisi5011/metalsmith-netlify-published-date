@@ -10,10 +10,13 @@
 
 #### devDependencies
 
+* `eslint-plugin-node`
+    * [#82] - `9.2.0` -> `10.0.0`
 * `nock`
     * [#83] - `11.3.2` -> `11.3.3`
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+[#82]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/82
 [#83]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/83
 [#84]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/84
 
