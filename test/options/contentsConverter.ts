@@ -7,7 +7,7 @@ import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
 import { processAsync } from '../helpers/metalsmith';
-import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
+import createNetlify from '../helpers/netlify-mock-server';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
 
 const metadata = {
@@ -105,19 +105,12 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -239,19 +232,12 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);

@@ -5,7 +5,7 @@ import path from 'path';
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
 import { buildAsync, processAsync } from './helpers/metalsmith';
-import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import createNetlify from './helpers/netlify-mock-server';
 import { getPublishedDate, hasProp } from './helpers/utils';
 
 test.serial('should add correct dates to metadata', async t => {
@@ -82,19 +82,12 @@ test.serial('should add correct dates to metadata', async t => {
             { addedPublishedDate },
             { beforeBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -238,19 +231,12 @@ test('should add correct dates to metadata in binary files', async t => {
             { addedPublishedDate },
             { beforeBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.png'].published, initialPublishedDate);
@@ -348,17 +334,10 @@ test('failed deploy should be ignored', async t => {
     t.log({
         files,
         dates: [{ initialPublishedDate }, { modifiedPublishedDate }],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -430,17 +409,10 @@ test('enqueued and building deploy should be ignored', async t => {
     t.log({
         files,
         dates: [{ initialPublishedDate }, { modifiedPublishedDate }],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPagePreviewLogs: initialPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-                modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                    requestLog2str,
-                ),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);

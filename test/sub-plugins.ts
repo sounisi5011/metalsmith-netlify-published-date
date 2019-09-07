@@ -6,7 +6,7 @@ import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
 import { processAsync } from './helpers/metalsmith';
-import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import createNetlify from './helpers/netlify-mock-server';
 import { convertMustachePlugin, processCountPlugin } from './helpers/plugins';
 import { deleteProps, entries2obj } from './helpers/utils';
 
@@ -138,16 +138,13 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     t.log({
         files,
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPage: initialPagePreviewLogs.map(requestLog2str),
-                modifiedPage: modifiedPagePreviewLogs.map(requestLog2str),
-                addedPage: addedPagePreviewLogs.map(requestLog2str),
-                addModifiedPage: addModifiedPagePreviewLogs.map(requestLog2str),
-                newPage: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPage: initialPagePreviewLogs.map(String),
+            modifiedPage: modifiedPagePreviewLogs.map(String),
+            addedPage: addedPagePreviewLogs.map(String),
+            addModifiedPage: addModifiedPagePreviewLogs.map(String),
+            newPage: newPagePreviewLogs.map(String),
+        }),
         requestCountPerPage,
         beforeFiles,
         pluginsRunLogs,
@@ -360,12 +357,9 @@ test('If the plugin gets progressing build of self, make the published date and 
 
     t.log({
         files,
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                initialPage: initialPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPage: initialPagePreviewLogs.map(String),
+        }),
         requestCountPerPage,
         pluginsRunLogs,
     });

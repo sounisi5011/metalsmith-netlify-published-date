@@ -7,7 +7,7 @@ import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
 import { processAsync } from '../helpers/metalsmith';
-import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
+import createNetlify from '../helpers/netlify-mock-server';
 import { convertMustachePlugin } from '../helpers/plugins';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
 
@@ -147,12 +147,9 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
         requestLogsExpectedCount: {
             newPagePreviewRequestExpectedCount,
         },
