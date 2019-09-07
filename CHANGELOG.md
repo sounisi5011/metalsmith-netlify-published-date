@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...HEAD
+
+## [0.2.0] (2019-09-07 UTC)
+
 ### Features
 
 * [#84] - Add `metadataUpdater` option: Update metadata before build for comparison
@@ -15,10 +19,15 @@
 * `nock`
     * [#83] - `11.3.2` -> `11.3.3`
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+### Tests
+
+* [#85] - Refactoring tests
+
+[0.2.0]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...v0.2.0
 [#82]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/82
 [#83]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/83
 [#84]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/84
+[#85]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/85
 
 ## [0.1.2] (2019-09-04 UTC)
 
