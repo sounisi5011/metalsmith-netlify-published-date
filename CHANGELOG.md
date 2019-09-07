@@ -6,7 +6,15 @@
 
 * [#84] - Add `metadataUpdater` option: Update metadata before build for comparison
 
+### Updated Dependencies
+
+#### devDependencies
+
+* `nock`
+    * [#83] - `11.3.2` -> `11.3.3`
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+[#83]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/83
 [#84]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/84
 
 ## [0.1.2] (2019-09-04 UTC)
