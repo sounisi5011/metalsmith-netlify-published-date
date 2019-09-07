@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...HEAD
 
 ## [0.2.0] (2019-09-07 UTC)
 
