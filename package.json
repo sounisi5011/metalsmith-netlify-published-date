@@ -139,7 +139,7 @@
       "./test/**/*.ts"
     ],
     "helpers": [
-      "**/helpers/**/*"
+      "**/{fixtures,helpers}/**/*"
     ],
     "compileEnhancements": false,
     "require": [

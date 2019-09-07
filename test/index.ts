@@ -1,11 +1,11 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { dirpath as fixtures } from './helpers/fixtures';
-import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import { buildAsync, processAsync } from './helpers/metalsmith';
+import createNetlify from './helpers/netlify-mock-server';
 import { getPublishedDate, hasProp } from './helpers/utils';
 
 test.serial('should add correct dates to metadata', async t => {
@@ -28,6 +28,7 @@ test.serial('should add correct dates to metadata', async t => {
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
@@ -57,9 +58,9 @@ test.serial('should add correct dates to metadata', async t => {
     const addedPublishedDate = getPublishedDate(
         server.deploys.getByKey('added'),
     );
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.build.bind(metalsmith))();
+    const files = await buildAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -75,20 +76,18 @@ test.serial('should add correct dates to metadata', async t => {
 
     t.log({
         files,
-        dates: {
-            initialPublishedDate,
-            modifiedPublishedDate,
-            addedPublishedDate,
-            lastPublishedDate,
-        },
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        dates: [
+            { initialPublishedDate },
+            { modifiedPublishedDate },
+            { addedPublishedDate },
+            { beforeBuildDate },
+        ],
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -101,9 +100,9 @@ test.serial('should add correct dates to metadata', async t => {
     t.deepEqual(files['added.html'].modified, addedPublishedDate);
 
     t.true(files['new.html'].published instanceof Date);
-    t.true(files['new.html'].published > lastPublishedDate);
+    t.true(files['new.html'].published > beforeBuildDate);
     t.true(files['new.html'].modified instanceof Date);
-    t.true(files['new.html'].modified > lastPublishedDate);
+    t.true(files['new.html'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,
@@ -115,8 +114,9 @@ test.serial('should add correct dates to metadata', async t => {
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -136,7 +136,7 @@ test('should not process files that do not match by pattern', async t => {
         }),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
 
     if (
         Object.values(files).some(filedata =>
@@ -177,6 +177,7 @@ test('should add correct dates to metadata in binary files', async t => {
                 key: 'added',
                 '/added.gif': { filepath: 'added.gif' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.webp': { filepath: 'modified.webp' },
@@ -206,9 +207,9 @@ test('should add correct dates to metadata in binary files', async t => {
     const addedPublishedDate = getPublishedDate(
         server.deploys.getByKey('added'),
     );
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.png',
     );
@@ -224,20 +225,18 @@ test('should add correct dates to metadata in binary files', async t => {
 
     t.log({
         files,
-        dates: {
-            initialPublishedDate,
-            modifiedPublishedDate,
-            addedPublishedDate,
-            lastPublishedDate,
-        },
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        dates: [
+            { initialPublishedDate },
+            { modifiedPublishedDate },
+            { addedPublishedDate },
+            { beforeBuildDate },
+        ],
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.png'].published, initialPublishedDate);
@@ -250,9 +249,9 @@ test('should add correct dates to metadata in binary files', async t => {
     t.deepEqual(files['added.gif'].modified, addedPublishedDate);
 
     t.true(files['new.jp2'].published instanceof Date);
-    t.true(files['new.jp2'].published > lastPublishedDate);
+    t.true(files['new.jp2'].published > beforeBuildDate);
     t.true(files['new.jp2'].modified instanceof Date);
-    t.true(files['new.jp2'].modified > lastPublishedDate);
+    t.true(files['new.jp2'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,
@@ -264,8 +263,9 @@ test('should add correct dates to metadata in binary files', async t => {
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -291,9 +291,11 @@ test('failed deploy should be ignored', async t => {
                 '/initial.html': { filepath: 'initial.html' },
                 '/modified.html': Buffer.from(''),
             },
+            {},
             {
                 state: 'error',
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
@@ -321,7 +323,7 @@ test('failed deploy should be ignored', async t => {
         server.deploys.getByKey('modified'),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -331,16 +333,11 @@ test('failed deploy should be ignored', async t => {
 
     t.log({
         files,
-        dates: {
-            initialPublishedDate,
-            modifiedPublishedDate,
-        },
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-        },
+        dates: [{ initialPublishedDate }, { modifiedPublishedDate }],
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -366,13 +363,16 @@ test('enqueued and building deploy should be ignored', async t => {
                 '/initial.html': { filepath: 'initial.html' },
                 '/modified.html': Buffer.from(''),
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 state: 'building',
             },
+            {},
             {
                 state: 'enqueued',
             },
@@ -398,7 +398,7 @@ test('enqueued and building deploy should be ignored', async t => {
         server.deploys.getByKey('modified'),
     );
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -408,16 +408,11 @@ test('enqueued and building deploy should be ignored', async t => {
 
     t.log({
         files,
-        dates: {
-            initialPublishedDate,
-            modifiedPublishedDate,
-        },
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-        },
+        dates: [{ initialPublishedDate }, { modifiedPublishedDate }],
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);

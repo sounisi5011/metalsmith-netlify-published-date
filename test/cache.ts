@@ -8,8 +8,10 @@ import util from 'util';
 import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
+import { processAsync } from './helpers/metalsmith';
 import createNetlify from './helpers/netlify-mock-server';
 import { ArrayType } from './helpers/types';
+import { getNewItems } from './helpers/utils';
 
 const fsStat = util.promisify(fs.stat);
 
@@ -45,6 +47,7 @@ const serverScheme = [
         key: 'added',
         '/added.html': { filepath: 'added.html' },
     },
+    {},
     {
         key: 'modified',
         '/modified.html': { filepath: 'modified.html' },
@@ -71,13 +74,9 @@ test('filesystem', async t => {
         }),
     );
 
-    const firstFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const firstApiLogs = [...server.requestLogs.api];
-    const firstApiLogLen = server.requestLogs.api.length;
-    const firstPreviewsLogs = [...server.requestLogs.previews];
-    const firstPreviewsLogLen = server.requestLogs.previews.length;
+    const firstFiles = await processAsync(metalsmith);
+    const firstApiLogs = getNewItems(server.requestLogs.api);
+    const firstPreviewsLogs = getNewItems(server.requestLogs.previews);
 
     await t.notThrowsAsync(async () => {
         t.true(
@@ -86,23 +85,13 @@ test('filesystem', async t => {
         );
     }, 'cache directory should exist');
 
-    const secondFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const secondApiLogs = server.requestLogs.api.slice(firstApiLogLen);
-    const secondApiLogLen = server.requestLogs.api.length;
-    const secondPreviewsLogs = server.requestLogs.previews.slice(
-        firstPreviewsLogLen,
-    );
-    const secondPreviewsLogLen = server.requestLogs.previews.length;
+    const secondFiles = await processAsync(metalsmith);
+    const secondApiLogs = getNewItems(server.requestLogs.api);
+    const secondPreviewsLogs = getNewItems(server.requestLogs.previews);
 
-    const thirdFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const thirdApiLogs = server.requestLogs.api.slice(secondApiLogLen);
-    const thirdPreviewsLogs = server.requestLogs.previews.slice(
-        secondPreviewsLogLen,
-    );
+    const thirdFiles = await processAsync(metalsmith);
+    const thirdApiLogs = getNewItems(server.requestLogs.api);
+    const thirdPreviewsLogs = getNewItems(server.requestLogs.previews);
 
     t.deepEqual(
         secondFiles,
@@ -159,31 +148,17 @@ test('in-memory', async t => {
         root: metalsmith.source(),
     });
 
-    const firstFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const firstApiLogs = [...server.requestLogs.api];
-    const firstApiLogLen = server.requestLogs.api.length;
-    const firstPreviewsLogs = [...server.requestLogs.previews];
-    const firstPreviewsLogLen = server.requestLogs.previews.length;
+    const firstFiles = await processAsync(metalsmith);
+    const firstApiLogs = getNewItems(server.requestLogs.api);
+    const firstPreviewsLogs = getNewItems(server.requestLogs.previews);
 
-    const secondFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const secondApiLogs = server.requestLogs.api.slice(firstApiLogLen);
-    const secondApiLogLen = server.requestLogs.api.length;
-    const secondPreviewsLogs = server.requestLogs.previews.slice(
-        firstPreviewsLogLen,
-    );
-    const secondPreviewsLogLen = server.requestLogs.previews.length;
+    const secondFiles = await processAsync(metalsmith);
+    const secondApiLogs = getNewItems(server.requestLogs.api);
+    const secondPreviewsLogs = getNewItems(server.requestLogs.previews);
 
-    const thirdFiles = await util.promisify(
-        metalsmith.process.bind(metalsmith),
-    )();
-    const thirdApiLogs = server.requestLogs.api.slice(secondApiLogLen);
-    const thirdPreviewsLogs = server.requestLogs.previews.slice(
-        secondPreviewsLogLen,
-    );
+    const thirdFiles = await processAsync(metalsmith);
+    const thirdApiLogs = getNewItems(server.requestLogs.api);
+    const thirdPreviewsLogs = getNewItems(server.requestLogs.previews);
 
     t.deepEqual(
         secondFiles,
@@ -239,15 +214,11 @@ test('filesystem: unread cache entries should also be kept', async t => {
 
     let firstFiles: Metalsmith.Files = {};
     let firstApiLogs: typeof server.requestLogs.api = [];
-    let firstApiLogLen = 0;
     let firstPreviewsLogs: ArrayType<typeof server.requestLogs.previews> = [];
-    let firstPreviewsLogLen = 0;
 
     let secondFiles: Metalsmith.Files = {};
     let secondApiLogs: typeof server.requestLogs.api = [];
-    let secondApiLogLen = 0;
     let secondPreviewsLogs: ArrayType<typeof server.requestLogs.previews> = [];
-    let secondPreviewsLogLen = 0;
 
     await del(cacheDir);
 
@@ -263,10 +234,8 @@ test('filesystem: unread cache entries should also be kept', async t => {
             .use((files, metalsmith, done) => {
                 const { api, previews } = server.requestLogs;
                 firstFiles = files;
-                firstApiLogs = [...api];
-                firstApiLogLen = api.length;
-                firstPreviewsLogs = [...previews];
-                firstPreviewsLogLen = previews.length;
+                firstApiLogs = getNewItems(api);
+                firstPreviewsLogs = getNewItems(previews);
                 done(null, files, metalsmith);
             })
             .use(
@@ -280,10 +249,8 @@ test('filesystem: unread cache entries should also be kept', async t => {
             .use((files, metalsmith, done) => {
                 const { api, previews } = server.requestLogs;
                 secondFiles = files;
-                secondApiLogs = api.slice(firstApiLogLen);
-                secondApiLogLen = api.length;
-                secondPreviewsLogs = previews.slice(firstPreviewsLogLen);
-                secondPreviewsLogLen = previews.length;
+                secondApiLogs = getNewItems(api);
+                secondPreviewsLogs = getNewItems(previews);
                 done(null, files, metalsmith);
             })
             .use(
@@ -295,10 +262,8 @@ test('filesystem: unread cache entries should also be kept', async t => {
             )
             .process.bind(metalsmith),
     )();
-    const thirdApiLogs = server.requestLogs.api.slice(secondApiLogLen);
-    const thirdPreviewsLogs = server.requestLogs.previews.slice(
-        secondPreviewsLogLen,
-    );
+    const thirdApiLogs = getNewItems(server.requestLogs.api);
+    const thirdPreviewsLogs = getNewItems(server.requestLogs.previews);
 
     const modifiedOnlyFirstApiLogs = firstApiLogs.slice(
         0,

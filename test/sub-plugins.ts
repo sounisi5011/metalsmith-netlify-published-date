@@ -1,12 +1,12 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../src/index';
 import { isObject } from '../src/utils';
 import { dirpath as fixtures } from './helpers/fixtures';
-import createNetlify, { requestLog2str } from './helpers/netlify-mock-server';
+import { processAsync } from './helpers/metalsmith';
+import createNetlify from './helpers/netlify-mock-server';
 import { convertMustachePlugin, processCountPlugin } from './helpers/plugins';
 import { deleteProps, entries2obj } from './helpers/utils';
 
@@ -105,9 +105,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         requestLogs: server.requestLogs,
     });
 
-    const lastPublishedDate = new Date(Date.now() - 1);
+    const beforeBuildDate = new Date(Date.now() - 1);
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
@@ -138,14 +138,13 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
     t.log({
         files,
-        requestLogs: {
-            previews: server.requestLogs.previews.map(requestLog2str),
-            initialPage: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPage: modifiedPagePreviewLogs.map(requestLog2str),
-            addedPage: addedPagePreviewLogs.map(requestLog2str),
-            addModifiedPage: addModifiedPagePreviewLogs.map(requestLog2str),
-            newPage: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPage: initialPagePreviewLogs.map(String),
+            modifiedPage: modifiedPagePreviewLogs.map(String),
+            addedPage: addedPagePreviewLogs.map(String),
+            addModifiedPage: addModifiedPagePreviewLogs.map(String),
+            newPage: newPagePreviewLogs.map(String),
+        }),
         requestCountPerPage,
         beforeFiles,
         pluginsRunLogs,
@@ -200,9 +199,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
     );
 
     t.true(files['new.html'].published instanceof Date);
-    t.true(files['new.html'].published > lastPublishedDate);
+    t.true(files['new.html'].published > beforeBuildDate);
     t.true(files['new.html'].modified instanceof Date);
-    t.true(files['new.html'].modified > lastPublishedDate);
+    t.true(files['new.html'].modified > beforeBuildDate);
 
     t.is(
         initialPagePreviewLogs.length,
@@ -214,8 +213,9 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -307,6 +307,7 @@ test('If the plugin gets progressing build of self, make the published date and 
                 key: 'self-build',
                 state: 'building',
             },
+            {},
             {
                 state: 'building',
             },
@@ -337,7 +338,7 @@ test('If the plugin gets progressing build of self, make the published date and 
         requestLogs: server.requestLogs,
     });
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const beforeFiles = beforeFilesList[0];
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
@@ -356,10 +357,9 @@ test('If the plugin gets progressing build of self, make the published date and 
 
     t.log({
         files,
-        requestLogs: {
-            previews: server.requestLogs.previews.map(requestLog2str),
-            initialPage: initialPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPage: initialPagePreviewLogs.map(String),
+        }),
         requestCountPerPage,
         pluginsRunLogs,
     });

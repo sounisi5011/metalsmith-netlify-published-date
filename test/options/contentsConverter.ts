@@ -1,13 +1,13 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
-import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
+import { processAsync } from '../helpers/metalsmith';
+import createNetlify from '../helpers/netlify-mock-server';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
 
 const metadata = {
@@ -47,10 +47,12 @@ test('The return value of the contentsConverter() option should be used for comp
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 key: 'last',
             },
@@ -80,7 +82,7 @@ test('The return value of the contentsConverter() option should be used for comp
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -103,14 +105,12 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -135,8 +135,9 @@ test('The return value of the contentsConverter() option should be used for comp
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(
@@ -173,10 +174,12 @@ test('The return value of the contentsConverter() option should be used for comp
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
             },
+            {},
             {
                 key: 'last',
             },
@@ -206,7 +209,7 @@ test('The return value of the contentsConverter() option should be used for comp
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const initialPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/initial.html',
     );
@@ -229,14 +232,12 @@ test('The return value of the contentsConverter() option should be used for comp
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: {
-            initialPagePreviewLogs: initialPagePreviewLogs.map(requestLog2str),
-            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(
-                requestLog2str,
-            ),
-            addedPagePreviewLogs: addedPagePreviewLogs.map(requestLog2str),
-            newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-        },
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            initialPagePreviewLogs: initialPagePreviewLogs.map(String),
+            modifiedPagePreviewLogs: modifiedPagePreviewLogs.map(String),
+            addedPagePreviewLogs: addedPagePreviewLogs.map(String),
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
     });
 
     t.deepEqual(files['initial.html'].published, initialPublishedDate);
@@ -261,8 +262,9 @@ test('The return value of the contentsConverter() option should be used for comp
         server.deploys.length,
         'If the page was deployed initial and modified midway, should have requested all the previews',
     );
-    t.true(
-        addedPagePreviewLogs.length < server.deploys.length,
+    t.is(
+        addedPagePreviewLogs.length,
+        server.deploys.getsUntilByKey('added').length + 1,
         'If the page was deployed midway, should not have requested all previews',
     );
     t.is(

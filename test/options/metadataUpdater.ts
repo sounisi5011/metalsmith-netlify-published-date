@@ -1,13 +1,13 @@
 import test from 'ava';
 import Metalsmith from 'metalsmith';
 import path from 'path';
-import util from 'util';
 
 import netlifyPublishedDate from '../../src';
 import { normalizeOptions } from '../../src/options';
 import { OptionsInterface } from '../../src/plugin';
 import { dirpath as fixtures } from '../helpers/fixtures';
-import createNetlify, { requestLog2str } from '../helpers/netlify-mock-server';
+import { processAsync } from '../helpers/metalsmith';
+import createNetlify from '../helpers/netlify-mock-server';
 import { convertMustachePlugin } from '../helpers/plugins';
 import { appendValueReportPattern, getPublishedDate } from '../helpers/utils';
 
@@ -90,27 +90,15 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
                     'Published at {{published}}\nLast updated at {{modified}}',
                 ),
             },
-            {
-                '/new.html': Buffer.from(
-                    'Published at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
-            {
-                '/new.html': Buffer.from(
-                    'Published at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
+            {},
+            {},
             {
                 key: 'modified',
                 '/new.html': Buffer.from(
                     '[title]\n\nPublished at {{published}}\nLast updated at {{modified}}',
                 ),
             },
-            {
-                '/new.html': Buffer.from(
-                    '[hoge]\n\nPublished at {{published}}\nLast updated at {{modified}}',
-                ),
-            },
+            {},
             {
                 key: 'last',
                 '/new.html': Buffer.from(
@@ -143,14 +131,9 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
     );
     const lastPublishedDate = getPublishedDate(server.deploys.getByKey('last'));
     const newPagePreviewRequestExpectedCount =
-        server.deploys.reduce((count, deploy) => {
-            if (addedPublishedDate <= getPublishedDate(deploy)) {
-                count++;
-            }
-            return count;
-        }, 0) + 1;
+        server.deploys.getsUntilByKey('added').length + 1;
 
-    const files = await util.promisify(metalsmith.process.bind(metalsmith))();
+    const files = await processAsync(metalsmith);
     const newPagePreviewLogs = server.requestLogs.previews.filter(
         requestLog => requestLog.path === '/new.html',
     );
@@ -164,12 +147,9 @@ test('The metadataUpdater() option should be able to update file metadata', asyn
             { lastPublishedDate },
             { currentBuildDate },
         ],
-        requestLogs: Object.assign(
-            server.requestLogs.previews.map(requestLog2str),
-            {
-                newPagePreviewLogs: newPagePreviewLogs.map(requestLog2str),
-            },
-        ),
+        requestLogs: Object.assign(server.requestLogs.previews.map(String), {
+            newPagePreviewLogs: newPagePreviewLogs.map(String),
+        }),
         requestLogsExpectedCount: {
             newPagePreviewRequestExpectedCount,
         },
@@ -210,6 +190,7 @@ test('The metadataUpdater() option should not be affected by the return value of
                 key: 'added',
                 '/added.html': { filepath: 'added.html' },
             },
+            {},
             {
                 key: 'modified',
                 '/modified.html': { filepath: 'modified.html' },
@@ -219,7 +200,7 @@ test('The metadataUpdater() option should not be affected by the return value of
         { root: metalsmith.source() },
     );
 
-    await util.promisify(metalsmith.process.bind(metalsmith))();
+    await processAsync(metalsmith);
 });
 
 test('should pass the function to the options value', async t => {

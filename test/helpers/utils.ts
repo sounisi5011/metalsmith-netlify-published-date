@@ -57,6 +57,15 @@ export async function iterable2array<T>(
     return array;
 }
 
+const getNewItemsIndexMap = new WeakMap<ReadonlyArray<unknown>, number>();
+
+export function getNewItems<T>(list: ReadonlyArray<T>): T[] {
+    const index = getNewItemsIndexMap.get(list) || 0;
+    const length = list.length;
+    getNewItemsIndexMap.set(list, length);
+    return list.slice(index);
+}
+
 export async function chdir(
     dirpath: string | string[],
     callback: () => void | Promise<void>,

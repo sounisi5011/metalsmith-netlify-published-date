@@ -30,29 +30,77 @@ export interface DeploySchema {
         | void;
 }
 
-export interface RequestLog {
-    readonly statusCode?: number;
-    readonly host?: readonly string[];
-    readonly path: string;
-}
-
 export type NetlifyDeploy = NetlifyDeployInterface & Record<string, unknown>;
 
-export interface MockServer {
+export class MockServer {
     readonly deploys: readonly NetlifyDeploy[] & {
         getByKey(key: string): NetlifyDeploy;
+        getsUntilByKey(key: string): NetlifyDeploy[];
     };
+
     readonly nockScope: {
         readonly api: nock.Scope;
         readonly previews: ReadonlyMap<string, nock.Scope>;
     };
+
     readonly requestLogs: {
         readonly api: readonly RequestLog[];
         readonly previews: readonly RequestLog[] & {
             readonly [urlpath: string]: readonly RequestLog[];
         };
     };
+
     readonly apiTotalPages: number;
+
+    constructor({
+        commitDeployList,
+        key2deployMap,
+        apiScope,
+        previews,
+        requestLogs,
+        apiTotalPages,
+    }: {
+        commitDeployList: readonly NetlifyDeploy[];
+        key2deployMap: Map<string, NetlifyDeploy>;
+        apiScope: nock.Scope;
+        previews: ([string, nock.Scope])[];
+        requestLogs: {
+            api: RequestLog[];
+            previews: RequestLog[] & { [urlpath: string]: RequestLog[] };
+        };
+        apiTotalPages: number;
+    }) {
+        this.deploys = Object.assign(commitDeployList, {
+            getByKey(key: string) {
+                const deploy = key2deployMap.get(key);
+                if (!deploy) {
+                    throw new Error(`Deploy key is not defined: ${key}`);
+                }
+                return deploy;
+            },
+            getsUntilByKey(key: string) {
+                const deployByKey = key2deployMap.get(key);
+                if (!deployByKey) {
+                    throw new Error(`Deploy key is not defined: ${key}`);
+                }
+
+                const list: NetlifyDeploy[] = [];
+                for (const deploy of commitDeployList) {
+                    list.push(deploy);
+                    if (deploy === deployByKey) {
+                        break;
+                    }
+                }
+                return list;
+            },
+        });
+        this.nockScope = {
+            api: apiScope,
+            previews: new Map(previews),
+        };
+        this.requestLogs = requestLogs;
+        this.apiTotalPages = apiTotalPages;
+    }
 }
 
 export interface MockServerOptions {
@@ -63,37 +111,40 @@ export function getPreviewRootURL(deploy: NetlifyDeployInterface): string {
     return `https://${deploy.id}--${deploy.name}.netlify.com`;
 }
 
-export function createRequestLog(
-    req: http.ClientRequest,
-    interceptor: nock.Interceptor,
-): RequestLog {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore: TS2339 -- Property 'statusCode' does not exist on type 'Interceptor'.
-    const statusCode: unknown = interceptor.statusCode;
-    const host = req.getHeader('host');
+export class RequestLog {
+    readonly statusCode?: number;
+    readonly host?: string[];
+    readonly path: string;
 
-    return {
-        ...(typeof statusCode === 'number' ? { statusCode } : null),
-        ...(host !== undefined
-            ? {
-                  host: Array.isArray(host) ? host : [String(host)],
-              }
-            : null),
-        path: req.path,
-    };
-}
+    constructor(req: http.ClientRequest, interceptor: nock.Interceptor) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore: TS2339 -- Property 'statusCode' does not exist on type 'Interceptor'.
+        const statusCode: unknown = interceptor.statusCode;
+        const host = req.getHeader('host');
 
-export function requestLog2str(requestLog: RequestLog): string {
-    const { statusCode, host, path } = requestLog;
-    return [
-        statusCode !== undefined ? `HTTP ${statusCode} / ` : '',
-        host !== undefined
-            ? host.length > 1
-                ? `[ ${host.join(', ')} ] `
-                : host[0]
-            : '',
-        path,
-    ].join('');
+        if (typeof statusCode === 'number') {
+            this.statusCode = statusCode;
+        }
+
+        if (host !== undefined) {
+            this.host = Array.isArray(host) ? host : [String(host)];
+        }
+
+        this.path = req.path;
+    }
+
+    public toString(): string {
+        const { statusCode, host, path } = this;
+        return [
+            statusCode !== undefined ? `HTTP ${statusCode} / ` : '',
+            host !== undefined
+                ? host.length > 1
+                    ? `[ ${host.join(', ')} ] `
+                    : host[0]
+                : '',
+            path,
+        ].join('');
+    }
 }
 
 const deployNameMap = new Map<string, string>();
@@ -241,7 +292,7 @@ export default async function create(
             interceptor: nock.Interceptor,
             _body: string,
         ) => {
-            requestLogs.api.push(createRequestLog(req, interceptor));
+            requestLogs.api.push(new RequestLog(req, interceptor));
         },
     );
 
@@ -319,7 +370,7 @@ export default async function create(
                 interceptor: nock.Interceptor,
                 _body: string,
             ) => {
-                const requestLog = createRequestLog(req, interceptor);
+                const requestLog = new RequestLog(req, interceptor);
                 requestLogs.previews.push(requestLog);
                 logPagesMap.forEach((urlpathList, filepath) => {
                     urlpathList.forEach(urlpath => {
@@ -333,21 +384,12 @@ export default async function create(
     });
     previews.reverse();
 
-    return {
-        deploys: Object.assign(commitDeployList, {
-            getByKey(key: string) {
-                const deploy = key2deployMap.get(key);
-                if (!deploy) {
-                    throw new Error(`Deploy key is not defined: ${key}`);
-                }
-                return deploy;
-            },
-        }),
-        nockScope: {
-            api: apiScope,
-            previews: new Map(previews),
-        },
+    return new MockServer({
+        commitDeployList,
+        key2deployMap,
+        apiScope,
+        previews,
         requestLogs,
         apiTotalPages,
-    };
+    });
 }
