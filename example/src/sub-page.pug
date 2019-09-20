@@ -4,7 +4,6 @@ canonicalPath: sub-page.html
 pkgName: "@sounisi5011/metalsmith-netlify-published-date"
 ---
 
-- const now = new Date()
 doctype html
 html(lang="en")
     head
@@ -22,30 +21,30 @@ html(lang="en")
         p
             | Page generation time:
             |
-            time(datetime=now.toISOString())
-                = now.getFullYear()
+            time(datetime=dateBuilt.toISOString())
+                = dateBuilt.getFullYear()
                 | /
-                = String(now.getMonth() + 1).padStart(2, 0)
+                = String(dateBuilt.getMonth() + 1).padStart(2, 0)
                 | /
-                = String(now.getDate()).padStart(2, 0)
+                = String(dateBuilt.getDate()).padStart(2, 0)
                 |
                 |
-                = String(now.getHours()).padStart(2, 0)
+                = String(dateBuilt.getHours()).padStart(2, 0)
                 | :
-                = String(now.getMinutes()).padStart(2, 0)
+                = String(dateBuilt.getMinutes()).padStart(2, 0)
                 | :
-                = String(now.getSeconds()).padStart(2, 0)
+                = String(dateBuilt.getSeconds()).padStart(2, 0)
                 |
                 | UTC
-                if 0 < now.getTimezoneOffset()
+                if 0 < dateBuilt.getTimezoneOffset()
                     | +
-                else if now.getTimezoneOffset() < 0
+                else if dateBuilt.getTimezoneOffset() < 0
                     | -
                 else
                     != '&plusmn;'
-                = String(Math.trunc(Math.abs(now.getTimezoneOffset()) / 60)).padStart(2, 0)
+                = String(Math.trunc(Math.abs(dateBuilt.getTimezoneOffset()) / 60)).padStart(2, 0)
                 | :
-                = String(Math.abs(now.getTimezoneOffset()) % 60).padStart(2, 0)
+                = String(Math.abs(dateBuilt.getTimezoneOffset()) % 60).padStart(2, 0)
 
         if published instanceof Date
             p
