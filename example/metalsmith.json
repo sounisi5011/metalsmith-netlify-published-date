@@ -1,5 +1,6 @@
 {
   "plugins": {
+    "metalsmith-build-date": { "key": "dateBuilt" },
     "@sounisi5011/metalsmith-netlify-published-date": {
       "pattern": "**/*.pug",
       "cacheDir": "./node_modules/.cache/",
