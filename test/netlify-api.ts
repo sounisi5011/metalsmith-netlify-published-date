@@ -27,7 +27,7 @@ test('Netlify API responses should be in a valid format', async t => {
                 ? response.headers.link.join(', ')
                 : response.headers.link;
 
-            let body = null;
+            let body: unknown = null;
             t.notThrows(() => {
                 try {
                     body = JSON.parse(bodyStr);
