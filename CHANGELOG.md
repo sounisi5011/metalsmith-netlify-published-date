@@ -12,6 +12,8 @@
     * [#109] - `2.1.0` -> `2.14.0`
 * `ava`
     * [#111] - `2.3.0` -> `2.4.0`
+* `can-npm-publish`
+    * [#110] - `1.3.1` -> `1.3.2`
 * `del-cli`
     * [#112] - `2.0.0` -> `3.0.0`
 * `eslint`
@@ -26,6 +28,8 @@
     * [#109] - `3.1.0` -> `3.1.2`
 * `eslint-plugin-simple-import-sort`
     * [#113] - `4.0.0` -> `5.0.0`
+* `git-branch-is`
+    * [#110] - `3.0.0` -> `3.1.0`
 * `husky`
     * [#108] - `3.0.5` -> `3.1.0`
 * `lint-staged`
@@ -68,6 +72,7 @@
 [#111]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/111
 [#113]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/113
 [#112]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/112
+[#110]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/110
 
 ## [0.2.0] (2019-09-07 UTC)
 
