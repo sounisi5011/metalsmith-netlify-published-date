@@ -12,6 +12,8 @@
     * [#109] - `2.1.0` -> `2.14.0`
 * `ava`
     * [#111] - `2.3.0` -> `2.4.0`
+* `del-cli`
+    * [#112] - `2.0.0` -> `3.0.0`
 * `eslint`
     * [#109] - `6.3.0` -> `6.8.0`
 * `eslint-config-prettier`
@@ -32,6 +34,8 @@
     * [#111] - `3.0.3` -> `3.2.1`
 * `nock`
     * [#111] - `11.3.3` -> `11.7.0`
+* `package-version-git-tag`
+    * [#112] - `1.1.1` -> `2.0.2`
 * `prettier`
     * [#108] - `1.18.2` -> `1.19.1`
 * `prettier-package-json`
@@ -63,6 +67,7 @@
 [#91]:  https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/91
 [#111]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/111
 [#113]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/113
+[#112]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/112
 
 ## [0.2.0] (2019-09-07 UTC)
 
