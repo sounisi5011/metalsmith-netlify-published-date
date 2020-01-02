@@ -37,6 +37,7 @@ Inspired of [Atom Contributing] and [Gitmoji].
 * `🐛` - fixing a bug
 * `🔥` - removing code or files
 * `✅` - adding or updating tests
+* `👷` - adding CI build system
 * `➕` - adding a dependency
 * `⬆️` - upgrading dependencies
 * `⬇️` - downgrading dependencies
@@ -46,3 +47,4 @@ Inspired of [Atom Contributing] and [Gitmoji].
 * `🙈` - adding or updating a `.gitignore` file
 * `📄` - adding or updating license
 * `🚚` - moving or renaming files
+* `⏪` - reverting changes

@@ -1,0 +1,14 @@
+jobs:
+  - job: Lint
+
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+      - template: ../steps/init-node.yml
+
+      - script: npx run-s test:peer-deps lint test:check-type-defs-pkgs
+        displayName: Run linter
+        timeoutInMinutes: 5
+
+    cancelTimeoutInMinutes: 1

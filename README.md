@@ -4,7 +4,7 @@
 [![GitHub License](https://img.shields.io/github/license/sounisi5011/metalsmith-netlify-published-date.svg)][github-license]
 ![](https://img.shields.io/node/v/@sounisi5011/metalsmith-netlify-published-date.svg)
 [![Dependencies Status](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date)
-[![Build Status](https://travis-ci.com/sounisi5011/metalsmith-netlify-published-date.svg?branch=master)](https://travis-ci.com/sounisi5011/metalsmith-netlify-published-date)
+[![Build Status](https://dev.azure.com/sounisi5011/npm%20projects/_apis/build/status/sounisi5011.metalsmith-netlify-published-date?branchName=master)](https://dev.azure.com/sounisi5011/npm%20projects/_build/latest?definitionId=7&branchName=master)
 [![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/metalsmith-netlify-published-date/maintainability)
 
 [npm]: https://www.npmjs.com/package/@sounisi5011/metalsmith-netlify-published-date
