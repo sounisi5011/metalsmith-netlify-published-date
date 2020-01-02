@@ -94,7 +94,7 @@
     "debug": "4.1.1",
     "deep-freeze-strict": "1.1.1",
     "flat-cache": "2.0.1",
-    "got": "9.6.0",
+    "got": "10.2.1",
     "import-cwd": "3.0.0",
     "is-plain-obj": "2.0.0",
     "multimatch": "4.0.0",
