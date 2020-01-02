@@ -1,0 +1,16 @@
+parameters:
+  nodeVersion: 12.x
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: ${{ parameters.nodeVersion }}
+    displayName: Install Node.js
+
+  - bash: |
+      echo node $(node --version)
+      echo npm $(npm --version)
+    displayName: Show node and npm version
+
+  - script: npm ci || npm install
+    displayName: Install dependencies
