@@ -48,11 +48,8 @@ test('Netlify API responses should be in a valid format', async t => {
                         const props: (
                             | 'created_at'
                             | 'updated_at'
-                            | 'published_at')[] = [
-                            'created_at',
-                            'updated_at',
-                            'published_at',
-                        ];
+                            | 'published_at'
+                        )[] = ['created_at', 'updated_at', 'published_at'];
                         for (const prop of props) {
                             const value = deploy[prop];
                             if (value !== null) {

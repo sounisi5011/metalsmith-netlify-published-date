@@ -16,8 +16,8 @@ export function isStringArray(value: unknown[]): value is string[] {
 
 export function hasProp<
     T extends object,
-    U extends (Parameters<typeof Object.prototype.hasOwnProperty>)[0]
->(value: T, prop: U): value is (typeof value) & { [P in U]: unknown } {
+    U extends Parameters<typeof Object.prototype.hasOwnProperty>[0]
+>(value: T, prop: U): value is typeof value & { [P in U]: unknown } {
     return Object.prototype.hasOwnProperty.call(value, prop);
 }
 
@@ -54,7 +54,7 @@ export function getPropertyDescriptor<O, P extends keyof O>(
 
 export function getPropertyDescriptorEntries<T extends object>(
     value: T,
-): [(keyof T), TypedPropertyDescriptor<T[keyof T]>][] {
+): [keyof T, TypedPropertyDescriptor<T[keyof T]>][] {
     const descs = Object.getOwnPropertyDescriptors(value);
     const props = [
         ...(Object.getOwnPropertyNames(descs) as (keyof T)[]),
@@ -96,7 +96,7 @@ export function initObject<O = unknown>(
 }
 
 export function equalsMap<K = unknown, V = unknown>(
-    map1: Map<K, V> | (readonly (readonly [K, V])[]),
+    map1: Map<K, V> | readonly (readonly [K, V])[],
     map2: Map<K, V>,
 ): boolean {
     const map1arr = [...map1];
@@ -109,7 +109,7 @@ export function equalsMap<K = unknown, V = unknown>(
 }
 
 export function equalsSet<V = unknown>(
-    set1: Set<V> | (readonly V[]),
+    set1: Set<V> | readonly V[],
     set2: Set<V>,
 ): boolean {
     const set1arr = [...set1];

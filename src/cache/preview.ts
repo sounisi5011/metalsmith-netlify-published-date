@@ -84,7 +84,8 @@ export default class PreviewCache {
     ): value is CachedPreviewResponseJSONInterface {
         return (
             isObject(value) &&
-            (typeof value.published === 'string' && isBufferJSON(value.body))
+            typeof value.published === 'string' &&
+            isBufferJSON(value.body)
         );
     }
 

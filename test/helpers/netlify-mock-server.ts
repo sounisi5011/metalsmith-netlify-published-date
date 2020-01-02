@@ -63,7 +63,7 @@ export class MockServer {
         commitDeployList: readonly NetlifyDeploy[];
         key2deployMap: Map<string, NetlifyDeploy>;
         apiScope: nock.Scope;
-        previews: ([string, nock.Scope])[];
+        previews: [string, nock.Scope][];
         requestLogs: {
             api: RequestLog[];
             previews: RequestLog[] & { [urlpath: string]: RequestLog[] };
@@ -211,7 +211,7 @@ const siteIDSet = new Set<string>();
 
 export default async function create(
     siteID: string,
-    deploysSchema: readonly (DeploySchema)[] = [],
+    deploysSchema: readonly DeploySchema[] = [],
     options: MockServerOptions = {},
 ): Promise<MockServer> {
     if (siteIDSet.has(siteID)) {
@@ -245,10 +245,8 @@ export default async function create(
     ).map(commit => createDeploy(siteID, commit));
     const commitDeployList: readonly (
         | ArrayItemType<typeof otherCommitDeployList>
-        | typeof initialCommitDeploy)[] = [
-        ...otherCommitDeployList,
-        initialCommitDeploy,
-    ];
+        | typeof initialCommitDeploy
+    )[] = [...otherCommitDeployList, initialCommitDeploy];
 
     /**
      * @see https://www.netlify.com/docs/api/#deploys
@@ -297,7 +295,7 @@ export default async function create(
     );
 
     const key2deployMap = new Map<string, NetlifyDeploy>();
-    const previews: ([string, nock.Scope])[] = [];
+    const previews: [string, nock.Scope][] = [];
     const previewFilesState: Writeable<DeploySchema> = {};
     [...commitDeployList].reverse().forEach((deploy, index) => {
         const deploySchema = deploysSchema[index];

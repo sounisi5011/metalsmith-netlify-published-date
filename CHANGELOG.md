@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Updated Dependencies
+
+#### devDependencies
+
+* `husky`
+    * [#108] - `3.0.5` -> `3.1.0`
+* `lint-staged`
+    * [#108] - `9.2.5` -> `9.5.0`
+* `prettier`
+    * [#108] - `1.18.2` -> `1.19.1`
+* `prettier-package-json`
+    * [#108] - `2.1.0` -> `2.1.3`
+* `sort-package-json`
+    * [#108] - `1.22.1` -> `1.35.0`
+
 ### Internal API
 
 * [#116] - Introduce `object-rollback` package
@@ -17,6 +32,7 @@
 [#107]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/107
 [#116]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/116
 [#117]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/117
+[#108]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/108
 
 ## [0.2.0] (2019-09-07 UTC)
 

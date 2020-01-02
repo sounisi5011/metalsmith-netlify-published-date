@@ -5,7 +5,7 @@ import Mustache from 'mustache';
 import { isFile } from '../../src/utils/metalsmith';
 
 export function processCountPlugin(
-    list: ({ clone: Metalsmith.Files; ref: Metalsmith.Files })[],
+    list: { clone: Metalsmith.Files; ref: Metalsmith.Files }[],
 ): Metalsmith.Plugin {
     return (files, metalsmith, done) => {
         list.push({
