@@ -18,8 +18,12 @@
     * [#109] - `6.2.0` -> `6.9.0`
 * `eslint-plugin-import`
     * [#109] - `2.18.2` -> `2.19.1`
+* `eslint-plugin-node`
+    * [#113] - `10.0.0` -> `11.0.0`
 * `eslint-plugin-prettier`
     * [#109] - `3.1.0` -> `3.1.2`
+* `eslint-plugin-simple-import-sort`
+    * [#113] - `4.0.0` -> `5.0.0`
 * `husky`
     * [#108] - `3.0.5` -> `3.1.0`
 * `lint-staged`
@@ -58,6 +62,7 @@
 [#109]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/109
 [#91]:  https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/91
 [#111]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/111
+[#113]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/113
 
 ## [0.2.0] (2019-09-07 UTC)
 
