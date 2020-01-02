@@ -13,3 +13,8 @@ jobs:
     parameters:
       name: Linux
       vmImage: ubuntu-latest
+
+  - template: azure-pipelines-templates/jobs/unit-test.yml
+    parameters:
+      name: Windows
+      vmImage: windows-latest
