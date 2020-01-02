@@ -10,11 +10,13 @@
 
 * [#98] - Uppdate example / Add `metalsmith-build-date`
 * [#107] - Renovate package groups
+* [#117] - Migrate from Travis CI to Azure Pipelines
 
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...HEAD
 [#98]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/98
 [#107]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/107
 [#116]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/116
+[#117]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/117
 
 ## [0.2.0] (2019-09-07 UTC)
 
