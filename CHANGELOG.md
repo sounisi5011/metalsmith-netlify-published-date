@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Internal API
+
+* [#116] - Introduce `object-rollback` package
+
 ### Others
 
 * [#98] - Uppdate example / Add `metalsmith-build-date`
@@ -10,6 +14,7 @@
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...HEAD
 [#98]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/98
 [#107]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/107
+[#116]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/116
 
 ## [0.2.0] (2019-09-07 UTC)
 
