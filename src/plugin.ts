@@ -216,7 +216,7 @@ export const defaultOptions: OptionsInterface = deepFreeze({
     defaultDate: null,
     filename2urlPath: filename => filename,
     contentsConverter: contents => contents,
-    metadataUpdater: () => {},
+    metadataUpdater: () => {}, // eslint-disable-line @typescript-eslint/no-empty-function
     contentsEquals: ({ file, previewPage }) => file.equals(previewPage),
 });
 
