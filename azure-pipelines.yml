@@ -1,0 +1,67 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+# no PR builds
+pr: none
+
+jobs:
+  - job: Lint
+
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: 12.x
+        displayName: Install Node.js
+
+      - bash: |
+          echo node $(node --version)
+          echo npm $(npm --version)
+        displayName: Show node and npm version
+
+      - script: npm ci || npm install
+        displayName: Install dependencies
+
+      - script: npx run-s test:peer-deps lint test:check-type-defs-pkgs
+        displayName: Run linter
+        timeoutInMinutes: 5
+
+    cancelTimeoutInMinutes: 1
+
+  - template: azure-pipelines-templates/jobs/unit-test.yml
+    parameters:
+      name: Linux
+      vmImage: ubuntu-latest
+
+  - job: UnitTest
+
+    pool:
+      vmImage: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [8.3.0, 8.x, 9.0.0, 9.x, 10.0.0, 10.x, 11.0.0, 11.x, 12.0.0, 12.x, 13.0.0, 13.x]
+
+    steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: ${{ matrix.node-version }}
+        displayName: Install Node.js
+
+      - bash: |
+          echo node $(node --version)
+          echo npm $(npm --version)
+        displayName: Show node and npm version
+
+      - script: npm ci || npm install
+        displayName: Install dependencies
+
+      - script: npm run test:ava
+        displayName: Run unit test
+        timeoutInMinutes: 5
+
+    cancelTimeoutInMinutes: 1
