@@ -73,12 +73,14 @@ async function main(distDir, buildTask) {
   }
 
   const importSet = new Set(
-    (await Promise.all(
-      tsFilepathList
-        .map(filepath => readFileAsync(filepath, 'utf8'))
-        .map(async code => parser.parse(await code))
-        .map(async ast => getImportNames(await ast)),
-    )).reduce((a, b) => a.concat(b)),
+    (
+      await Promise.all(
+        tsFilepathList
+          .map(filepath => readFileAsync(filepath, 'utf8'))
+          .map(async code => parser.parse(await code))
+          .map(async ast => getImportNames(await ast)),
+      )
+    ).reduce((a, b) => a.concat(b)),
   );
 
   const typePkgNames = {

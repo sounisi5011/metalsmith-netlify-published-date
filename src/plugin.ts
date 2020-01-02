@@ -80,7 +80,8 @@ export type DeployedPageMetadataInterface = {
     | {
           previewPageResponse: null;
           cachedResponse: CachedPreviewResponseInterface;
-      });
+      }
+);
 
 /*
  * Utility functions
@@ -130,27 +131,29 @@ export async function getTargetFileList({
     metalsmith: Metalsmith;
 }): Promise<{ filename: string; urlpath: string }[]> {
     const matchedFiles = getMatchedFiles(files, options.pattern);
-    const targetFileList = (await Promise.all(
-        matchedFiles.map(async filename => {
-            const fileData = files[filename];
+    const targetFileList = (
+        await Promise.all(
+            matchedFiles.map(async filename => {
+                const fileData = files[filename];
 
-            fileValidationLog('checking file: %s', filename);
-            if (!isFile(fileData)) {
-                return;
-            }
+                fileValidationLog('checking file: %s', filename);
+                if (!isFile(fileData)) {
+                    return;
+                }
 
-            const urlpath = path2url(
-                await options.filename2urlPath(filename, {
-                    files,
-                    fileData,
-                    metalsmith,
-                }),
-            );
-            filePreviewURLLog('get URL Path: %o -> %o', filename, urlpath);
+                const urlpath = path2url(
+                    await options.filename2urlPath(filename, {
+                        files,
+                        fileData,
+                        metalsmith,
+                    }),
+                );
+                filePreviewURLLog('get URL Path: %o -> %o', filename, urlpath);
 
-            return { filename, urlpath };
-        }),
-    )).filter(isNotVoid);
+                return { filename, urlpath };
+            }),
+        )
+    ).filter(isNotVoid);
     return targetFileList;
 }
 

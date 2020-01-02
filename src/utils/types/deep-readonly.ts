@@ -4,7 +4,7 @@
 
 export type DeepReadonly<T> = T extends Primitive
     ? T
-    : T extends (readonly (infer U)[])
+    : T extends readonly (infer U)[]
     ? DeepReadonlyArray<U>
     : T extends ReadonlyMap<infer K, infer V>
     ? DeepReadonlyMap<K, V>
@@ -24,7 +24,7 @@ type DeepReadonlyArray<T> = T extends Primitive
     ? readonly T[]
     : DeepReadonlyArrayInterface<T>;
 
-type DeepReadonlyMap<K, V> = (K | V) extends Primitive
+type DeepReadonlyMap<K, V> = K | V extends Primitive
     ? ReadonlyMap<K, V>
     : DeepReadonlyMapInterface<K, V>;
 

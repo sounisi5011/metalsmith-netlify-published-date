@@ -294,44 +294,11 @@ export async function getPreviewDataList({
     files: Metalsmith.Files;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
 }> {
-    const previewDataList = (await Promise.all(
-        targetFileList.map(async ({ filename, urlpath }) => {
-            const dateState = dateStateMap.get(filename);
-            const fileData = files[filename];
-
-            setMetadata({
-                fileData,
-                files,
-                filename,
-                metalsmith,
-                metadata: {
-                    published: dateState.published.date,
-                    modified: dateState.modified.date,
-                },
-                options: pluginOptions,
-                nowDate,
-            });
-
-            if (
-                isEstablished(dateState) &&
-                (isAllfileModifiedEstablished(dateStateMap) ||
-                    dateState.notFoundDetected)
-            ) {
-                return;
-            }
-
-            const previewPageURL = joinURL(deploy.deployAbsoluteURL, urlpath);
-
-            const previewData = await fetchPageData({
-                filename,
-                urlpath,
-                previewPageURL,
-                deploy,
-                cache,
-            });
-
-            if (previewData.fromCache) {
-                const { metadata } = previewData;
+    const previewDataList = (
+        await Promise.all(
+            targetFileList.map(async ({ filename, urlpath }) => {
+                const dateState = dateStateMap.get(filename);
+                const fileData = files[filename];
 
                 setMetadata({
                     fileData,
@@ -339,77 +306,118 @@ export async function getPreviewDataList({
                     filename,
                     metalsmith,
                     metadata: {
+                        published: dateState.published.date,
                         modified: dateState.modified.date,
-                        ...metadata,
                     },
                     options: pluginOptions,
                     nowDate,
                 });
 
-                if (!dateState.published.established) {
-                    dateState.published.date = metadata.published;
-                    dateState.published.established = true;
-
-                    fileMetadataLog(
-                        '%s / published date is established: %s',
-                        filename,
-                        dateState.published.date,
-                    );
+                if (
+                    isEstablished(dateState) &&
+                    (isAllfileModifiedEstablished(dateStateMap) ||
+                        dateState.notFoundDetected)
+                ) {
+                    return;
                 }
-            } else if (previewData.previewPageNotFound) {
-                if (!dateState.published.established) {
-                    if (!dateState.modified.established) {
-                        fileMetadataLog(
-                            '%s / published date and modified date is established: %s / %s',
-                            filename,
-                            dateState.published.date,
-                            dateState.modified.date,
-                        );
-                    } else {
+
+                const previewPageURL = joinURL(
+                    deploy.deployAbsoluteURL,
+                    urlpath,
+                );
+
+                const previewData = await fetchPageData({
+                    filename,
+                    urlpath,
+                    previewPageURL,
+                    deploy,
+                    cache,
+                });
+
+                if (previewData.fromCache) {
+                    const { metadata } = previewData;
+
+                    setMetadata({
+                        fileData,
+                        files,
+                        filename,
+                        metalsmith,
+                        metadata: {
+                            modified: dateState.modified.date,
+                            ...metadata,
+                        },
+                        options: pluginOptions,
+                        nowDate,
+                    });
+
+                    if (!dateState.published.established) {
+                        dateState.published.date = metadata.published;
+                        dateState.published.established = true;
+
                         fileMetadataLog(
                             '%s / published date is established: %s',
                             filename,
                             dateState.published.date,
                         );
                     }
+                } else if (previewData.previewPageNotFound) {
+                    if (!dateState.published.established) {
+                        if (!dateState.modified.established) {
+                            fileMetadataLog(
+                                '%s / published date and modified date is established: %s / %s',
+                                filename,
+                                dateState.published.date,
+                                dateState.modified.date,
+                            );
+                        } else {
+                            fileMetadataLog(
+                                '%s / published date is established: %s',
+                                filename,
+                                dateState.published.date,
+                            );
+                        }
+                    }
+
+                    dateState.published.established = true;
+                    dateState.modified.established = true;
+                    dateState.notFoundDetected = true;
+                } else {
+                    const { metadata, previewPageResponse } = previewData;
+
+                    new Set([
+                        previewPageURL,
+                        previewPageResponse.requestUrl,
+                        ...(previewPageResponse.redirectUrls || []),
+                        previewPageResponse.url,
+                    ]).forEach(previewPageURL => {
+                        cacheQueue
+                            .get(filename)
+                            .set(previewPageURL, previewPageResponse.body);
+                        previewCacheLog(
+                            'enqueue to queue / %s',
+                            previewPageURL,
+                        );
+                    });
+
+                    setMetadata({
+                        fileData,
+                        files,
+                        filename,
+                        metalsmith,
+                        metadata,
+                        options: pluginOptions,
+                        nowDate,
+                    });
+
+                    if (!dateState.published.established) {
+                        dateState.published.date = publishedDate(deploy);
+                    }
                 }
 
-                dateState.published.established = true;
-                dateState.modified.established = true;
-                dateState.notFoundDetected = true;
-            } else {
-                const { metadata, previewPageResponse } = previewData;
-
-                new Set([
-                    previewPageURL,
-                    previewPageResponse.requestUrl,
-                    ...(previewPageResponse.redirectUrls || []),
-                    previewPageResponse.url,
-                ]).forEach(previewPageURL => {
-                    cacheQueue
-                        .get(filename)
-                        .set(previewPageURL, previewPageResponse.body);
-                    previewCacheLog('enqueue to queue / %s', previewPageURL);
-                });
-
-                setMetadata({
-                    fileData,
-                    files,
-                    filename,
-                    metalsmith,
-                    metadata,
-                    options: pluginOptions,
-                    nowDate,
-                });
-
-                if (!dateState.published.established) {
-                    dateState.published.date = publishedDate(deploy);
-                }
-            }
-
-            return previewData;
-        }),
-    )).filter(isNotVoid);
+                return previewData;
+            }),
+        )
+    ).filter(isNotVoid);
 
     return {
         previewDataList,

@@ -72,6 +72,21 @@
       "git add"
     ]
   },
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "./test/**/*.ts"
+    ],
+    "helpers": [
+      "**/{fixtures,helpers}/**/*"
+    ],
+    "require": [
+      "ts-node/register/transpile-only"
+    ]
+  },
   "dependencies": {
     "@types/debug": "4.1.5",
     "@types/got": "9.6.7",
@@ -134,20 +149,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "ava": {
-    "files": [
-      "./test/**/*.ts"
-    ],
-    "helpers": [
-      "**/{fixtures,helpers}/**/*"
-    ],
-    "compileEnhancements": false,
-    "require": [
-      "ts-node/register/transpile-only"
-    ],
-    "extensions": [
-      "ts"
-    ]
   }
 }

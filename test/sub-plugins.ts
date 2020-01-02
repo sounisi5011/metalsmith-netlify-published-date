@@ -43,8 +43,8 @@ function deleteMetadataProps(
 
 test('Plugins specified in the "plugins" option should be execute', async t => {
     const siteID = 'template.test';
-    const beforeFilesList: (Parameters<typeof processCountPlugin>)[0] = [];
-    const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
+    const beforeFilesList: Parameters<typeof processCountPlugin>[0] = [];
+    const pluginsRunLogs: Parameters<typeof processCountPlugin>[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template'))
         .use(processCountPlugin(beforeFilesList))
         .use(
@@ -277,8 +277,8 @@ test('Plugins specified in the "plugins" option should be execute', async t => {
 
 test('If the plugin gets progressing build of self, make the published date and the modified date of the new file the deploy created date', async t => {
     const siteID = 'progressing-deploy.template.test';
-    const beforeFilesList: (Parameters<typeof processCountPlugin>)[0] = [];
-    const pluginsRunLogs: (Parameters<typeof processCountPlugin>)[0] = [];
+    const beforeFilesList: Parameters<typeof processCountPlugin>[0] = [];
+    const pluginsRunLogs: Parameters<typeof processCountPlugin>[0] = [];
     const metalsmith = Metalsmith(path.join(fixtures, 'template'))
         .use(processCountPlugin(beforeFilesList))
         .use(
