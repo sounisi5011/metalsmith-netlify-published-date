@@ -11,7 +11,7 @@ test.before(() => {
 });
 
 test('should pass the plugin function array to the options value', t => {
-    const plugin1: Metalsmith.Plugin = (): void => {};
+    const plugin1: Metalsmith.Plugin = (): void => {}; // eslint-disable-line @typescript-eslint/no-empty-function
     const plugin2: Metalsmith.Plugin = (...args: unknown[]): unknown[] => args;
     const options = normalizeOptions(
         {

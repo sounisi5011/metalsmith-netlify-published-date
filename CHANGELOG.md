@@ -6,6 +6,18 @@
 
 #### devDependencies
 
+* `@typescript-eslint/eslint-plugin`
+    * [#109] - `2.1.0` -> `2.14.0`
+* `@typescript-eslint/parser`
+    * [#109] - `2.1.0` -> `2.14.0`
+* `eslint`
+    * [#109] - `6.3.0` -> `6.8.0`
+* `eslint-config-prettier`
+    * [#109] - `6.2.0` -> `6.9.0`
+* `eslint-plugin-import`
+    * [#109] - `2.18.2` -> `2.19.1`
+* `eslint-plugin-prettier`
+    * [#109] - `3.1.0` -> `3.1.2`
 * `husky`
     * [#108] - `3.0.5` -> `3.1.0`
 * `lint-staged`
@@ -33,6 +45,7 @@
 [#116]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/116
 [#117]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/117
 [#108]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/108
+[#109]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/109
 
 ## [0.2.0] (2019-09-07 UTC)
 
