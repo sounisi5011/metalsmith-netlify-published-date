@@ -28,6 +28,8 @@
     * [#108] - `2.1.0` -> `2.1.3`
 * `sort-package-json`
     * [#108] - `1.22.1` -> `1.35.0`
+* `typescript`
+    * [#91] - `3.5.3` -> `3.7.4`
 
 ### Internal API
 
@@ -46,6 +48,7 @@
 [#117]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/117
 [#108]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/108
 [#109]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/109
+[#91]:  https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/91
 
 ## [0.2.0] (2019-09-07 UTC)
 
