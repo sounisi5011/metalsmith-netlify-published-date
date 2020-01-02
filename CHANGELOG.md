@@ -10,6 +10,8 @@
     * [#109] - `2.1.0` -> `2.14.0`
 * `@typescript-eslint/parser`
     * [#109] - `2.1.0` -> `2.14.0`
+* `ava`
+    * [#111] - `2.3.0` -> `2.4.0`
 * `eslint`
     * [#109] - `6.3.0` -> `6.8.0`
 * `eslint-config-prettier`
@@ -22,12 +24,18 @@
     * [#108] - `3.0.5` -> `3.1.0`
 * `lint-staged`
     * [#108] - `9.2.5` -> `9.5.0`
+* `mustache`
+    * [#111] - `3.0.3` -> `3.2.1`
+* `nock`
+    * [#111] - `11.3.3` -> `11.7.0`
 * `prettier`
     * [#108] - `1.18.2` -> `1.19.1`
 * `prettier-package-json`
     * [#108] - `2.1.0` -> `2.1.3`
 * `sort-package-json`
     * [#108] - `1.22.1` -> `1.35.0`
+* `ts-node`
+    * [#111] - `8.3.0` -> `8.5.4`
 * `typescript`
     * [#91] - `3.5.3` -> `3.7.4`
 
@@ -49,6 +57,7 @@
 [#108]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/108
 [#109]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/109
 [#91]:  https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/91
+[#111]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/111
 
 ## [0.2.0] (2019-09-07 UTC)
 
