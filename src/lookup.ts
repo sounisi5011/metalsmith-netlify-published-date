@@ -1,5 +1,6 @@
 import got from 'got';
 import Metalsmith from 'metalsmith';
+import { ObjectState } from 'object-rollback';
 import { URL } from 'url';
 
 import PreviewCache, { CachedPreviewResponseInterface } from './cache/preview';
@@ -8,7 +9,6 @@ import { NetlifyDeployData, netlifyDeploys } from './netlify';
 import { OptionsInterface, setMetadata } from './plugin';
 import {
     findEqualsPath,
-    hasProp,
     isNotVoid,
     joinURL,
     MapWithDefault,
@@ -17,7 +17,6 @@ import {
 } from './utils';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
-import createState, { StateInterface } from './utils/obj-restore';
 
 const log = debug.extend('lookup');
 const processLog = log.extend('process');
@@ -422,15 +421,15 @@ export async function getPreviewDataList({
 export async function getProcessedFiles({
     previewDataList,
     files,
-    filesState,
-    dateStateMap,
+    // filesState,
+    // dateStateMap,
     deploy,
     pluginOptions,
     metalsmith,
 }: {
     previewDataList: PreviewDataType[];
     files: Metalsmith.Files;
-    filesState: StateInterface<Metalsmith.Files>;
+    filesState: ObjectState<Metalsmith.Files>;
     dateStateMap: MapWithDefault<string, FileDateStateInterface>;
     deploy: NetlifyDeployData;
     pluginOptions: OptionsInterface;
@@ -471,25 +470,25 @@ export async function getProcessedFiles({
         }
     }
 
-    const diff = filesState.diff();
-    processLog(
-        'convert with the following metadata by files: %o',
-        [...dateStateMap].reduce<Metalsmith.Files>(
-            (dataMap, [filename, metadata]) => {
-                const filedata = files[filename];
-                if (filedata && !dataMap[filename]) {
-                    dataMap[filename] = {};
-                    Object.keys(metadata).forEach(prop => {
-                        if (hasProp(filedata, prop)) {
-                            dataMap[filename][prop] = filedata[prop];
-                        }
-                    });
-                }
-                return dataMap;
-            },
-            diff ? diff.addedOrUpdated : {},
-        ),
-    );
+    // const diff = filesState.diff();
+    // processLog(
+    //     'convert with the following metadata by files: %o',
+    //     [...dateStateMap].reduce<Metalsmith.Files>(
+    //         (dataMap, [filename, metadata]) => {
+    //             const filedata = files[filename];
+    //             if (filedata && !dataMap[filename]) {
+    //                 dataMap[filename] = {};
+    //                 Object.keys(metadata).forEach(prop => {
+    //                     if (hasProp(filedata, prop)) {
+    //                         dataMap[filename][prop] = filedata[prop];
+    //                     }
+    //                 });
+    //             }
+    //             return dataMap;
+    //         },
+    //         diff ? diff.addedOrUpdated : {},
+    //     ),
+    // );
 
     const processedFiles = await processFiles(
         metalsmith,
@@ -661,7 +660,7 @@ export default async function({
     const cacheQueue = new MapWithDefault<string, Map<string, Buffer>>(
         () => new Map(),
     );
-    const filesState = createState(files);
+    const filesState = new ObjectState(files);
     const dateStateMap = new MapWithDefault<string, FileDateStateInterface>(
         () => ({
             published: new DateState(),
@@ -720,10 +719,10 @@ export default async function({
             break;
         }
 
-        filesState.restore();
+        filesState.rollback();
     }
 
-    filesState.restore();
+    filesState.rollback();
 
     cacheQueue.forEach((cacheQueue, filename) => {
         const dateState = dateStateMap.get(filename);
