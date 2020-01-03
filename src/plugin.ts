@@ -1,5 +1,4 @@
 import deepFreeze from 'deep-freeze-strict';
-import got from 'got';
 import Metalsmith from 'metalsmith';
 import path from 'path';
 
@@ -8,6 +7,7 @@ import lookup from './lookup';
 import { NetlifyDeployData } from './netlify';
 import { normalizeOptions } from './options';
 import { isNotVoid, path2url } from './utils';
+import { MultiFetchResult } from './utils/fetch';
 import { debug as log } from './utils/log';
 import {
     createPlugin,
@@ -74,7 +74,7 @@ export type DeployedPageMetadataInterface = {
     deploy: NetlifyDeployData;
 } & (
     | {
-          previewPageResponse: got.Response<Buffer>;
+          previewPageResponse: MultiFetchResult;
           cachedResponse: null;
       }
     | {

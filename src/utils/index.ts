@@ -203,3 +203,11 @@ export class MapWithDefault<K, V> extends Map<K, V> {
         }
     }
 }
+
+export function toBuffer(value: string | Buffer): Buffer {
+    if (Buffer.isBuffer(value)) {
+        return value;
+    } else {
+        return Buffer.from(value);
+    }
+}
