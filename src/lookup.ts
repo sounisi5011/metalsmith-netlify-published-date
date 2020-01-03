@@ -258,20 +258,19 @@ export async function fetchPageData({
 
     const published = publishedDate(deploy);
     const modified = publishedDate(deploy);
-    let contents: Buffer;
-    try {
-        contents = toBuffer(await previewPageResult.getBody());
-    } catch (error) {
-        previewResponseErrorLog(
-            'failed to read response body / %s / %o',
-            previewPageURL,
-            error,
-        );
-        if (error instanceof Error) {
-            error.message = `Fetching preview page on Netlify failed. Failed to read response body: ${previewPageURL} ; ${error.message}`;
-        }
-        throw error;
-    }
+    const contents = await Promise.resolve(previewPageResult.getBody())
+        .then(toBuffer)
+        .catch(error => {
+            previewResponseErrorLog(
+                'failed to read response body / %s / %o',
+                previewPageURL,
+                error,
+            );
+            if (error instanceof Error) {
+                error.message = `Fetching preview page on Netlify failed. Failed to read response body: ${previewPageURL} ; ${error.message}`;
+            }
+            throw error;
+        });
 
     const ret: PreviewDataInterface = {
         filename,

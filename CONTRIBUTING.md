@@ -32,6 +32,7 @@ Inspired of [Atom Contributing] and [Gitmoji].
 * `👽` - updating code due to external API changes
 * `💩` - writing bad code that needs to be improved
 * `🚨` - removing linter warnings
+* `♻️` - refactoring code
 * `📝` - writing docs
 * `🚀` - deploying stuff
 * `🐛` - fixing a bug

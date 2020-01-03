@@ -111,20 +111,19 @@ export async function* netlifyDeploys(
             responseLog('fetch is successful / %s', url);
             responseHeadersLog('headers of %s / %o', url, response.headers);
 
-            let bodyText: string;
-            try {
-                bodyText = (await result.getBody()).toString();
-            } catch (error) {
-                responseErrorLog(
-                    'failed to read response body / %s / %o',
-                    url,
-                    error,
-                );
-                if (error instanceof Error) {
-                    error.message = `Request to Netlify API failed. Failed to read response body: ${url} ; ${error.message}`;
-                }
-                throw error;
-            }
+            const bodyText = await Promise.resolve(result.getBody())
+                .then(String)
+                .catch(error => {
+                    responseErrorLog(
+                        'failed to read response body / %s / %o',
+                        url,
+                        error,
+                    );
+                    if (error instanceof Error) {
+                        error.message = `Request to Netlify API failed. Failed to read response body: ${url} ; ${error.message}`;
+                    }
+                    throw error;
+                });
 
             let bodyData: unknown;
             try {
