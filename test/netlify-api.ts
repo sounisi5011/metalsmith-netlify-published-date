@@ -1,8 +1,8 @@
 import test from 'ava';
-import got from 'got';
 import parseLink from 'parse-link-header';
 
 import { isNetlifyDeploy } from '../src/netlify';
+import { redirectFetch } from '../src/utils/fetch';
 import { isValidDate } from './helpers/utils';
 
 const API_PREFIX = 'https://api.netlify.com/api/v1/';
@@ -21,8 +21,9 @@ test('Netlify API responses should be in a valid format', async t => {
             const headers = accessToken
                 ? { authorization: `Bearer ${accessToken}` }
                 : {};
-            const response = await got(url, { headers });
-            const bodyStr = response.body;
+            const result = await redirectFetch(url, { headers });
+            const response = result.lastResult.response;
+            const bodyStr = (await result.getBody()).toString();
             const linkHeader = Array.isArray(response.headers.link)
                 ? response.headers.link.join(', ')
                 : response.headers.link;
