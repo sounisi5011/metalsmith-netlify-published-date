@@ -10,7 +10,9 @@ export function isObject(value: unknown): value is Record<any, unknown> {
     return typeof value === 'object' && value !== null;
 }
 
-export function isStringArray(value: unknown[]): value is string[] {
+export function isStringArray(
+    value: ReadonlyArray<unknown>,
+): value is string[] {
     return value.every(v => typeof v === 'string');
 }
 
