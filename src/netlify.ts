@@ -3,6 +3,7 @@ import './polyfills/symbol.async-iterator';
 import parseLink from 'parse-link-header';
 
 import { isObject } from './utils';
+import { responseBodyErrorHandler } from './utils/error';
 import { redirectFetch } from './utils/fetch';
 import { debug } from './utils/log';
 
@@ -113,17 +114,11 @@ export async function* netlifyDeploys(
 
             const bodyText = await Promise.resolve(result.getBody())
                 .then(String)
-                .catch(error => {
-                    responseErrorLog(
-                        'failed to read response body / %s / %o',
-                        url,
-                        error,
-                    );
-                    if (error instanceof Error) {
-                        error.message = `Request to Netlify API failed. Failed to read response body: ${url} ; ${error.message}`;
-                    }
-                    throw error;
-                });
+                .catch(error =>
+                    responseBodyErrorHandler(responseErrorLog, url, error, {
+                        errorMessagePrefix: 'Request to Netlify API failed.',
+                    }),
+                );
 
             let bodyData: unknown;
             try {
