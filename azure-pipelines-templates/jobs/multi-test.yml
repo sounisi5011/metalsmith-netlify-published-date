@@ -1,5 +1,4 @@
 parameters:
-  name: Linux
   vmImage: ubuntu-latest
   nodeVersions:
     - 8.3.0
@@ -14,10 +13,12 @@ parameters:
     - 12.x
     - 13.0.0
     - 13.x
+  variables: {}
+  timeoutMin: 5
+  env: {}
 
 jobs:
-  - job: ${{ format('UnitTest_{0}', parameters.name) }}
-    displayName: ${{ format('UnitTest / {0}', parameters.name) }}
+  - job: ${{ parameters.jobName }}
 
     pool:
       vmImage: ${{ parameters.vmImage }}
@@ -28,13 +29,16 @@ jobs:
           ${{ format('Node.js {0}', nodeVersion) }}:
             node_version: ${{ nodeVersion }}
 
+    variables: ${{ parameters.variables }}
+
     steps:
       - template: ../steps/init-node.yml
         parameters:
           nodeVersion: $(node_version)
 
-      - script: npm run test:ava
-        displayName: Run unit test
-        timeoutInMinutes: 5
+      - script: ${{ parameters.script }}
+        displayName: ${{ parameters.stepLabel }}
+        timeoutInMinutes: ${{ parameters.timeoutMin }}
+        env: ${{ parameters.env }}
 
     cancelTimeoutInMinutes: 1
