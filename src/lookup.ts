@@ -15,7 +15,6 @@ import {
     toBuffer,
     url2path,
 } from './utils';
-import { responseBodyErrorHandler } from './utils/error';
 import { MultiFetchResult, redirectFetch } from './utils/fetch';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
@@ -261,17 +260,17 @@ export async function fetchPageData({
     const modified = publishedDate(deploy);
     const contents = await Promise.resolve(previewPageResult.getBody())
         .then(toBuffer)
-        .catch(error =>
-            responseBodyErrorHandler(
-                previewResponseErrorLog,
+        .catch(error => {
+            previewResponseErrorLog(
+                'failed to read response body / %s / %o',
                 previewPageURL,
                 error,
-                {
-                    errorMessagePrefix:
-                        'Fetching preview page on Netlify failed.',
-                },
-            ),
-        );
+            );
+            if (error instanceof Error) {
+                error.message = `Fetching preview page on Netlify failed. Failed to read response body: ${previewPageURL} ; ${error.message}`;
+            }
+            throw error;
+        });
 
     const ret: PreviewDataInterface = {
         filename,
