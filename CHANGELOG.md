@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
+### Documentation
+
+* [#123] - Fix CHANGELOG's typo
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...master
+[#123]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/123
 
 ## [0.3.0] (2020-01-04 UTC)
 
