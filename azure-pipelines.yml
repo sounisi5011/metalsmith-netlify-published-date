@@ -6,6 +6,14 @@
 # no PR builds
 pr: none
 
+schedules:
+  - cron: "0 0 * * Sun"
+    displayName: External API test
+    branches:
+      include:
+        - master
+    always: true
+
 jobs:
   - template: azure-pipelines-templates/jobs/single-test.yml
     parameters:
