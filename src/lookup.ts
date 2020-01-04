@@ -1,4 +1,3 @@
-import got from 'got';
 import Metalsmith from 'metalsmith';
 import { ObjectState } from 'object-rollback';
 import { URL } from 'url';
@@ -13,8 +12,10 @@ import {
     joinURL,
     MapWithDefault,
     pickProps,
+    toBuffer,
     url2path,
 } from './utils';
+import { MultiFetchResult, redirectFetch } from './utils/fetch';
 import { debug } from './utils/log';
 import { isFile, processFiles } from './utils/metalsmith';
 
@@ -45,7 +46,7 @@ export interface PreviewBaseDataInterface {
     urlpath: string;
     previewPageURL: string;
     contents: Buffer | null;
-    previewPageResponse: got.Response<Buffer> | null;
+    previewPageResponse: MultiFetchResult | null;
     cachedResponse: CachedPreviewResponseInterface | null;
     previewPageNotFound: boolean;
     fromCache: boolean;
@@ -54,7 +55,7 @@ export interface PreviewBaseDataInterface {
 export interface PreviewDataInterface extends PreviewBaseDataInterface {
     metadata: { published: string; modified: string };
     contents: Buffer;
-    previewPageResponse: got.Response<Buffer>;
+    previewPageResponse: MultiFetchResult;
     cachedResponse: null;
     previewPageNotFound: false;
     fromCache: false;
@@ -206,60 +207,76 @@ export async function fetchPageData({
         return ret;
     }
 
-    let previewPageResponse: got.Response<Buffer>;
-    try {
-        previewRequestLog('GET %s', previewPageURL);
-        previewPageResponse = await got(previewPageURL, {
-            encoding: null,
-        });
-        previewResponseLog('fetch is successful / %s', previewPageURL);
-    } catch (error) {
-        if (error instanceof got.HTTPError) {
-            previewResponseLog(
-                'fetch fails with HTTP %s %s / %s',
-                error.statusCode,
-                error.statusMessage,
-                previewPageURL,
-            );
-
-            if (error.statusCode === 404) {
-                const ret: PreviewNotFoundDataInterface = {
-                    filename,
-                    urlpath,
-                    previewPageURL,
-                    previewPageResponse: null,
-                    cachedResponse: null,
-                    contents: null,
-                    previewPageNotFound: true,
-                    fromCache: false,
-                };
-                return ret;
-            } else {
-                previewResponseHeadersLog(
-                    'headers of %s / %O',
-                    previewPageURL,
-                    error.headers,
-                );
-            }
-        } else {
+    previewRequestLog('GET %s', previewPageURL);
+    const previewPageResult = await redirectFetch(previewPageURL).catch(
+        error => {
             previewResponseErrorLog(
-                'fetch failed by "got" package error / %s / %o',
+                'fetch failed by http/https module error / %s / %o',
                 previewPageURL,
                 error,
             );
+            if (error instanceof Error) {
+                error.message = `Fetching a page on Netlify failed. ${error.message}`;
+            }
+            throw error;
+        },
+    );
+
+    if (!previewPageResult.isOk) {
+        previewResponseLog(
+            'fetch fails with HTTP %s %s / %s',
+            previewPageResult.statusCode,
+            previewPageResult.statusMessage,
+            previewPageURL,
+        );
+
+        if (previewPageResult.statusCode === 404) {
+            const ret: PreviewNotFoundDataInterface = {
+                filename,
+                urlpath,
+                previewPageURL,
+                previewPageResponse: null,
+                cachedResponse: null,
+                contents: null,
+                previewPageNotFound: true,
+                fromCache: false,
+            };
+            return ret;
+        } else {
+            previewResponseHeadersLog(
+                'headers of %s / %O',
+                previewPageURL,
+                previewPageResult.headers,
+            );
+            throw new Error(
+                'Fetching preview page on Netlify failed. HTTP response status is: ' +
+                    `${previewPageResult.statusCode} ${previewPageResult.statusMessage} ; ${previewPageURL}`,
+            );
         }
-        throw error;
     }
+    previewResponseLog('fetch is successful / %s', previewPageURL);
 
     const published = publishedDate(deploy);
     const modified = publishedDate(deploy);
-    const contents = previewPageResponse.body;
+    const contents = await Promise.resolve(previewPageResult.getBody())
+        .then(toBuffer)
+        .catch(error => {
+            previewResponseErrorLog(
+                'failed to read response body / %s / %o',
+                previewPageURL,
+                error,
+            );
+            if (error instanceof Error) {
+                error.message = `Fetching preview page on Netlify failed. Failed to read response body: ${previewPageURL} ; ${error.message}`;
+            }
+            throw error;
+        });
 
     const ret: PreviewDataInterface = {
         filename,
         urlpath,
         previewPageURL,
-        previewPageResponse,
+        previewPageResponse: previewPageResult,
         cachedResponse: null,
         contents,
         metadata: { published, modified },
@@ -384,20 +401,18 @@ export async function getPreviewDataList({
                 } else {
                     const { metadata, previewPageResponse } = previewData;
 
-                    new Set([
+                    for (const url of new Set([
                         previewPageURL,
-                        previewPageResponse.requestUrl,
-                        ...(previewPageResponse.redirectUrls || []),
-                        previewPageResponse.url,
-                    ]).forEach(previewPageURL => {
+                        ...previewPageResponse.fetchedURLs,
+                    ])) {
                         cacheQueue
                             .get(filename)
-                            .set(previewPageURL, previewPageResponse.body);
-                        previewCacheLog(
-                            'enqueue to queue / %s',
-                            previewPageURL,
-                        );
-                    });
+                            .set(
+                                url,
+                                toBuffer(await previewPageResponse.getBody()),
+                            );
+                        previewCacheLog('enqueue to queue / %s', url);
+                    }
 
                     setMetadata({
                         fileData,

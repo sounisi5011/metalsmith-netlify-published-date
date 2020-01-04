@@ -10,7 +10,9 @@ export function isObject(value: unknown): value is Record<any, unknown> {
     return typeof value === 'object' && value !== null;
 }
 
-export function isStringArray(value: unknown[]): value is string[] {
+export function isStringArray(
+    value: ReadonlyArray<unknown>,
+): value is string[] {
     return value.every(v => typeof v === 'string');
 }
 
@@ -199,5 +201,13 @@ export class MapWithDefault<K, V> extends Map<K, V> {
             this.set(key, defaultValue);
             return defaultValue;
         }
+    }
+}
+
+export function toBuffer(value: string | Buffer): Buffer {
+    if (Buffer.isBuffer(value)) {
+        return value;
+    } else {
+        return Buffer.from(value);
     }
 }

@@ -1,9 +1,9 @@
 import './polyfills/symbol.async-iterator';
 
-import got from 'got';
 import parseLink from 'parse-link-header';
 
 import { isObject } from './utils';
+import { redirectFetch } from './utils/fetch';
 import { debug } from './utils/log';
 
 const log = debug.extend('netlify-api');
@@ -82,43 +82,65 @@ export async function* netlifyDeploys(
     const fetch =
         options.fetchCallback ||
         (async (url, headers) => {
-            try {
-                requestLog('GET %s / headers %o', url, headers);
-                const response = await got(url, {
-                    headers,
-                    json: true,
-                });
-                responseLog('fetch is successful / %s', url);
-                responseHeadersLog('headers of %s / %o', url, response.headers);
-                const linkHeaderValue = response.headers.link;
-                return {
-                    body: response.body,
-                    linkHeader: Array.isArray(linkHeaderValue)
-                        ? linkHeaderValue.join(', ')
-                        : linkHeaderValue,
-                };
-            } catch (error) {
-                if (error instanceof got.HTTPError) {
-                    responseLog(
-                        'fetch fails with HTTP %s %s / %s',
-                        error.statusCode,
-                        error.statusMessage,
-                        url,
-                    );
-                    responseHeadersLog(
-                        'headers of %s / %O',
-                        url,
-                        error.headers,
-                    );
-                } else {
+            requestLog('GET %s / headers %o', url, headers);
+            const result = await redirectFetch(url, { headers }).catch(
+                error => {
                     responseErrorLog(
-                        'fetch failed by "got" package error / %s / %o',
+                        'fetch failed by http/https module error / %s / %o',
                         url,
                         error,
                     );
-                }
-                throw error;
+                    throw error;
+                },
+            );
+
+            if (!result.isOk) {
+                responseLog(
+                    'fetch fails with HTTP %s %s / %s',
+                    result.statusCode,
+                    result.statusMessage,
+                    url,
+                );
+                responseHeadersLog('headers of %s / %o', url, result.headers);
+                throw new Error(
+                    'Request to Netlify API failed. HTTP response status is: ' +
+                        `${result.statusCode} ${result.statusMessage} ; ${url}`,
+                );
             }
+            responseLog('fetch is successful / %s', url);
+            responseHeadersLog('headers of %s / %o', url, result.headers);
+
+            const bodyText = await Promise.resolve(result.getBody())
+                .then(String)
+                .catch(error => {
+                    responseErrorLog(
+                        'failed to read response body / %s / %o',
+                        url,
+                        error,
+                    );
+                    if (error instanceof Error) {
+                        error.message = `Request to Netlify API failed. Failed to read response body: ${url} ; ${error.message}`;
+                    }
+                    throw error;
+                });
+
+            let bodyData: unknown;
+            try {
+                bodyData = JSON.parse(bodyText);
+            } catch (_) {
+                responseErrorLog('invalid JSON body / %s', url);
+                throw new SyntaxError(
+                    `Netlify API returned invalid JSON from: ${url}`,
+                );
+            }
+
+            const linkHeaderValue = result.headers.link;
+            return {
+                body: bodyData,
+                linkHeader: Array.isArray(linkHeaderValue)
+                    ? linkHeaderValue.join(', ')
+                    : linkHeaderValue,
+            };
         });
     const commitHashSet = options.commitHashList
         ? new Set(options.commitHashList)
