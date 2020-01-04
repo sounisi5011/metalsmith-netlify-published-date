@@ -13,3 +13,5 @@ jobs:
     parameters:
       name: Linux
       vmImage: ubuntu-latest
+
+  - template: azure-pipelines-templates/jobs/external-api.yml
