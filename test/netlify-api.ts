@@ -34,7 +34,7 @@ testFn('Netlify API responses should be in a valid format', async t => {
                 : {};
             const result = await redirectFetch(url, { headers });
             t.log('HTTP', result.statusCode, result.statusMessage);
-            t.log(result.fetchedURLs.join('\n→ '));
+            t.log(privateEnvsReplacer(result.fetchedURLs.join('\n→ ')));
             t.log(
                 new Map(
                     Object.entries(result.headers).map(([key, value]) => {
@@ -58,16 +58,23 @@ testFn('Netlify API responses should be in a valid format', async t => {
                 try {
                     body = JSON.parse(bodyStr);
                 } catch (error) {
-                    t.log({ url, bodyStr });
+                    t.log({
+                        url: privateEnvsReplacer(url),
+                        bodyStr: privateEnvsReplacer(bodyStr),
+                    });
                     throw error;
                 }
-            }, `response body should be valid JSON: ${url}`);
+            }, `response body should be valid JSON: ${privateEnvsReplacer(url)}`);
 
             fetchedURL.add(url);
 
             if (!Array.isArray(body)) {
-                t.log({ url, body });
-                t.fail(`response body should be array: ${url}`);
+                t.log({ url: privateEnvsReplacer(url), body });
+                t.fail(
+                    `response body should be array: ${privateEnvsReplacer(
+                        url,
+                    )}`,
+                );
             } else {
                 for (const [index, deploy] of body.entries()) {
                     if (isNetlifyDeploy(deploy)) {
@@ -81,20 +88,26 @@ testFn('Netlify API responses should be in a valid format', async t => {
                             if (value !== null) {
                                 if (!isValidDate(new Date(value))) {
                                     t.log({
-                                        url,
+                                        url: privateEnvsReplacer(url),
                                         index,
-                                        field: { [prop]: value },
+                                        field: {
+                                            [prop]: privateEnvsReplacer(value),
+                                        },
                                     });
                                     t.fail(
-                                        `${prop} field of deploy data of index number ${index} should be parsable date format: ${url}`,
+                                        `${prop} field of deploy data of index number ${index} should be parsable date format: ${privateEnvsReplacer(
+                                            url,
+                                        )}`,
                                     );
                                 }
                             }
                         }
                     } else {
-                        t.log({ url, index, deploy });
+                        t.log({ url: privateEnvsReplacer(url), index, deploy });
                         t.fail(
-                            `value of index number ${index} in the response body should be a valid deploy data: ${url}`,
+                            `value of index number ${index} in the response body should be a valid deploy data: ${privateEnvsReplacer(
+                                url,
+                            )}`,
                         );
                     }
                 }
