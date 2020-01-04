@@ -1,0 +1,21 @@
+parameters:
+  vmImage: ubuntu-latest
+  variables: {}
+  timeoutMin: 5
+
+jobs:
+  - job: ${{ parameters.jobName }}
+
+    pool:
+      vmImage: ${{ parameters.vmImage }}
+
+    variables: ${{ parameters.variables }}
+
+    steps:
+      - template: ../steps/init-node.yml
+
+      - script: ${{ parameters.script }}
+        displayName: ${{ parameters.stepLabel }}
+        timeoutInMinutes: ${{ parameters.timeoutMin }}
+
+    cancelTimeoutInMinutes: 1

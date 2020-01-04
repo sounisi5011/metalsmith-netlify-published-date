@@ -7,14 +7,24 @@
 pr: none
 
 jobs:
-  - template: azure-pipelines-templates/jobs/lint.yml
-
-  - template: azure-pipelines-templates/jobs/unit-test.yml
+  - template: azure-pipelines-templates/jobs/single-test.yml
     parameters:
-      name: Linux
+      jobName: Lint
+      stepLabel: Run linter
+      script: npx run-s test:peer-deps lint test:check-type-defs-pkgs
+
+  - template: azure-pipelines-templates/jobs/multi-test.yml
+    parameters:
+      jobName: UnitTest_Linux
       vmImage: ubuntu-latest
+      stepLabel: Run unit test
+      script: npm run test:ava
 
-  - template: azure-pipelines-templates/jobs/external-api.yml
+  - template: azure-pipelines-templates/jobs/single-test.yml
     parameters:
+      jobName: External_API
+      stepLabel: Run external API test
+      script: npx ava ./test/netlify-api.ts
       variables:
         NETLIFY_API_SITE_ID: peaceful-shockley-c9f989.netlify.com
+        NETLIFY_API_ACCESS_TOKEN: $(NETLIFY_API_ACCESS_TOKEN)
