@@ -59,6 +59,7 @@
     * [#108] - `2.1.0` -> `2.1.3`
 * `sort-package-json`
     * [#108] - `1.22.1` -> `1.35.0`
+    * [#121] - `1.35.0` -> `1.36.0`
 * `ts-node`
     * [#111] - `8.3.0` -> `8.5.4`
 * `typescript`
@@ -96,6 +97,7 @@
 [#110]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/110
 [#120]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/120
 [#119]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/119
+[#121]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/121
 
 ## [0.2.0] (2019-09-07 UTC)
 
