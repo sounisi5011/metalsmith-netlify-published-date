@@ -36,6 +36,25 @@ export function entries2obj<T>(
 }
 
 /**
+ * @see https://stackoverflow.com/a/1145525/4907315
+ */
+export function replaceAll(
+    ...searchList: (readonly [string | undefined, string])[]
+): (str: string) => string {
+    const filteredSearchList = searchList.filter(
+        (value: unknown): value is [string, string] =>
+            Array.isArray(value) &&
+            value.length >= 2 &&
+            value.every(v => typeof v === 'string'),
+    );
+    return str =>
+        filteredSearchList.reduce(
+            (str, [search, replacement]) => str.split(search).join(replacement),
+            str,
+        );
+}
+
+/**
  * @see https://qiita.com/muddydixon/items/2edf6dcb84295eccf4f3
  */
 

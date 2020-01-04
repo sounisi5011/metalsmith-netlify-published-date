@@ -3,16 +3,25 @@ import parseLink from 'parse-link-header';
 
 import { isNetlifyDeploy } from '../src/netlify';
 import { redirectFetch } from '../src/utils/fetch';
-import { isValidDate } from './helpers/utils';
+import { isValidDate, replaceAll } from './helpers/utils';
 
 const API_PREFIX = 'https://api.netlify.com/api/v1/';
 const siteID = process.env.NETLIFY_API_SITE_ID;
 const accessToken = process.env.NETLIFY_API_ACCESS_TOKEN;
 
+const privateEnvsReplacer = replaceAll(
+    [accessToken, `\${NETLIFY_API_ACCESS_TOKEN}`],
+    [siteID, `\${NETLIFY_API_SITE_ID}`],
+);
+
 const testFn = siteID ? test : test.skip;
 
 testFn('Netlify API responses should be in a valid format', async t => {
     const fetchedURL = new Set<string>();
+
+    if (accessToken) {
+        t.log({ accessToken: '*'.repeat(accessToken.length) });
+    }
 
     /**
      * @see https://www.netlify.com/docs/api/#deploys
@@ -24,6 +33,21 @@ testFn('Netlify API responses should be in a valid format', async t => {
                 ? { authorization: `Bearer ${accessToken}` }
                 : {};
             const result = await redirectFetch(url, { headers });
+            t.log('HTTP', result.statusCode, result.statusMessage);
+            t.log(result.fetchedURLs.join('\n→ '));
+            t.log(
+                new Map(
+                    Object.entries(result.headers).map(([key, value]) => {
+                        if (typeof value === 'string') {
+                            value = privateEnvsReplacer(value);
+                        } else if (value) {
+                            value = value.map(privateEnvsReplacer);
+                        }
+                        return [key, value];
+                    }),
+                ),
+            );
+
             const bodyStr = (await result.getBody()).toString();
             const linkHeader = Array.isArray(result.headers.link)
                 ? result.headers.link.join(', ')
