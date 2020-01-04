@@ -2,14 +2,19 @@
 
 ## [Unreleased]
 
+### Documentation
+
+* [#123] - Fix CHANGELOG's typo
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...master
+[#123]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/123
 
 ## [0.3.0] (2020-01-04 UTC)
 
 ### Breaking Changes
 
 * [#120] -
-    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/utils/fetch.ts#L133-L241).
+    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/utils/fetch.ts#L133-L241).
     This change affects the following plugin options:
     * [`metadataUpdater`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L46-L51) -
         [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L49-L50).
