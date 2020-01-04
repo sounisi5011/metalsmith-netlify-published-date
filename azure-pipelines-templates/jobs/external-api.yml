@@ -14,7 +14,8 @@ jobs:
 
       - script: npx ava ./test/netlify-api.ts
         displayName: Run external API test
-        env: NETLIFY_API_ACCESS_TOKEN=$(NETLIFY_API_ACCESS_TOKEN)
+        env:
+          NETLIFY_API_ACCESS_TOKEN: $(NETLIFY_API_ACCESS_TOKEN)
         timeoutInMinutes: 5
 
     cancelTimeoutInMinutes: 1
