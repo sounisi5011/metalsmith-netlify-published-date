@@ -2,6 +2,7 @@ parameters:
   vmImage: ubuntu-latest
   variables: {}
   timeoutMin: 5
+  env: {}
 
 jobs:
   - job: ${{ parameters.jobName }}
@@ -17,5 +18,6 @@ jobs:
       - script: ${{ parameters.script }}
         displayName: ${{ parameters.stepLabel }}
         timeoutInMinutes: ${{ parameters.timeoutMin }}
+        env: ${{ parameters.env }}
 
     cancelTimeoutInMinutes: 1

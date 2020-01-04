@@ -27,4 +27,5 @@ jobs:
       script: npx ava ./test/netlify-api.ts
       variables:
         NETLIFY_API_SITE_ID: peaceful-shockley-c9f989.netlify.com
+      env:
         NETLIFY_API_ACCESS_TOKEN: $(NETLIFY_API_ACCESS_TOKEN)
