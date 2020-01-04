@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+
+* [#120] -
+    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/utils/fetch.ts#L129-L196).
+    This change affects the following plugin options:
+    * [`metadataUpdater`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L46-L51) -
+        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L49-L50).
+    * [`contentsConverter`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L52-L57) -
+        [The second argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L54-L56).
+    * [`contentsEquals`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L58-L63) -
+        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L61-L62).
+
 ### Updated Dependencies
 
 #### devDependencies
@@ -51,9 +63,17 @@
 * `typescript`
     * [#91] - `3.5.3` -> `3.7.4`
 
+### Removed Dependencies
+
+#### dependencies
+
+* [#120] - `@types/got`
+* [#120] - `got`
+
 ### Internal API
 
 * [#116] - Introduce `object-rollback` package
+* [#120] - Migrate from [`got`](https://www.npmjs.com/package/got) package to [`http`](https://nodejs.org/api/http.html) / [`https`](https://nodejs.org/api/https.html) modules
 
 ### Others
 
@@ -73,6 +93,7 @@
 [#113]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/113
 [#112]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/112
 [#110]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/110
+[#120]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/120
 
 ## [0.2.0] (2019-09-07 UTC)
 
