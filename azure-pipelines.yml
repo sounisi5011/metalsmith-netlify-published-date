@@ -15,3 +15,6 @@ jobs:
       vmImage: ubuntu-latest
 
   - template: azure-pipelines-templates/jobs/external-api.yml
+    parameters:
+      variables:
+        NETLIFY_API_SITE_ID: peaceful-shockley-c9f989.netlify.com

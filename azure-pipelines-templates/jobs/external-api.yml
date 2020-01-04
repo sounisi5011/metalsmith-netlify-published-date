@@ -1,11 +1,13 @@
+parameters:
+  variables: {}
+
 jobs:
   - job: External_API
 
     pool:
       vmImage: ubuntu-latest
 
-    variables:
-      NETLIFY_API_SITE_ID: peaceful-shockley-c9f989.netlify.com
+    variables: ${{ parameters.variables }}
 
     steps:
       - template: ../steps/init-node.yml
