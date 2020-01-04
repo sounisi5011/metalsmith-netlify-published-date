@@ -2,6 +2,7 @@
   "extends": ["config:base"],
   "commitMessagePrefix": "\u2B06\uFE0F",
   "ignorePaths": ["example/package.json"],
+  "ignoreDeps": ["@types/node"],
   "packageRules": [
     {
       "updateTypes": ["pin"],

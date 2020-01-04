@@ -2,17 +2,21 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...master
+
+## [0.3.0] (2020-01-04 UTC)
+
 ### Breaking Changes
 
 * [#120] -
-    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/utils/fetch.ts#L133-L241).
+    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/utils/fetch.ts#L133-L241).
     This change affects the following plugin options:
-    * [`metadataUpdater`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L46-L51) -
-        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L49-L50).
-    * [`contentsConverter`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L52-L57) -
-        [The second argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L54-L56).
-    * [`contentsEquals`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L58-L63) -
-        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L61-L62).
+    * [`metadataUpdater`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L46-L51) -
+        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L49-L50).
+    * [`contentsConverter`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L52-L57) -
+        [The second argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L54-L56).
+    * [`contentsEquals`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L58-L63) -
+        [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L61-L62).
 
 ### Updated Dependencies
 
@@ -65,6 +69,16 @@
 * `typescript`
     * [#91] - `3.5.3` -> `3.7.4`
 
+### Added Dependencies
+
+#### dependencies
+
+* [#116] - `object-rollback@1.0.0`
+
+#### devDependencies
+
+* [#122] - `@types/node@12.x`
+
 ### Removed Dependencies
 
 #### dependencies
@@ -83,8 +97,8 @@
 * [#107] - Renovate package groups
 * [#117] - Migrate from Travis CI to Azure Pipelines
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...HEAD
-[#98]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/98
+[0.3.0]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.2.0...v0.3.0
+[#98]:  https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/98
 [#107]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/107
 [#116]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/116
 [#117]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/117
@@ -98,6 +112,7 @@
 [#120]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/120
 [#119]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/119
 [#121]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/121
+[#122]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/122
 
 ## [0.2.0] (2019-09-07 UTC)
 
@@ -256,4 +271,4 @@
 
 ## [0.1.0] (2019-08-07)
 
-[0.1.0]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.0.0...v0.1.0
+[0.1.0]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/13ffdc1b10f0550f5adb50674dc19997d2b50454...v0.1.0
