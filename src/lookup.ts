@@ -246,7 +246,7 @@ export async function fetchPageData({
             previewResponseHeadersLog(
                 'headers of %s / %O',
                 previewPageURL,
-                previewPageResult.lastResult.response.headers,
+                previewPageResult.headers,
             );
             throw new Error(
                 'Fetching preview page on Netlify failed. HTTP response status is: ' +
@@ -403,7 +403,7 @@ export async function getPreviewDataList({
 
                     for (const url of new Set([
                         previewPageURL,
-                        ...previewPageResponse.requestURLs,
+                        ...previewPageResponse.fetchedURLs,
                     ])) {
                         cacheQueue
                             .get(filename)

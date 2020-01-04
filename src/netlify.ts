@@ -93,7 +93,6 @@ export async function* netlifyDeploys(
                     throw error;
                 },
             );
-            const response = result.lastResult.response;
 
             if (!result.isOk) {
                 responseLog(
@@ -102,14 +101,14 @@ export async function* netlifyDeploys(
                     result.statusMessage,
                     url,
                 );
-                responseHeadersLog('headers of %s / %o', url, response.headers);
+                responseHeadersLog('headers of %s / %o', url, result.headers);
                 throw new Error(
                     'Request to Netlify API failed. HTTP response status is: ' +
                         `${result.statusCode} ${result.statusMessage} ; ${url}`,
                 );
             }
             responseLog('fetch is successful / %s', url);
-            responseHeadersLog('headers of %s / %o', url, response.headers);
+            responseHeadersLog('headers of %s / %o', url, result.headers);
 
             const bodyText = await Promise.resolve(result.getBody())
                 .then(String)
@@ -135,7 +134,7 @@ export async function* netlifyDeploys(
                 );
             }
 
-            const linkHeaderValue = response.headers.link;
+            const linkHeaderValue = result.headers.link;
             return {
                 body: bodyData,
                 linkHeader: Array.isArray(linkHeaderValue)

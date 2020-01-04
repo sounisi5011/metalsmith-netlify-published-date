@@ -5,7 +5,7 @@
 ### Breaking Changes
 
 * [#120] -
-    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/utils/fetch.ts#L129-L196).
+    The object passed to [the `previewPageResponse` property](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L77) of the `metadata` argument has been changed from [the `got`'s Response](https://www.npmjs.com/package/got/v/9.6.0#response)) to [the `MultiFetchResult`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/utils/fetch.ts#L133-L241).
     This change affects the following plugin options:
     * [`metadataUpdater`](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L46-L51) -
         [The third argument is the `metadata` argument](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/src/plugin.ts#L49-L50).

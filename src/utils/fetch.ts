@@ -44,12 +44,16 @@ export class FetchResult {
         });
     }
 
-    public get statusCode(): number | undefined {
-        return this.response.statusCode;
+    public get statusCode(): number {
+        return this.response.statusCode ?? NaN;
     }
 
-    public get statusMessage(): string | undefined {
-        return this.response.statusMessage;
+    public get statusMessage(): string {
+        return this.response.statusMessage ?? '';
+    }
+
+    public get headers(): http.IncomingHttpHeaders {
+        return this.response.headers;
     }
 
     /**
@@ -57,14 +61,14 @@ export class FetchResult {
      */
     public get isOk(): boolean {
         const { statusCode } = this;
-        return Boolean(statusCode && statusCode >= 200 && statusCode <= 299);
+        return statusCode >= 200 && statusCode <= 299;
     }
 
     /**
      * @see https://fetch.spec.whatwg.org/commit-snapshots/8ca61488c0c9efb32fd138ce14e25ce2b4ce0dfc/#redirect-status
      */
     public get isRedirect(): boolean {
-        return [301, 302, 303, 307, 308].includes(this.statusCode as number);
+        return [301, 302, 303, 307, 308].includes(this.statusCode);
     }
 
     public getBody(): FetchResultBody | Promise<FetchResultBody> {
@@ -142,36 +146,64 @@ export class MultiFetchResult {
         this.addResult(result);
     }
 
+    /**
+     * Map object that has the FetchResult object of the response obtained from the visited URLs as values, with all the visited URLs as keys.
+     */
     public get results(): ReadonlyMap<string, FetchResult> {
         return this.__results;
     }
 
+    /**
+     * A FetchResult object indicating the result of the first request.
+     */
     public get firstResult(): FetchResult {
         return this.__firstResult;
     }
 
+    /**
+     * A FetchResult object indicating the result of the last request.
+     * If a redirected, this property indicates the response after the move.
+     */
     public get lastResult(): FetchResult {
         return this.__lastResult;
     }
 
+    /**
+     * URL of the first request.
+     */
     public get requestURL(): string {
         return this.firstResult.requestURL;
     }
 
-    public get requestURLs(): string[] {
+    /**
+     * Get all requested URLs.
+     */
+    public get fetchedURLs(): string[] {
         return [...this.results.keys()];
+    }
+
+    /**
+     * Last URL after redirects.
+     * If not redirected, this value is the same as the requestURL property.
+     */
+    public get responseURL(): string {
+        return this.lastResult.requestURL;
     }
 
     public get requestOptions(): https.RequestOptions {
         return this.firstResult.requestOptions;
     }
 
-    public get statusCode(): number | undefined {
-        return this.lastResult.response.statusCode;
+    public get statusCode(): number {
+        return this.lastResult.statusCode;
     }
 
-    public get statusMessage(): string | undefined {
-        return this.lastResult.response.statusMessage;
+    public get statusMessage(): string {
+        return this.lastResult.statusMessage;
+    }
+
+    public get headers(): http.IncomingHttpHeaders {
+        return this.lastResult.headers;
     }
 
     public get isOk(): boolean {
@@ -179,16 +211,29 @@ export class MultiFetchResult {
     }
 
     /**
-     * If true, the redirection did not complete.
+     * If true, the redirect has completed.
+     * If false, these are probably the reasons:
+     * - Redirect could not be completed due to limitation of maxRedirects argument.
+     * - During the redirect, function got a response requesting that redirect to visited URL.
      */
-    public get isRedirect(): boolean {
-        return this.lastResult.isRedirect;
+    public get redirectCompleted(): boolean {
+        return !this.lastResult.isRedirect;
+    }
+
+    /**
+     * If true, it is the response after moving by redirect.
+     */
+    public get redirected(): boolean {
+        return this.results.size >= 2;
     }
 
     public getBody(): FetchResultBody | Promise<FetchResultBody> {
         return this.lastResult.getBody();
     }
 
+    /**
+     * @private
+     */
     public addResult(result: FetchResult): void {
         this.__results.set(result.requestURL, result);
         this.__lastResult = result;

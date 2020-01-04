@@ -22,11 +22,10 @@ test('Netlify API responses should be in a valid format', async t => {
                 ? { authorization: `Bearer ${accessToken}` }
                 : {};
             const result = await redirectFetch(url, { headers });
-            const response = result.lastResult.response;
             const bodyStr = (await result.getBody()).toString();
-            const linkHeader = Array.isArray(response.headers.link)
-                ? response.headers.link.join(', ')
-                : response.headers.link;
+            const linkHeader = Array.isArray(result.headers.link)
+                ? result.headers.link.join(', ')
+                : result.headers.link;
 
             let body: unknown = null;
             t.notThrows(() => {
