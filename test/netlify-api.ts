@@ -6,10 +6,12 @@ import { redirectFetch } from '../src/utils/fetch';
 import { isValidDate } from './helpers/utils';
 
 const API_PREFIX = 'https://api.netlify.com/api/v1/';
-const siteID = 'peaceful-shockley-c9f989.netlify.com';
-const accessToken = null;
+const siteID = process.env.NETLIFY_API_SITE_ID;
+const accessToken = process.env.NETLIFY_API_ACCESS_TOKEN;
 
-test('Netlify API responses should be in a valid format', async t => {
+const testFn = siteID ? test : test.skip;
+
+testFn('Netlify API responses should be in a valid format', async t => {
     const fetchedURL = new Set<string>();
 
     /**
