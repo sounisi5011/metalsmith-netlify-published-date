@@ -1,5 +1,5 @@
 jobs:
-  - job: External-API
+  - job: External_API
 
     pool:
       vmImage: ubuntu-latest

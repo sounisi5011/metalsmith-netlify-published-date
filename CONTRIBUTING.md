@@ -39,6 +39,7 @@ Inspired of [Atom Contributing] and [Gitmoji].
 * `🔥` - removing code or files
 * `✅` - adding or updating tests
 * `👷` - adding CI build system
+* `💚` - fixing CI Build
 * `➕` - adding a dependency
 * `⬆️` - upgrading dependencies
 * `⬇️` - downgrading dependencies
