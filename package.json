@@ -1,6 +1,6 @@
 {
   "name": "@sounisi5011/metalsmith-netlify-published-date",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Get published date and modified date of the each page published by Netlify",
   "keywords": [
     "date",
