@@ -4,12 +4,12 @@
 [![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=green)][github-license]
 ![Supported Node.js version: >=8.3.0](https://img.shields.io/static/v1?label=node&message=%3E%3D8.3.0&color=brightgreen)
 [![Install Size Details](https://packagephobia.now.sh/badge?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)](https://packagephobia.now.sh/result?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)
-[![Dependencies Status](https://david-dm.org/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/@sounisi5011/metalsmith-netlify-published-date)
+[![Dependencies Status](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date)
 [![Build Status](https://dev.azure.com/sounisi5011/npm%20projects/_apis/build/status/sounisi5011.metalsmith-netlify-published-date?branchName=master)](https://dev.azure.com/sounisi5011/npm%20projects/_build/latest?definitionId=7&branchName=master)
-[![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/maintainability)
+[![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/metalsmith-netlify-published-date/maintainability)
 
 [npm]: https://www.npmjs.com/package/@sounisi5011/metalsmith-netlify-published-date
-[github-license]: https://github.com/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/LICENSE
+[github-license]: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/LICENSE
 
 Get published date and modified date of the each page published by Netlify.
 
@@ -128,4 +128,4 @@ npm test
 
 ## Contributing
 
-see [CONTRIBUTING.md](https://github.com/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/blob/master/CONTRIBUTING.md)
+see [CONTRIBUTING.md](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/CONTRIBUTING.md)

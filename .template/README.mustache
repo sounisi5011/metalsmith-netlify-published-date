@@ -10,12 +10,12 @@ codeclimateBadgeURL: https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/
 [![License: {{{pkg.license}}}](https://img.shields.io/static/v1?label=license&message={{#encURL}} {{{pkg.license}}} {{/encURL}}&color=green)][github-license]
 ![Supported Node.js version: {{{pkg.engines.node}}}](https://img.shields.io/static/v1?label=node&message={{#encURL}} {{{pkg.engines.node}}} {{/encURL}}&color=brightgreen)
 [![Install Size Details](https://packagephobia.now.sh/badge?p={{{pkg.name}}}@{{{pkg.version}}})](https://packagephobia.now.sh/result?p={{{pkg.name}}}@{{{pkg.version}}})
-[![Dependencies Status](https://david-dm.org/sounisi5011/{{{pkg.name}}}/status.svg)](https://david-dm.org/sounisi5011/{{{pkg.name}}})
+[![Dependencies Status](https://david-dm.org/{{{repo.owner}}}/{{{repo.name}}}/status.svg)](https://david-dm.org/{{{repo.owner}}}/{{{repo.name}}})
 [![Build Status]({{{azurePipelinesBadgeURL}}})]({{{azurePipelinesPageURL}}})
-[![Maintainability Status]({{{codeclimateBadgeURL}}})](https://codeclimate.com/github/sounisi5011/{{{pkg.name}}}/maintainability)
+[![Maintainability Status]({{{codeclimateBadgeURL}}})](https://codeclimate.com/github/{{{repo.owner}}}/{{{repo.name}}}/maintainability)
 
 [npm]: https://www.npmjs.com/package/{{{pkg.name}}}
-[github-license]: https://github.com/sounisi5011/{{{pkg.name}}}/blob/v{{{pkg.version}}}/LICENSE
+[github-license]: {{{githubFileRoot}}}/LICENSE
 
 Get published date and modified date of the each page published by Netlify.
 
@@ -134,4 +134,4 @@ npm test
 
 ## Contributing
 
-see [CONTRIBUTING.md](https://github.com/sounisi5011/{{{pkg.name}}}/blob/master/CONTRIBUTING.md)
+see [CONTRIBUTING.md]({{{repo.rootURL}}}/blob/master/CONTRIBUTING.md)
