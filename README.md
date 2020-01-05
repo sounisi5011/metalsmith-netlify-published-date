@@ -42,8 +42,8 @@ Pattern are verified using [multimatch v4.0.0][npm-multimatch-used].
 
 ### `siteID`
 
-[Site ID](https://www.netlify.com/docs/api/#site-ids) that indicates the website to lookup on Netlify.  
-When building on Netlify, this value is automatically set from [the environment variable `URL`](https://www.netlify.com/docs/continuous-deployment/#environment-variables).  
+[Site ID](https://docs.netlify.com/api/get-started/#get-site) that indicates the website to lookup on Netlify.  
+When building on Netlify, this value is automatically set from [the environment variable `URL`](https://docs.netlify.com/configure-builds/environment-variables/#deploy-urls-and-metadata).  
 When building in the development environment, you need to specify the `siteID` option or add the environment variable `URL`.
 
 ### `accessToken`
@@ -98,7 +98,7 @@ See the `remove-time-elem.js` file in the `./example/` directory for verbose usa
 
 Specify the directory to save the cache file that holds the response data obtained from Netlify.
 
-If set `null`, an in-memory cache using [the `Map` object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) is used.
+If set `null`, an in-memory cache using [the `Map` object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Map) is used.
 
 By default, it is set in the directory where the package is installed.  
 In a normal configuration, this package is installed under the `node_modules/` directory.  
