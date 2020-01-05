@@ -1,15 +1,15 @@
 # @sounisi5011/metalsmith-netlify-published-date
 
 [![Go to the latest release page on npm](https://img.shields.io/npm/v/@sounisi5011/metalsmith-netlify-published-date.svg)][npm]
-[![GitHub License](https://img.shields.io/github/license/sounisi5011/metalsmith-netlify-published-date.svg)][github-license]
-![](https://img.shields.io/node/v/@sounisi5011/metalsmith-netlify-published-date.svg)
+[![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=green)][github-license]
+![Supported Node.js version: >=8.3.0](https://img.shields.io/static/v1?label=node&message=%3E%3D8.3.0&color=brightgreen)
 [![Install Size Details](https://packagephobia.now.sh/badge?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)](https://packagephobia.now.sh/result?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)
-[![Dependencies Status](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date)
+[![Dependencies Status](https://david-dm.org/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/@sounisi5011/metalsmith-netlify-published-date)
 [![Build Status](https://dev.azure.com/sounisi5011/npm%20projects/_apis/build/status/sounisi5011.metalsmith-netlify-published-date?branchName=master)](https://dev.azure.com/sounisi5011/npm%20projects/_build/latest?definitionId=7&branchName=master)
-[![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/metalsmith-netlify-published-date/maintainability)
+[![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/maintainability)
 
 [npm]: https://www.npmjs.com/package/@sounisi5011/metalsmith-netlify-published-date
-[github-license]: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/LICENSE
+[github-license]: https://github.com/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/LICENSE
 
 Get published date and modified date of the each page published by Netlify.
 
@@ -36,9 +36,9 @@ Also check the test code in the `./test/options/` directory for options availabl
 
 Only files that match this pattern will be processed.  
 Specify a glob expression string or an array of strings as the pattern.  
-Pattern are verified using [multimatch v4.0.0].
+Pattern are verified using [multimatch v4.0.0][npm-multimatch-used].
 
-[multimatch v4.0.0]: https://www.npmjs.com/package/multimatch/v/4.0.0
+[npm-multimatch-used]: https://www.npmjs.com/package/multimatch/v/4.0.0
 
 ### `siteID`
 
@@ -110,12 +110,12 @@ This plugin supports debugging output.
 To enable, use the following command when running your build script:
 
 ```sh
-DEBUG=@sounisi5011/metalsmith-netlify-published-date* node my-website-build.js
+DEBUG=@sounisi5011/metalsmith-netlify-published-date,@sounisi5011/metalsmith-netlify-published-date:* node my-website-build.js
 ```
 
-For more details, please check the description of [debug v4.1.1].
+For more details, please check the description of [debug v4.1.1][npm-debug-used].
 
-[debug v4.1.1]: https://www.npmjs.com/package/debug/v/4.1.1
+[npm-debug-used]: https://www.npmjs.com/package/debug/v/4.1.1
 
 ## Tests
 
@@ -128,4 +128,4 @@ npm test
 
 ## Contributing
 
-see [CONTRIBUTING.md](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/CONTRIBUTING.md)
+see [CONTRIBUTING.md](https://github.com/sounisi5011/@sounisi5011/metalsmith-netlify-published-date/blob/master/CONTRIBUTING.md)

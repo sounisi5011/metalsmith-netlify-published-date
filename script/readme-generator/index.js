@@ -47,6 +47,32 @@ function parseArgs(args) {
   return { options, targets };
 }
 
+/**
+ * @see https://docs.npmjs.com/files/package.json#repository
+ * @todo Support other hosting services: eg: GitLab, Bitbucket
+ */
+function getRepoData(repositoryField, defaultValue = {}) {
+  if (typeof repositoryField === 'string') {
+    const match = /^github:([^/]+)\/([^/]+)$/.exec(repositoryField);
+    if (match) {
+      const [, owner, name] = match;
+      return { owner, name, rootURL: `https://github.com/${owner}/${name}` };
+    }
+  }
+
+  if (repositoryField && typeof repositoryField.url === 'string') {
+    const match = /^(?:git\+)?(https:\/\/github\.com\/([^/]+)\/((?:(?!\.git$)[^/])+))/.exec(
+      repositoryField.url,
+    );
+    if (match) {
+      const [, rootURL, owner, name] = match;
+      return { owner, name, rootURL };
+    }
+  }
+
+  return defaultValue;
+}
+
 async function main(args) {
   const cwd = process.cwd();
   const cwdRelativePath = path.relative.bind(path, cwd);
@@ -60,9 +86,15 @@ async function main(args) {
     await readFileAsync(templatePath, 'utf8'),
   );
   const pkg = require(path.resolve(cwd, 'package.json'));
+  const repo = getRepoData(pkg.repository, {
+    owner: pkg.author,
+    name: pkg.name,
+    rootURL: `https://github.com/${pkg.author}/${pkg.name}`,
+  });
   const view = {
     pkg,
     pkgLock: require(path.resolve(cwd, 'package-lock.json')),
+    repo,
     encURL: () => (text, render) =>
       encodeURIComponent(render(text.trim())).replace(
         /[!'()*]/g,
@@ -73,11 +105,11 @@ async function main(args) {
             .toUpperCase()}`,
       ),
     ...templateData,
-    githubTreeRoot: `https://github.com/sounisi5011/${pkg.name}/tree/v${pkg.version}`,
-    githubFileRoot: `https://github.com/sounisi5011/${pkg.name}/blob/v${pkg.version}`,
+    githubTreeRoot: `${repo.rootURL}/tree/v${pkg.version}`,
+    githubFileRoot: `${repo.rootURL}/blob/v${pkg.version}`,
   };
   const output = Mustache.render(templateCode.replace(/^[\r\n]+/, ''), view);
-  const outputPath = path.resolve(path.dirname(templatePath), 'README.md');
+  const outputPath = path.resolve(cwd, 'README.md');
 
   if (options.has('test')) {
     const origReadme = await tryReadFile(outputPath);
