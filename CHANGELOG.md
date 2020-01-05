@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
+### Documentation
+
+* [#129] - Fix README
+
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.1...master
+[#129]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/129
 
 ## [0.3.1] (2020-01-05 UTC)
 

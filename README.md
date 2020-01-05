@@ -16,7 +16,7 @@ Get published date and modified date of the each page published by Netlify.
 ## Install
 
 ```sh
-npm install @sounisi5011/metalsmith-netlify-published-date@0.3.0
+npm install @sounisi5011/metalsmith-netlify-published-date@0.3.1
 ```
 
 ## Usage
