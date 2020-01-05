@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:readme": "readme-generator --template ./.template/README.mustache",
     "clean": "del './dist/' './test/fixtures/*/{build,cache}/' './example/{node_modules,build}/'",
     "fmt-pkg": "run-s fmt-pkg:prettier fmt-pkg:sort",
     "fmt-pkg:prettier": "prettier-package-json --write ./package.json",
@@ -48,10 +49,11 @@
     "release:validation:git-branch": "git-branch-is master",
     "release:validation:git-work-dir": "is-git-status-clean",
     "release:validation:publishable": "can-npm-publish --verbose",
-    "test": "run-s test:peer-deps lint test:ava test:check-type-defs-pkgs",
+    "test": "run-s test:readme test:peer-deps lint test:ava test:check-type-defs-pkgs",
     "test:ava": "ava",
     "test:check-type-defs-pkgs": "node script/check-type-defs-pkgs.js ./dist/ build",
-    "test:peer-deps": "check-peer-deps"
+    "test:peer-deps": "check-peer-deps",
+    "test:readme": "run-s 'build:readme -- --test'"
   },
   "husky": {
     "hooks": {
@@ -67,6 +69,13 @@
       "prettier --write",
       "eslint --fix",
       "git add"
+    ],
+    "./!(README.md)**": [
+      "run-s build:readme --",
+      "git add ./README.md"
+    ],
+    "./README.md": [
+      "run-s test:readme --"
     ],
     "package.json": [
       "prettier-package-json --write",
@@ -102,6 +111,7 @@
   },
   "devDependencies": {
     "@sounisi5011/check-peer-deps": "github:sounisi5011/check-peer-deps",
+    "@sounisi5011/readme-generator": "file:script/readme-generator",
     "@types/deep-freeze-strict": "1.1.0",
     "@types/flat-cache": "2.0.0",
     "@types/lodash.clonedeep": "4.5.6",
