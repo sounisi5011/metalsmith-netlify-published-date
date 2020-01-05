@@ -2,6 +2,10 @@
 
 /**
  * @see https://github.com/sounisi5011/metalsmith-dart-sass/blob/v1.0.1/script/readme-generator/index.js
+ *
+ * Updated by 4a9d6e61d203718a90f0c559e9b1524da45c0205
+ * - Fix to generate repository URL correctly.
+ * - Fix to generate README.md file in command execution directory.
  */
 
 const fs = require('fs');
