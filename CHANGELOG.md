@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.2...master
+
+## [0.3.2] (2020-01-05 UTC)
+
 ### Documentation
 
 * [#129] - Fix README
 
-[Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.1...master
+[0.3.2]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.1...v0.3.2
 [#129]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/129
 
 ## [0.3.1] (2020-01-05 UTC)
@@ -26,7 +30,7 @@
 
 * [#124] - Increasing test execution interval using external API
 
-[0.3.1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...master
+[0.3.1]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...v0.3.1
 [#123]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/123
 [#124]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/124
 [#126]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/126
