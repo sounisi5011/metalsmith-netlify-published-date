@@ -1,44 +1,50 @@
-# @sounisi5011/metalsmith-netlify-published-date
+---
+azurePipelinesBadgeURL: https://dev.azure.com/sounisi5011/npm%20projects/_apis/build/status/sounisi5011.metalsmith-netlify-published-date?branchName=master
+azurePipelinesPageURL: https://dev.azure.com/sounisi5011/npm%20projects/_build/latest?definitionId=7&branchName=master
+codeclimateBadgeURL: https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability
+---
 
-[![Go to the latest release page on npm](https://img.shields.io/npm/v/@sounisi5011/metalsmith-netlify-published-date.svg)][npm]
-[![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=green)][github-license]
-![Supported Node.js version: >=8.3.0](https://img.shields.io/static/v1?label=node&message=%3E%3D8.3.0&color=brightgreen)
-[![Install Size Details](https://packagephobia.now.sh/badge?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)](https://packagephobia.now.sh/result?p=@sounisi5011/metalsmith-netlify-published-date@0.3.0)
-[![Dependencies Status](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date/status.svg)](https://david-dm.org/sounisi5011/metalsmith-netlify-published-date)
-[![Build Status](https://dev.azure.com/sounisi5011/npm%20projects/_apis/build/status/sounisi5011.metalsmith-netlify-published-date?branchName=master)](https://dev.azure.com/sounisi5011/npm%20projects/_build/latest?definitionId=7&branchName=master)
-[![Maintainability Status](https://api.codeclimate.com/v1/badges/913d0fe6324ac84907d6/maintainability)](https://codeclimate.com/github/sounisi5011/metalsmith-netlify-published-date/maintainability)
+# {{{pkg.name}}}
 
-[npm]: https://www.npmjs.com/package/@sounisi5011/metalsmith-netlify-published-date
-[github-license]: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/LICENSE
+[![Go to the latest release page on npm](https://img.shields.io/npm/v/{{{pkg.name}}}.svg)][npm]
+[![License: {{{pkg.license}}}](https://img.shields.io/static/v1?label=license&message={{#encURL}} {{{pkg.license}}} {{/encURL}}&color=green)][github-license]
+![Supported Node.js version: {{{pkg.engines.node}}}](https://img.shields.io/static/v1?label=node&message={{#encURL}} {{{pkg.engines.node}}} {{/encURL}}&color=brightgreen)
+[![Install Size Details](https://packagephobia.now.sh/badge?p={{{pkg.name}}}@{{{pkg.version}}})](https://packagephobia.now.sh/result?p={{{pkg.name}}}@{{{pkg.version}}})
+[![Dependencies Status](https://david-dm.org/{{{repo.owner}}}/{{{repo.name}}}/status.svg)](https://david-dm.org/{{{repo.owner}}}/{{{repo.name}}})
+[![Build Status]({{{azurePipelinesBadgeURL}}})]({{{azurePipelinesPageURL}}})
+[![Maintainability Status]({{{codeclimateBadgeURL}}})](https://codeclimate.com/github/{{{repo.owner}}}/{{{repo.name}}}/maintainability)
+
+[npm]: https://www.npmjs.com/package/{{{pkg.name}}}
+[github-license]: {{{githubFileRoot}}}/LICENSE
 
 Get published date and modified date of the each page published by Netlify.
 
 ## Install
 
 ```sh
-npm install @sounisi5011/metalsmith-netlify-published-date@0.3.0
+npm install {{{pkg.name}}}@0.3.0
 ```
 
 ## Usage
 
 There is an example of a working configuration in the `./example/` directory.  
-Please check: https://github.com/sounisi5011/metalsmith-netlify-published-date/tree/v0.3.0/example
+Please check: {{{githubTreeRoot}}}/example
 
 ## Options
 
 **This release is unstable. Some options may be change or remove before version 1.x is released.**
 
-To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L32-L64
+To see a list of the latest commit options, see the type definition in the `./src/plugin.ts` file: {{{githubFileRoot}}}/src/plugin.ts#L32-L64
 
-Also check the test code in the `./test/options/` directory for options available in the JSON file: https://github.com/sounisi5011/metalsmith-netlify-published-date/tree/v0.3.0/test/options
+Also check the test code in the `./test/options/` directory for options available in the JSON file: {{{githubTreeRoot}}}/test/options
 
 ### `pattern`
 
 Only files that match this pattern will be processed.  
 Specify a glob expression string or an array of strings as the pattern.  
-Pattern are verified using [multimatch v4.0.0][npm-multimatch-used].
+Pattern are verified using [multimatch v{{{pkgLock.dependencies.multimatch.version}}}][npm-multimatch-used].
 
-[npm-multimatch-used]: https://www.npmjs.com/package/multimatch/v/4.0.0
+[npm-multimatch-used]: https://www.npmjs.com/package/multimatch/v/{{{pkgLock.dependencies.multimatch.version}}}
 
 ### `siteID`
 
@@ -66,7 +72,7 @@ Specify the function of the following features: convert the file name of the bef
 e.g. If a file with extension `.pug` is converted to a file with extension `.html`, the following function should be set:
 
 ```js
-const netlifyPublishedDate = require('@sounisi5011/metalsmith-netlify-published-date');
+const netlifyPublishedDate = require('{{{pkg.name}}}');
 
 netlifyPublishedDate({
     ...
@@ -75,7 +81,7 @@ netlifyPublishedDate({
 })
 ```
 
-Note: The return value of the function is [delimited by the path delimiter and then URL escaped](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/src/plugin.ts#L144-L150). That is, the value that this function must return is not a URL, but a file path before it is converted to a URL.
+Note: The return value of the function is [delimited by the path delimiter and then URL escaped]({{{githubFileRoot}}}/src/plugin.ts#L144-L150). That is, the value that this function must return is not a URL, but a file path before it is converted to a URL.
 
 ### `metadataUpdater`
 
@@ -84,7 +90,7 @@ Content converted with the function specified in this option is used for content
 
 The page data obtained from the Netlify preview is passed to the first argument. Parse this data and update the Metalsmith metadata passed in the second argument.
 
-See the `set-datetime.js` file in the `./example/` directory for verbose usage: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/example/set-datetime.js
+See the `set-datetime.js` file in the `./example/` directory for verbose usage: {{{githubFileRoot}}}/example/set-datetime.js
 
 ### `contentsConverter`
 
@@ -92,7 +98,7 @@ This function converts the content generated by the plugin specified in the `plu
 Content converted with the function specified in this option is used for content comparison.
 
 In other words, this function is used to remove HTML elements that should be excluded in the comparison.  
-See the `remove-time-elem.js` file in the `./example/` directory for verbose usage: https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/v0.3.0/example/remove-time-elem.js
+See the `remove-time-elem.js` file in the `./example/` directory for verbose usage: {{{githubFileRoot}}}/example/remove-time-elem.js
 
 ### `cacheDir`
 
@@ -110,12 +116,12 @@ This plugin supports debugging output.
 To enable, use the following command when running your build script:
 
 ```sh
-DEBUG=@sounisi5011/metalsmith-netlify-published-date,@sounisi5011/metalsmith-netlify-published-date:* node my-website-build.js
+DEBUG={{{pkg.name}}},{{{pkg.name}}}:* node my-website-build.js
 ```
 
-For more details, please check the description of [debug v4.1.1][npm-debug-used].
+For more details, please check the description of [debug v{{{pkgLock.dependencies.debug.version}}}][npm-debug-used].
 
-[npm-debug-used]: https://www.npmjs.com/package/debug/v/4.1.1
+[npm-debug-used]: https://www.npmjs.com/package/debug/v/{{{pkgLock.dependencies.debug.version}}}
 
 ## Tests
 
@@ -128,4 +134,4 @@ npm test
 
 ## Contributing
 
-see [CONTRIBUTING.md](https://github.com/sounisi5011/metalsmith-netlify-published-date/blob/master/CONTRIBUTING.md)
+see [CONTRIBUTING.md]({{{repo.rootURL}}}/blob/master/CONTRIBUTING.md)

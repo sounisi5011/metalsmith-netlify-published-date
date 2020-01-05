@@ -5,6 +5,7 @@
 ### Documentation
 
 * [#123] - Fix CHANGELOG's typo
+* [#127] - Introduce README generator
 
 ### Removed Dependencies
 
@@ -20,6 +21,7 @@
 [#123]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/123
 [#124]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/124
 [#126]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/126
+[#127]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/127
 
 ## [0.3.0] (2020-01-04 UTC)
 
