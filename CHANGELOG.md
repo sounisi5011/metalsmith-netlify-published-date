@@ -6,6 +6,12 @@
 
 * [#123] - Fix CHANGELOG's typo
 
+### Removed Dependencies
+
+#### dependencies
+
+* [#126] - `is-plain-obj`
+
 ### Others
 
 * [#124] - Increasing test execution interval using external API
@@ -13,6 +19,7 @@
 [Unreleased]: https://github.com/sounisi5011/metalsmith-netlify-published-date/compare/v0.3.0...master
 [#123]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/123
 [#124]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/124
+[#126]: https://github.com/sounisi5011/metalsmith-netlify-published-date/pull/126
 
 ## [0.3.0] (2020-01-04 UTC)
 
