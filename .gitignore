@@ -59,3 +59,5 @@ typings/
 
 # Cache directory
 /.cache/
+
+/example/package-lock.json
