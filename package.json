@@ -103,7 +103,7 @@
     "@types/metalsmith": "2.3.0",
     "debug": "4.1.1",
     "deep-freeze-strict": "1.1.1",
-    "flat-cache": "2.0.1",
+    "flat-cache": "3.0.4",
     "import-cwd": "3.0.0",
     "multimatch": "4.0.0",
     "object-rollback": "1.0.0",
