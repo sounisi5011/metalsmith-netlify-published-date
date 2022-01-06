@@ -107,7 +107,7 @@
     "import-cwd": "3.0.0",
     "multimatch": "4.0.0",
     "object-rollback": "1.0.0",
-    "parse-link-header": "1.0.1"
+    "parse-link-header": "2.0.0"
   },
   "devDependencies": {
     "@sounisi5011/check-peer-deps": "github:sounisi5011/check-peer-deps",
