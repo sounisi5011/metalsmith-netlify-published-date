@@ -99,9 +99,9 @@
     ]
   },
   "dependencies": {
-    "@types/debug": "4.1.5",
+    "@types/debug": "4.1.7",
     "@types/metalsmith": "2.3.0",
-    "debug": "4.1.1",
+    "debug": "4.3.4",
     "deep-freeze-strict": "1.1.1",
     "flat-cache": "2.0.1",
     "import-cwd": "3.0.0",
